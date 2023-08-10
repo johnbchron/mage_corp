@@ -18,18 +18,12 @@ use bevy::{
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct LowResCamera {
-  pub pixel_size:  u8,
-  pub window_res:  (u32, u32),
-  pub texture_res: (u32, u32),
+  pub pixel_size: u8,
 }
 
 impl Default for LowResCamera {
   fn default() -> Self {
-    Self {
-      pixel_size:  8,
-      window_res:  (1920, 1080),
-      texture_res: (240, 135),
-    }
+    Self { pixel_size: 8 }
   }
 }
 
@@ -41,32 +35,93 @@ pub struct LowResCameraTarget;
 #[reflect(Component)]
 pub struct LowResSecondaryCamera;
 
-fn update_resolutions(
-  mut camera_query: Query<&mut LowResCamera>,
-  window_query: Query<&Window, With<PrimaryWindow>>,
-) {
-  let window = window_query.single();
-  let mut camera = camera_query.single_mut();
-
-  camera.window_res = (window.width() as u32, window.height() as u32);
-  camera.texture_res = (
-    (window.width() / camera.pixel_size as f32).ceil() as u32,
-    (window.height() / camera.pixel_size as f32).ceil() as u32,
-  );
+// when the window gets resized, update the camera's resolution
+fn calculate_texture_resolution(
+  window_x: f32,
+  window_y: f32,
+  pixel_size: u8,
+) -> Vec2 {
+  Vec2::new(
+    (window_x / pixel_size as f32).ceil(),
+    (window_y / pixel_size as f32).ceil(),
+  )
 }
 
-fn maintain_texture_resolution(
+fn rebuild_texture_setup(
   mut camera_query: Query<(&LowResCamera, &mut Camera)>,
-  mut target_query: Query<Entity, With<LowResCameraTarget>>,
+  target_query: Query<Entity, With<LowResCameraTarget>>,
+  window_query: Query<&Window, With<PrimaryWindow>>,
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
   let (lowres_camera, mut camera) = camera_query.single_mut();
+  let window = window_query.single();
 
+  let desired_texture_size = calculate_texture_resolution(
+    window.width(),
+    window.height(),
+    lowres_camera.pixel_size,
+  );
+
+  // this will hold the handle to the image texture if it already exists
+  let mut image_handle: Option<Handle<Image>> = None;
+
+  // if the camera already has a texture and it's the right size, use that
+  if let RenderTarget::Image(render_handle) = &camera.target {
+    let image = images.get(render_handle).unwrap();
+    if image.size().x == desired_texture_size.x as f32
+      && image.size().y == desired_texture_size.y as f32
+    {
+      image_handle = Some(render_handle.clone());
+    }
+  }
+
+  // if we didn't find a texture, or the texture is the wrong size, create a new
+  // one
+  if image_handle.is_none() {
+    // create a new texture
+    let image =
+      build_texture_image(desired_texture_size.x, desired_texture_size.y);
+    image_handle = Some(images.add(image));
+    // set the camera's target to the new texture
+    camera.target = RenderTarget::Image(image_handle.clone().unwrap().clone());
+  }
+
+  // create a material with the texture. this has to be done every frame
+  // see https://github.com/bevyengine/bevy/issues/8341
+  let texture_material = materials.add(StandardMaterial {
+    base_color_texture: Some(image_handle.unwrap()),
+    unlit: true,
+    ..default()
+  });
+
+  // add the material to the quad
+  let lowres_target = target_query.single();
+  commands
+    .entity(lowres_target)
+    .insert(texture_material.clone());
+}
+
+fn trigger_projection_rescaling(
+  window_query: Query<&Window, (With<PrimaryWindow>, Changed<Window>)>,
+  mut projection_query: Query<(&mut Projection, &LowResCamera)>,
+) {
+  for window in window_query.iter() {
+    let (mut projection, lowres_camera) = projection_query.single_mut();
+    let desired_texture_size = calculate_texture_resolution(
+      window.width(),
+      window.height(),
+      lowres_camera.pixel_size,
+    );
+    projection.update(desired_texture_size.x, desired_texture_size.y);
+  }
+}
+
+fn build_texture_image(x: f32, y: f32) -> Image {
   let image_size = Extent3d {
-    width:                 lowres_camera.texture_res.0,
-    height:                lowres_camera.texture_res.1,
+    width:                 x as u32,
+    height:                y as u32,
     depth_or_array_layers: 1,
   };
 
@@ -89,33 +144,7 @@ fn maintain_texture_resolution(
   // fill image.data with zeroes
   image.resize(image_size);
 
-  let image_handle = images.add(image);
-
-  camera.target = RenderTarget::Image(image_handle.clone());
-  camera.viewport = None;
-
-  let texture_material = materials.add(StandardMaterial {
-    base_color_texture: Some(image_handle),
-    unlit: true,
-    ..default()
-  });
-
-  let lowres_target = target_query.single_mut();
-
-  commands.entity(lowres_target).insert(texture_material);
-}
-
-fn trigger_projection_remapping(
-  window_query: Query<&Window, (With<PrimaryWindow>, Changed<Window>)>,
-  mut projection_query: Query<(&mut Projection, &LowResCamera)>,
-) {
-  for _ in window_query.iter() {
-    let (mut projection, lowres_camera) = projection_query.single_mut();
-    projection.update(
-      lowres_camera.texture_res.0 as f32,
-      lowres_camera.texture_res.1 as f32,
-    );
-  }
+  image
 }
 
 fn setup_target_camera(
@@ -174,8 +203,9 @@ impl Plugin for LowResPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, setup_target_camera)
-      .add_systems(Update, maintain_texture_resolution)
-      .add_systems(Update, update_resolutions)
-      .add_systems(Update, trigger_projection_remapping);
+      .add_systems(Update, rebuild_texture_setup)
+      .add_systems(Update, trigger_projection_rescaling)
+      .register_type::<LowResCamera>()
+      ;
   }
 }

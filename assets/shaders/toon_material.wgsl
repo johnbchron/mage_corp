@@ -27,32 +27,24 @@ var<private> sobel_y: array<f32, 9> = array<f32, 9>(
 const depth_threshold: f32 = 0.2;
 const normal_threshold: f32 = 0.05;
 
-@group(1) @binding(0)
-var<uniform> material_color: vec4<f32>;
-@group(1) @binding(1)
-var<uniform> material_ambient_light: vec4<f32>;
-@group(1) @binding(2)
-var<uniform> material_specular_color: vec4<f32>;
-@group(1) @binding(3)
-var<uniform> material_rim_color: vec4<f32>;
-@group(1) @binding(4)
-var<uniform> material_outline_color: vec4<f32>;
-@group(1) @binding(5)
-var<uniform> material_glossiness: f32;
-@group(1) @binding(6)
-var<uniform> material_rim_power: f32;
-@group(1) @binding(7)
-var<uniform> material_rim_threshold: f32;
-@group(1) @binding(8)
-var<uniform> material_outline_scale: f32;
+struct ToonMaterial {
+  color: vec4<f32>,
+  ambient_light: vec4<f32>,
+  specular_color: vec4<f32>,
+  rim_color: vec4<f32>,
+  outline_color: vec4<f32>,
+  glossiness: f32,
+  rim_power: f32,
+  rim_threshold: f32,
+  outline_scale: f32,
+}
 
-// fn hardstep_1d(x: f32, interval: f32) -> f32 {
-//  return floor(x / interval) * interval + (interval / 2.0);
-// }
-// 
-// fn hardstep_2d(x: vec2<f32>, interval: f32) -> vec2<f32> {
-//  return vec2<f32>(hardstep_1d(x.x, interval), hardstep_1d(x.y, interval));
-// }
+@group(1) @binding(0)
+var<uniform> material: ToonMaterial;
+@group(1) @binding(1)
+var material_color_texture: texture_2d<f32>;
+@group(1) @binding(2)
+var material_color_texture_sampler: sampler;
 
 fn get_depth(pos: vec2<f32>) -> f32 {
   return bevy_pbr::prepass_utils::prepass_depth(vec4(pos, 0.0, 0.0), 0u);
@@ -138,26 +130,26 @@ fn fragment(
   // specular light
   let camera_half_forward = normalize(camera_forward + light_direction);
   let specular_intensity = clamp(dot(surface_normal, camera_half_forward), 0.0, 1.0);
-  let specular_light_intensity = pow(specular_intensity * smooth_light_intensity, material_glossiness * material_glossiness);
+  let specular_light_intensity = pow(specular_intensity * smooth_light_intensity, material.glossiness * material.glossiness);
   let smooth_specular_light_intensity = smoothstep(0.0, 0.025, specular_light_intensity);
-  let specular_color = material_specular_color * smooth_specular_light_intensity;
+  let specular_color = material.specular_color * smooth_specular_light_intensity;
   let specular_light = specular_color * smooth_light_intensity;
   
   // rim light
   let rim_intensity = clamp(1.0 - dot(surface_normal, camera_forward), 0.0, 1.0);
-  let rim_light_intensity = rim_intensity * pow(light_intensity, material_rim_threshold);
-  let smooth_rim_light_intensity = smoothstep(material_rim_power - 0.01, material_rim_power + 0.01, rim_light_intensity);
-  let rim_light = material_rim_color * smooth_rim_light_intensity;
+  let rim_light_intensity = rim_intensity * pow(light_intensity, material.rim_threshold);
+  let smooth_rim_light_intensity = smoothstep(material.rim_power - 0.01, material.rim_power + 0.01, rim_light_intensity);
+  let rim_light = material.rim_color * smooth_rim_light_intensity;
   
-  let light = material_ambient_light + main_light + specular_light + rim_light;
+  let light = material.ambient_light + main_light + specular_light + rim_light;
   
-  let depth_edge = detect_edge_depth(mesh.position.xy, material_outline_scale);
-  let normal_edge = detect_edge_normal(mesh.position.xy, material_outline_scale);
+  let depth_edge = detect_edge_depth(mesh.position.xy, material.outline_scale);
+  let normal_edge = detect_edge_normal(mesh.position.xy, material.outline_scale);
   
   let edge = max(floor(depth_edge), floor(normal_edge));
   
-  var color: vec4<f32> = material_color * light;
-  color = mix(color, material_outline_color, edge);
+  var color: vec4<f32> = material.color * textureSample(material_color_texture, material_color_texture_sampler, mesh.uv) * light;
+  color = mix(color, material.outline_color, edge);
   
   return color;
 }

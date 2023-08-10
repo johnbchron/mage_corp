@@ -6,25 +6,30 @@ use bevy::{
 
 #[derive(AsBindGroup, TypeUuid, Reflect, Debug, Clone)]
 #[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e1"]
+#[reflect(Default, Debug)]
 pub struct ToonMaterial {
   #[uniform(0)]
   pub color:          Color,
-  #[uniform(1)]
+  #[uniform(0)]
   pub ambient_light:  Color,
-  #[uniform(2)]
+  #[uniform(0)]
   pub specular_color: Color,
-  #[uniform(3)]
+  #[uniform(0)]
   pub rim_color:      Color,
-  #[uniform(4)]
+  #[uniform(0)]
   pub outline_color:  Color,
-  #[uniform(5)]
+  #[uniform(0)]
   pub specular_power: f32,
-  #[uniform(6)]
+  #[uniform(0)]
   pub rim_power:      f32,
-  #[uniform(7)]
+  #[uniform(0)]
   pub rim_threshold:  f32,
-  #[uniform(8)]
+  #[uniform(0)]
   pub outline_scale:  f32,
+  #[texture(1)]
+  #[sampler(2)]
+  pub color_texture:  Option<Handle<Image>>,
+  pub alpha_mode:     AlphaMode,
 }
 
 impl Material for ToonMaterial {
@@ -33,7 +38,12 @@ impl Material for ToonMaterial {
   }
 
   fn alpha_mode(&self) -> AlphaMode {
+    // self.alpha_mode
     AlphaMode::Opaque
+  }
+
+  fn prepass_fragment_shader() -> ShaderRef {
+    StandardMaterial::prepass_fragment_shader()
   }
 }
 
@@ -42,6 +52,7 @@ impl Default for ToonMaterial {
     Self {
       // cornflower blue
       color:          Color::rgb(0.392, 0.584, 0.929),
+      color_texture:  None,
       ambient_light:  Color::rgb(0.4, 0.4, 0.4),
       specular_color: Color::rgb(1.0, 1.0, 1.0),
       rim_color:      Color::rgb(1.0, 1.0, 1.0),
@@ -50,6 +61,7 @@ impl Default for ToonMaterial {
       rim_power:      0.712,
       rim_threshold:  0.1,
       outline_scale:  0.5,
+      alpha_mode:     AlphaMode::Opaque,
     }
   }
 }
@@ -58,7 +70,36 @@ impl From<Color> for ToonMaterial {
   fn from(color: Color) -> Self {
     Self {
       color,
+      alpha_mode: if color.a() < 1.0 {
+        AlphaMode::Blend
+      } else {
+        AlphaMode::Opaque
+      },
       ..Default::default()
+    }
+  }
+}
+
+impl From<Handle<Image>> for ToonMaterial {
+  fn from(texture: Handle<Image>) -> Self {
+    ToonMaterial {
+      color_texture: Some(texture),
+      ..Default::default()
+    }
+  }
+}
+
+impl From<&StandardMaterial> for ToonMaterial {
+  fn from(std_material: &StandardMaterial) -> ToonMaterial {
+    let specular: f32 =
+      16.0 * 2.0_f32.powf(3.0 * (-std_material.reflectance + 0.5));
+    ToonMaterial {
+      color: std_material.base_color,
+      color_texture: std_material.base_color_texture.clone(),
+      specular_power: specular,
+      rim_power: std_material.perceptual_roughness.sqrt().clamp(0.5, 1.0),
+      alpha_mode: std_material.alpha_mode,
+      ..default()
     }
   }
 }
