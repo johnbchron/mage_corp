@@ -4,20 +4,11 @@ use bevy_mod_wanderlust::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes};
 
-use crate::ToonMaterial;
+use crate::toon::ConvertToToonMaterial;
 
-pub fn spawn_player(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut toon_materials: ResMut<Assets<ToonMaterial>>,
-) {
-  let material_handle = toon_materials.add(ToonMaterial::default());
-  // let material_handle =
-  // std_materials.add(StandardMaterial::from(Color::rgb(0.392, 0.584, 0.929)));
-  let mesh_handle = meshes.add(Mesh::try_from(shape::Cube::new(1.0)).unwrap());
-
-  commands.spawn((
-    ControllerBundle {
+pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
+  commands
+    .spawn((ControllerBundle {
       settings: ControllerSettings {
         acceleration: 25.0,
         max_speed: 10.0,
@@ -56,16 +47,17 @@ pub fn spawn_player(
           | LockedAxes::ROTATION_LOCKED_Z,
         ..default()
       },
-      transform: Transform::from_xyz(1.5, 0.0, 0.0),
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
-    },
-    material_handle.clone(),
-    mesh_handle.clone(),
-  ));
-
-  // commands.spawn(MaterialMeshBundle {
-  //   material: material_handle.clone(),
-  //   mesh: mesh_handle.clone(),
-  //   ..default()
-  // });
+    },))
+    .with_children(|parent| {
+      parent.spawn((
+        SceneBundle {
+          scene: asset_server.load("scenes/fox.glb#Scene0"),
+          transform: Transform::from_xyz(0.0, -0.5, 0.0),
+          ..default()
+        },
+        ConvertToToonMaterial { outline: Some(1.0) },
+      ));
+    });
 }

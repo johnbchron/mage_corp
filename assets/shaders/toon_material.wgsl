@@ -24,8 +24,9 @@ var<private> sobel_y: array<f32, 9> = array<f32, 9>(
   1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0,
 );
 
-const depth_threshold: f32 = 0.2;
-const normal_threshold: f32 = 0.05;
+var<private> equidistant: array<f32, 9> = array<f32, 9>(
+  0.707, 1.0, 0.707, 1.0, 0.0, 1.0, 0.707, 1.0, 0.707,
+);
 
 struct ToonMaterial {
   color: vec4<f32>,
@@ -37,6 +38,8 @@ struct ToonMaterial {
   rim_power: f32,
   rim_threshold: f32,
   outline_scale: f32,
+  outline_normal_threshold: f32,
+  outline_depth_threshold: f32,
 }
 
 @group(1) @binding(0)
@@ -54,28 +57,35 @@ fn get_normal(pos: vec2<f32>) -> vec3<f32> {
   return bevy_pbr::prepass_utils::prepass_normal(vec4(pos, 0.0, 0.0), 0u);
 }
 
+fn get_pixel_world_distance() -> f32 {
+  let camera_view = bevy_pbr::mesh_view_bindings::view;
+  
+  let camera_view_width = 2.0 / camera_view.view_proj[0][0];
+  let pixel_world_distance = camera_view_width / camera_view.viewport.z;
+  
+  return camera_view_width;
+}
+
 fn detect_edge_depth(frag_coord: vec2<f32>, scale: f32) -> f32 {
   let depth_modulation = 0.001;
+  
   var samples = array<f32, 9>();
   for (var i = 0; i < 9; i++) {
-    samples[i] = (1.0 - get_depth(frag_coord + neighbours[i] * scale)) / depth_modulation;
+    let coords = frag_coord + neighbours[i] * scale;
+    // this should be depth in world units
+    samples[i] = (1.0 - get_depth(coords)) / depth_modulation;
   }
-
-  var horizontal = 0.0;
+  
+  var total = 0.0;
   for (var i = 0; i < 9; i++) {
-    horizontal += samples[i] * sobel_x[i];
+    total += -(samples[4] - samples[i]) * equidistant[i];
   }
-
-  var vertical = 0.0;
-  for (var i = 0; i < 9; i++) {
-    vertical += samples[i] * sobel_y[i];
-  }
-
-  var edge = sqrt(horizontal * horizontal + vertical * vertical);
-  if edge < depth_threshold {
+  total = total / 8.0;
+  
+  if total < material.outline_depth_threshold {
     return 0.0;
   }
-  return edge;
+  return total;
 }
 
 fn detect_edge_normal(frag_coord: vec2<f32>, scale: f32) -> f32 {
@@ -84,21 +94,16 @@ fn detect_edge_normal(frag_coord: vec2<f32>, scale: f32) -> f32 {
     samples[i] = get_normal(frag_coord + neighbours[i] * scale);
   }
 
-  var horizontal = vec3<f32>(0.0);
+  var total = 0.0;
   for (var i = 0; i < 9; i++) {
-    horizontal += samples[i].xyz * sobel_x[i];
+    total += (1.0 - dot(samples[4], samples[i])) / 2.0 * equidistant[i];
   }
-
-  var vertical = vec3<f32>(0.0);
-  for (var i = 0; i < 9; i++) {
-    vertical += samples[i].xyz * sobel_y[i];
-  }
-
-  var edge = sqrt(dot(horizontal, horizontal) + dot(vertical, vertical));
-  if edge < normal_threshold {
+  total = total / 8.0;
+  
+  if total < material.outline_normal_threshold {
     return 0.0;
   }
-  return edge;
+  return total;
 }
 
 @fragment
@@ -144,12 +149,21 @@ fn fragment(
   let light = material.ambient_light + main_light + specular_light + rim_light;
   
   let depth_edge = detect_edge_depth(mesh.position.xy, material.outline_scale);
-  let normal_edge = detect_edge_normal(mesh.position.xy, material.outline_scale);
+  let normal_edge = detect_edge_normal(mesh.position.xy, material.outline_scale / 2.0);
   
-  let edge = max(floor(depth_edge), floor(normal_edge));
+  let edge = min(max(step(material.outline_depth_threshold, depth_edge), step(material.outline_normal_threshold, normal_edge)), 1.0);
+  let outline_stencil = 1.0 - ((1.0 - material.outline_color) * edge);
+
+  var texture_color: vec4<f32> = vec4(1.0);
+  #ifdef VERTEX_UVS
+  texture_color = textureSample(material_color_texture, material_color_texture_sampler, mesh.uv);
+  #endif
   
-  var color: vec4<f32> = material.color * textureSample(material_color_texture, material_color_texture_sampler, mesh.uv) * light;
-  color = mix(color, material.outline_color, edge);
+  let unlit_color = texture_color * material.color;
+  var color: vec4<f32> = unlit_color * light;
+  color = color * outline_stencil;
+  // color = mix(color, material.outline_color, edge);
   
+  // return vec4(depth_edge, normal_edge, 0.0, 1.0);
   return color;
 }

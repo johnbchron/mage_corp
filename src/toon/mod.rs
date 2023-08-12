@@ -9,27 +9,25 @@ impl Plugin for ToonPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugins(MaterialPlugin::<ToonMaterial>::default())
-	    .register_asset_reflect::<ToonMaterial>()
-      .add_systems(Update, convert_scene_materials)
-      ;
+      .register_asset_reflect::<ToonMaterial>()
+      .add_systems(Update, convert_scene_materials);
   }
 }
 
-#[derive(Component)]
-pub struct ConvertToToonMaterial;
+#[derive(Component, Default)]
+pub struct ConvertToToonMaterial {
+  pub outline: Option<f32>,
+}
 
 pub fn convert_scene_materials(
-  unloaded_instances: Query<
-    (Entity, &SceneInstance),
-    With<ConvertToToonMaterial>,
-  >,
+  unloaded_instances: Query<(Entity, &SceneInstance, &ConvertToToonMaterial)>,
   handles: Query<(Entity, &Handle<StandardMaterial>)>,
   pbr_materials: Res<Assets<StandardMaterial>>,
   scene_manager: Res<SceneSpawner>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
   mut cmds: Commands,
 ) {
-  for (entity, instance) in unloaded_instances.iter() {
+  for (entity, instance, conversion_settings) in unloaded_instances.iter() {
     if scene_manager.instance_is_ready(**instance) {
       cmds.entity(entity).remove::<ConvertToToonMaterial>();
 
@@ -40,7 +38,10 @@ pub fn convert_scene_materials(
         let Some(material) = pbr_materials.get(material_handle) else {
           continue;
         };
-        let toon_material = toon_materials.add(material.into());
+        let toon_material = toon_materials.add(
+          ToonMaterial::from(material)
+            .using_conversion_settings(conversion_settings),
+        );
         cmds
           .entity(entity)
           .insert(toon_material)

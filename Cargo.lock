@@ -514,13 +514,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_easings"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d940ec0558d8ac2a4a755783a4704f71d2d98cbffc9449d191e1bf7aad2ce8a4"
+name = "bevy_diagnostic_vertex_count"
+version = "0.3.0"
+source = "git+https://github.com/johnbchron/bevy_diagnostic_vertex_count?tag=v0.4#b5e8102de8fee8ce161f40351a2c8e7093074326"
 dependencies = [
  "bevy",
- "interpolation",
 ]
 
 [[package]]
@@ -772,14 +770,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_panorbit_camera"
-version = "0.7.0"
+name = "bevy_obj"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1273e61a4c3068a5ae1d7c8cdf3a522ba34c01cd7dae6fdecb7e86085401362c"
+checksum = "5cbe04365fda91ae1b681322bda661f0b69ede9a5bc50b3db6a97188c85bb670"
 dependencies = [
- "bevy",
- "bevy_easings",
- "bevy_egui",
+ "anyhow",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_ecs",
+ "bevy_pbr",
+ "bevy_render",
+ "bevy_scene",
+ "bevy_utils",
+ "thiserror",
+ "tobj",
 ]
 
 [[package]]
@@ -2159,12 +2164,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "interpolation"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3b7357d2bbc5ee92f8e899ab645233e43d21407573cceb37fed8bc3dede2c02"
-
-[[package]]
 name = "io-kit-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2390,8 +2389,9 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_diagnostic_vertex_count",
  "bevy_mod_wanderlust",
- "bevy_panorbit_camera",
+ "bevy_obj",
  "bevy_rapier3d",
 ]
 
@@ -3519,6 +3519,16 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "tobj"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b450e3ba06251ec4fc76917dafeaf55805ffb26dbf7d5500bfb9511ce63a0d1f"
+dependencies = [
+ "ahash 0.8.3",
+ "log",
+]
 
 [[package]]
 name = "toml_datetime"

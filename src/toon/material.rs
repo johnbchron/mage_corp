@@ -4,32 +4,38 @@ use bevy::{
   render::render_resource::{AsBindGroup, ShaderRef},
 };
 
+use super::ConvertToToonMaterial;
+
 #[derive(AsBindGroup, TypeUuid, Reflect, Debug, Clone)]
 #[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e1"]
 #[reflect(Default, Debug)]
 pub struct ToonMaterial {
   #[uniform(0)]
-  pub color:          Color,
+  pub color:                    Color,
   #[uniform(0)]
-  pub ambient_light:  Color,
+  pub ambient_light:            Color,
   #[uniform(0)]
-  pub specular_color: Color,
+  pub specular_color:           Color,
   #[uniform(0)]
-  pub rim_color:      Color,
+  pub rim_color:                Color,
   #[uniform(0)]
-  pub outline_color:  Color,
+  pub outline_color:            Color,
   #[uniform(0)]
-  pub specular_power: f32,
+  pub specular_power:           f32,
   #[uniform(0)]
-  pub rim_power:      f32,
+  pub rim_power:                f32,
   #[uniform(0)]
-  pub rim_threshold:  f32,
+  pub rim_threshold:            f32,
   #[uniform(0)]
-  pub outline_scale:  f32,
+  pub outline_scale:            f32,
+  #[uniform(0)]
+  pub outline_normal_threshold: f32,
+  #[uniform(0)]
+  pub outline_depth_threshold:  f32,
   #[texture(1)]
   #[sampler(2)]
-  pub color_texture:  Option<Handle<Image>>,
-  pub alpha_mode:     AlphaMode,
+  pub color_texture:            Option<Handle<Image>>,
+  pub alpha_mode:               AlphaMode,
 }
 
 impl Material for ToonMaterial {
@@ -38,8 +44,8 @@ impl Material for ToonMaterial {
   }
 
   fn alpha_mode(&self) -> AlphaMode {
-    // self.alpha_mode
-    AlphaMode::Opaque
+    self.alpha_mode
+    // AlphaMode::Opaque
   }
 
   fn prepass_fragment_shader() -> ShaderRef {
@@ -51,17 +57,19 @@ impl Default for ToonMaterial {
   fn default() -> Self {
     Self {
       // cornflower blue
-      color:          Color::rgb(0.392, 0.584, 0.929),
-      color_texture:  None,
-      ambient_light:  Color::rgb(0.4, 0.4, 0.4),
-      specular_color: Color::rgb(1.0, 1.0, 1.0),
-      rim_color:      Color::rgb(1.0, 1.0, 1.0),
-      outline_color:  Color::rgb(0.0, 0.0, 0.0),
-      specular_power: 32.0,
-      rim_power:      0.712,
-      rim_threshold:  0.1,
-      outline_scale:  0.5,
-      alpha_mode:     AlphaMode::Opaque,
+      color:                    Color::rgb(0.392, 0.584, 0.929),
+      color_texture:            None,
+      ambient_light:            Color::rgb(0.4, 0.4, 0.4),
+      specular_color:           Color::rgb(1.0, 1.0, 1.0),
+      rim_color:                Color::rgb(1.0, 1.0, 1.0),
+      outline_color:            Color::rgb(0.2, 0.2, 0.2),
+      specular_power:           32.0,
+      rim_power:                0.712,
+      rim_threshold:            0.1,
+      outline_scale:            1.0,
+      outline_normal_threshold: 0.1,
+      outline_depth_threshold:  0.1,
+      alpha_mode:               AlphaMode::Opaque,
     }
   }
 }
@@ -101,5 +109,20 @@ impl From<&StandardMaterial> for ToonMaterial {
       alpha_mode: std_material.alpha_mode,
       ..default()
     }
+  }
+}
+
+impl ToonMaterial {
+  pub fn using_conversion_settings(
+    self,
+    settings: &ConvertToToonMaterial,
+  ) -> Self {
+    let mut new = self;
+    if let Some(outline_scale) = settings.outline {
+      new.outline_scale = outline_scale;
+    } else {
+      new.outline_scale = 0.0;
+    }
+    new
   }
 }

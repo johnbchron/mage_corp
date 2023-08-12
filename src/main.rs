@@ -1,29 +1,36 @@
-mod fox;
 mod low_res;
 mod movement;
 mod player;
+mod scene;
 mod toon;
 mod utils;
 
-use std::f32::consts::PI;
+use core::f32::consts::PI;
 
 use bevy::{
   core_pipeline::{
     clear_color::ClearColorConfig,
     prepass::{DepthPrepass, NormalPrepass},
   },
+  diagnostic::{
+    EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin,
+    LogDiagnosticsPlugin,
+  },
   prelude::*,
-  render::camera::ScalingMode, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin},
+  render::camera::ScalingMode,
+};
+use bevy_diagnostic_vertex_count::{
+  VertexCountDiagnosticsPlugin, VertexCountDiagnosticsSettings,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_wanderlust::WanderlustPlugin;
-use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_rapier3d::prelude::*;
 
 use crate::{
   low_res::{LowResCamera, LowResPlugin},
   movement::apply_movement_input,
   player::spawn_player,
+  scene::ScenePlugin,
   toon::{ToonMaterial, ToonPlugin},
 };
 
@@ -48,7 +55,7 @@ fn spawn_props(
       ),
       material: toon_materials.add(ToonMaterial {
         color: Color::rgb(0.2, 0.2, 0.2),
-        // outline_scale: 0.0,
+        outline_scale: 0.0,
         ..default()
       }),
       transform: Transform::from_xyz(0.0, -0.5, 0.0),
@@ -94,10 +101,15 @@ fn spawn_camera_and_lights(mut commands: Commands) {
         (PI / 6.0).tan() * 8.0 * 2.0_f32.sqrt(),
         8.0,
       )
+      // transform: Transform::from_xyz(
+      //   0.0,
+      //   8.0 * 2.0_f32.sqrt(),
+      //   8.0,
+      // )
       .looking_at(Vec3::default(), Vec3::Y),
       // use an orthographic projection
       projection: OrthographicProjection {
-        scaling_mode: ScalingMode::WindowSize(100.0),
+        scaling_mode: ScalingMode::WindowSize(50.0),
         ..default()
       }
       .into(),
@@ -105,8 +117,7 @@ fn spawn_camera_and_lights(mut commands: Commands) {
     },
     DepthPrepass,
     NormalPrepass,
-    LowResCamera { pixel_size: 4 },
-    PanOrbitCamera::default(),
+    LowResCamera { pixel_size: 2 },
   ));
 
   commands.spawn(DirectionalLightBundle {
@@ -121,7 +132,7 @@ fn spawn_camera_and_lights(mut commands: Commands) {
 fn main() {
   App::new()
     .add_plugins(
-    	DefaultPlugins
+      DefaultPlugins
         .set(WindowPlugin {
           primary_window: Some(Window {
             present_mode: bevy::window::PresentMode::AutoNoVsync,
@@ -129,7 +140,8 @@ fn main() {
           }),
           ..Default::default()
         })
-	    	.set(ImagePlugin::default_nearest()))
+        .set(ImagePlugin::default_nearest()),
+    )
     // graphics
     .add_plugins(ToonPlugin)
     .add_plugins(LowResPlugin)
@@ -143,15 +155,17 @@ fn main() {
     // inspector
     .add_plugins(WorldInspectorPlugin::new())
     // QoL
-    .add_plugins(PanOrbitCameraPlugin)
     // setup
+    // .add_plugins(ScenePlugin)
     .add_systems(Startup, spawn_player)
     .add_systems(Startup, spawn_props)
-    .add_systems(Startup, fox::setup_fox_scene)
     .add_systems(Startup, spawn_camera_and_lights)
     // debug
     .add_systems(Update, utils::animate_light_direction)
     .add_plugins(LogDiagnosticsPlugin::default())
-    .add_plugins(FrameTimeDiagnosticsPlugin::default())
+    .add_plugins(FrameTimeDiagnosticsPlugin)
+    .add_plugins(EntityCountDiagnosticsPlugin::default())
+    .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
+    .add_plugins(VertexCountDiagnosticsPlugin::default())
     .run();
 }

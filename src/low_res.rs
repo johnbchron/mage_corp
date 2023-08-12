@@ -205,7 +205,6 @@ impl Plugin for LowResPlugin {
       .add_systems(Startup, setup_target_camera)
       .add_systems(Update, rebuild_texture_setup)
       .add_systems(Update, trigger_projection_rescaling)
-      .register_type::<LowResCamera>()
-      ;
+      .register_type::<LowResCamera>();
   }
 }
