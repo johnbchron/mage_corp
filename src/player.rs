@@ -57,7 +57,7 @@ pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
           transform: Transform::from_xyz(0.0, -0.5, 0.0),
           ..default()
         },
-        ConvertToToonMaterial { outline: Some(1.0) },
+        ConvertToToonMaterial { outline_scale: Some(1.0), ..default() },
       ));
     });
 }

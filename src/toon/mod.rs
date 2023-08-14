@@ -16,7 +16,9 @@ impl Plugin for ToonPlugin {
 
 #[derive(Component, Default)]
 pub struct ConvertToToonMaterial {
-  pub outline: Option<f32>,
+  pub outline_scale: Option<f32>,
+  pub outline_normal_color: Option<Color>,
+  pub outline_depth_color: Option<Color>,
 }
 
 pub fn convert_scene_materials(
@@ -40,7 +42,7 @@ pub fn convert_scene_materials(
         };
         let toon_material = toon_materials.add(
           ToonMaterial::from(material)
-            .using_conversion_settings(conversion_settings),
+            .with_settings(conversion_settings),
         );
         cmds
           .entity(entity)

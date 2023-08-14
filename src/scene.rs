@@ -20,6 +20,6 @@ fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
       transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
     },
-    // ConvertToToonMaterial::default(),
+    ConvertToToonMaterial { outline_scale: Some(1.0), ..default() },
   ));
 }

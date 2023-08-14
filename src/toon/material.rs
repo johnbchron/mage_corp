@@ -19,7 +19,9 @@ pub struct ToonMaterial {
   #[uniform(0)]
   pub rim_color:                Color,
   #[uniform(0)]
-  pub outline_color:            Color,
+  pub outline_normal_color:            Color,
+  #[uniform(0)]
+  pub outline_depth_color:            Color,
   #[uniform(0)]
   pub specular_power:           f32,
   #[uniform(0)]
@@ -32,6 +34,12 @@ pub struct ToonMaterial {
   pub outline_normal_threshold: f32,
   #[uniform(0)]
   pub outline_depth_threshold:  f32,
+  #[uniform(0)]
+  pub shades:                   f32,
+  #[uniform(0)]
+  pub shade_cutoff:             f32,
+  #[uniform(0)]
+  pub dither_strength:          f32,
   #[texture(1)]
   #[sampler(2)]
   pub color_texture:            Option<Handle<Image>>,
@@ -59,16 +67,20 @@ impl Default for ToonMaterial {
       // cornflower blue
       color:                    Color::rgb(0.392, 0.584, 0.929),
       color_texture:            None,
-      ambient_light:            Color::rgb(0.4, 0.4, 0.4),
+      ambient_light:            Color::rgb(0.6, 0.6, 0.6),
       specular_color:           Color::rgb(1.0, 1.0, 1.0),
       rim_color:                Color::rgb(1.0, 1.0, 1.0),
-      outline_color:            Color::rgb(0.2, 0.2, 0.2),
+      outline_normal_color:     Color::rgb(1.2, 1.2, 1.2),
+      outline_depth_color:      Color::rgb(0.2, 0.2, 0.2),
       specular_power:           32.0,
       rim_power:                0.712,
       rim_threshold:            0.1,
       outline_scale:            1.0,
       outline_normal_threshold: 0.1,
       outline_depth_threshold:  0.1,
+      shades:                   2.0,
+      shade_cutoff:             0.15,
+      dither_strength:          0.0,
       alpha_mode:               AlphaMode::Opaque,
     }
   }
@@ -113,15 +125,19 @@ impl From<&StandardMaterial> for ToonMaterial {
 }
 
 impl ToonMaterial {
-  pub fn using_conversion_settings(
+  pub fn with_settings(
     self,
     settings: &ConvertToToonMaterial,
   ) -> Self {
     let mut new = self;
-    if let Some(outline_scale) = settings.outline {
+    if let Some(outline_scale) = settings.outline_scale {
       new.outline_scale = outline_scale;
-    } else {
-      new.outline_scale = 0.0;
+    }
+    if let Some(outline_normal_color) = settings.outline_normal_color {
+      new.outline_normal_color = outline_normal_color;
+    }
+    if let Some(outline_depth_color) = settings.outline_depth_color {
+      new.outline_depth_color = outline_depth_color;
     }
     new
   }

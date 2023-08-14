@@ -44,12 +44,12 @@ fn spawn_props(
     MaterialMeshBundle {
       mesh: meshes.add(
         Mesh::try_from(shape::Box {
-          min_x: -5.0,
-          max_x: 5.0,
+          min_x: -10.0,
+          max_x: 10.0,
           min_y: -0.05,
           max_y: 0.05,
-          min_z: -5.0,
-          max_z: 5.0,
+          min_z: -10.0,
+          max_z: 10.0,
         })
         .unwrap(),
       ),
@@ -61,7 +61,7 @@ fn spawn_props(
       transform: Transform::from_xyz(0.0, -0.5, 0.0),
       ..default()
     },
-    Collider::cuboid(5.0, 0.05, 5.0),
+    Collider::cuboid(10.0, 0.05, 10.0),
   ));
 
   // spawn a capsule near the player
@@ -83,6 +83,23 @@ fn spawn_props(
       ..default()
     },
     Collider::capsule_y(0.5, 0.5),
+    RigidBody::Dynamic,
+  ));
+  
+  // spawn a cube near the player
+  commands.spawn((
+    MaterialMeshBundle {
+      mesh: meshes.add(
+        Mesh::try_from(shape::Cube { size: 1.0 }).unwrap(),
+      ),
+      material: toon_materials.add(ToonMaterial {
+        color: Color::rgb(0.2, 0.6, 0.2),
+        ..default()
+      }),
+      transform: Transform::from_xyz(1.5, 1.0, 0.0),
+      ..default()
+    },
+    Collider::cuboid(0.5, 0.5, 0.5),
     RigidBody::Dynamic,
   ));
 }
@@ -109,7 +126,7 @@ fn spawn_camera_and_lights(mut commands: Commands) {
       .looking_at(Vec3::default(), Vec3::Y),
       // use an orthographic projection
       projection: OrthographicProjection {
-        scaling_mode: ScalingMode::WindowSize(50.0),
+        scaling_mode: ScalingMode::WindowSize(20.0),
         ..default()
       }
       .into(),
@@ -117,12 +134,13 @@ fn spawn_camera_and_lights(mut commands: Commands) {
     },
     DepthPrepass,
     NormalPrepass,
-    LowResCamera { pixel_size: 2 },
+    LowResCamera { pixel_size: 4 },
   ));
 
   commands.spawn(DirectionalLightBundle {
     directional_light: DirectionalLight {
       shadows_enabled: true,
+      illuminance: 10000.0,
       ..default()
     },
     ..default()
@@ -156,7 +174,7 @@ fn main() {
     .add_plugins(WorldInspectorPlugin::new())
     // QoL
     // setup
-    // .add_plugins(ScenePlugin)
+    .add_plugins(ScenePlugin)
     .add_systems(Startup, spawn_player)
     .add_systems(Startup, spawn_props)
     .add_systems(Startup, spawn_camera_and_lights)

@@ -11,7 +11,8 @@ pub fn animate_light_direction(
     transform.rotation = Quat::from_euler(
       EulerRot::ZYX,
       0.0,
-      time.elapsed_seconds() * PI / 10.0,
+      // time.elapsed_seconds() * PI / 10.0,
+      16.0 * PI / 10.0,
       -FRAC_PI_4 / 2.0 * 3.0,
     );
   }
