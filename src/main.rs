@@ -62,6 +62,7 @@ fn spawn_props(
       ..default()
     },
     Collider::cuboid(10.0, 0.05, 10.0),
+    Name::new("ground_plane"),
   ));
 
   // spawn a capsule near the player
@@ -84,6 +85,7 @@ fn spawn_props(
     },
     Collider::capsule_y(0.5, 0.5),
     RigidBody::Dynamic,
+    Name::new("capsule"),
   ));
   
   // spawn a cube near the player
@@ -101,6 +103,7 @@ fn spawn_props(
     },
     Collider::cuboid(0.5, 0.5, 0.5),
     RigidBody::Dynamic,
+    Name::new("green_cube"),
   ));
 }
 
@@ -135,16 +138,20 @@ fn spawn_camera_and_lights(mut commands: Commands) {
     DepthPrepass,
     NormalPrepass,
     LowResCamera { pixel_size: 4 },
+    Name::new("lowres_camera"),
   ));
 
-  commands.spawn(DirectionalLightBundle {
-    directional_light: DirectionalLight {
-      shadows_enabled: true,
-      illuminance: 10000.0,
+  commands.spawn((
+    DirectionalLightBundle {
+      directional_light: DirectionalLight {
+        shadows_enabled: true,
+        illuminance: 10000.0,
+        ..default()
+      },
       ..default()
     },
-    ..default()
-  });
+    Name::new("directional_light"),
+  ));
 }
 
 fn main() {

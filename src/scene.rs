@@ -21,5 +21,6 @@ fn spawn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
       ..default()
     },
     ConvertToToonMaterial { outline_scale: Some(1.0), ..default() },
+    Name::new("barn"),
   ));
 }

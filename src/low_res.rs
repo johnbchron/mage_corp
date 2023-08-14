@@ -1,3 +1,4 @@
+use bevy::sprite::MaterialMesh2dBundle;
 use bevy::{
   core_pipeline::clear_color::ClearColorConfig,
   prelude::*,
@@ -11,9 +12,6 @@ use bevy::{
   },
   window::PrimaryWindow,
 };
-
-// #[derive(Resource, Reflect)]
-// pub struct DownscaledTexture(Handle<Image>);
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -53,10 +51,10 @@ fn rebuild_texture_setup(
   window_query: Query<&Window, With<PrimaryWindow>>,
   mut commands: Commands,
   mut images: ResMut<Assets<Image>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-  let (lowres_camera, mut camera) = camera_query.single_mut();
-  let window = window_query.single();
+  let (lowres_camera, mut camera) = camera_query.iter_mut().next().unwrap();
+  let window = window_query.iter().next().unwrap();
+  let lowres_target = target_query.iter().next().unwrap();
 
   let desired_texture_size = calculate_texture_resolution(
     window.width(),
@@ -64,43 +62,26 @@ fn rebuild_texture_setup(
     lowres_camera.pixel_size,
   );
 
-  // this will hold the handle to the image texture if it already exists
-  let mut image_handle: Option<Handle<Image>> = None;
-
   // if the camera already has a texture and it's the right size, use that
-  if let RenderTarget::Image(render_handle) = &camera.target {
-    let image = images.get(render_handle).unwrap();
+  if let RenderTarget::Image(image_handle) = &camera.target {
+    let image = images.get(image_handle).unwrap();
     if image.size().x == desired_texture_size.x as f32
       && image.size().y == desired_texture_size.y as f32
     {
-      image_handle = Some(render_handle.clone());
+      commands.entity(lowres_target).insert(image_handle.clone());
+      return;
     }
   }
 
-  // if we didn't find a texture, or the texture is the wrong size, create a new
-  // one
-  if image_handle.is_none() {
-    // create a new texture
-    let image =
-      build_texture_image(desired_texture_size.x, desired_texture_size.y);
-    image_handle = Some(images.add(image));
-    // set the camera's target to the new texture
-    camera.target = RenderTarget::Image(image_handle.clone().unwrap().clone());
-  }
-
-  // create a material with the texture. this has to be done every frame
-  // see https://github.com/bevyengine/bevy/issues/8341
-  let texture_material = materials.add(StandardMaterial {
-    base_color_texture: Some(image_handle.unwrap()),
-    unlit: true,
-    ..default()
-  });
-
-  // add the material to the quad
-  let lowres_target = target_query.single();
-  commands
-    .entity(lowres_target)
-    .insert(texture_material.clone());
+  // if we didn't find a texture, or the texture is the wrong size,
+  // create a new texture
+  let image =
+    build_texture_image(desired_texture_size.x, desired_texture_size.y);
+  let image_handle = images.add(image);
+  // set the camera's target to the new texture
+  camera.target = RenderTarget::Image(image_handle.clone());
+  // add the new texture to the target
+  commands.entity(lowres_target).insert(image_handle.clone());
 }
 
 fn trigger_projection_rescaling(
@@ -149,29 +130,25 @@ fn build_texture_image(x: f32, y: f32) -> Image {
 
 fn setup_target_camera(
   mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
 ) {
   let second_pass_layer = RenderLayers::layer(1);
 
-  // spawn quad to apply material to on second pass layer
-
   commands.spawn((
-    MaterialMeshBundle::<StandardMaterial> {
-      mesh: meshes
-        .add(Mesh::try_from(shape::Quad::new(Vec2::new(1.0, 1.0))).unwrap()),
-      // material: texture_material,
-      transform: Transform::from_xyz(0.0, 0.0, -1.0),
+    SpriteBundle {
+      sprite: Sprite {
+        custom_size: Some(Vec2::new(1.0, 1.0)),
+        ..default()
+      },
       ..default()
     },
-    second_pass_layer,
     LowResCameraTarget,
+    second_pass_layer,
+    Name::new("lowres_target"),
   ));
 
-  // spawn camera for second layer to look at quad
-
   commands.spawn((
-    Camera3dBundle {
-      camera_3d: Camera3d {
+    Camera2dBundle {
+      camera_2d: Camera2d {
         clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)),
         ..default()
       },
@@ -193,7 +170,9 @@ fn setup_target_camera(
       },
       ..default()
     },
+    // Camera2dBundle::default(),
     second_pass_layer,
+    Name::new("lowres_output_camera"),
   ));
 }
 
