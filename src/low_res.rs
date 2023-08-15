@@ -1,4 +1,3 @@
-use bevy::sprite::MaterialMesh2dBundle;
 use bevy::{
   core_pipeline::clear_color::ClearColorConfig,
   prelude::*,
@@ -28,10 +27,6 @@ impl Default for LowResCamera {
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
 pub struct LowResCameraTarget;
-
-#[derive(Component, Default, Reflect)]
-#[reflect(Component)]
-pub struct LowResSecondaryCamera;
 
 // when the window gets resized, update the camera's resolution
 fn calculate_texture_resolution(
@@ -128,9 +123,7 @@ fn build_texture_image(x: f32, y: f32) -> Image {
   image
 }
 
-fn setup_target_camera(
-  mut commands: Commands,
-) {
+fn setup_target_camera(mut commands: Commands) {
   let second_pass_layer = RenderLayers::layer(1);
 
   commands.spawn((
@@ -184,6 +177,7 @@ impl Plugin for LowResPlugin {
       .add_systems(Startup, setup_target_camera)
       .add_systems(Update, rebuild_texture_setup)
       .add_systems(Update, trigger_projection_rescaling)
-      .register_type::<LowResCamera>();
+      .register_type::<LowResCamera>()
+      .register_type::<LowResCameraTarget>();
   }
 }

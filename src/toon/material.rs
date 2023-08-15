@@ -19,9 +19,9 @@ pub struct ToonMaterial {
   #[uniform(0)]
   pub rim_color:                Color,
   #[uniform(0)]
-  pub outline_normal_color:            Color,
+  pub outline_normal_color:     Color,
   #[uniform(0)]
-  pub outline_depth_color:            Color,
+  pub outline_depth_color:      Color,
   #[uniform(0)]
   pub specular_power:           f32,
   #[uniform(0)]
@@ -125,10 +125,7 @@ impl From<&StandardMaterial> for ToonMaterial {
 }
 
 impl ToonMaterial {
-  pub fn with_settings(
-    self,
-    settings: &ConvertToToonMaterial,
-  ) -> Self {
+  pub fn with_settings(self, settings: &ConvertToToonMaterial) -> Self {
     let mut new = self;
     if let Some(outline_scale) = settings.outline_scale {
       new.outline_scale = outline_scale;

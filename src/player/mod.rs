@@ -1,6 +1,9 @@
+mod movement;
+
 use bevy::{math::vec3, prelude::*};
 use bevy_mod_wanderlust::{
   ControllerBundle, ControllerPhysicsBundle, ControllerSettings, Spring,
+  WanderlustPlugin,
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes};
 
@@ -60,7 +63,21 @@ pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
           transform: Transform::from_xyz(0.0, -0.5, 0.0),
           ..default()
         },
-        ConvertToToonMaterial { outline_scale: Some(1.0), ..default() },
+        ConvertToToonMaterial {
+          outline_scale: Some(1.0),
+          ..default()
+        },
       ));
     });
+}
+
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+  fn build(&self, app: &mut App) {
+    app
+      .add_plugins(WanderlustPlugin)
+      .add_systems(Startup, spawn_player)
+      .add_systems(Update, movement::apply_movement_input);
+  }
 }
