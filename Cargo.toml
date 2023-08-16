@@ -12,6 +12,7 @@ bevy_mod_wanderlust = "0.4.0"
 bevy_obj = { version = "0.11.0", features = ["scene"] }
 bevy_rapier3d = "0.22.0"
 bevy_diagnostic_vertex_count = { git = "https://github.com/johnbchron/bevy_diagnostic_vertex_count", tag = "v0.4" }
+rand = "0.8.5"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

@@ -10,7 +10,14 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::Collider;
 
-use crate::{LowResCamera, ToonMaterial};
+use crate::{
+  low_res::LowResCamera,
+  particle::{
+    descriptor::{ParticleDescriptor, ParticleBehavior, ParticleVelocity, ParticleAcceleration, ParticleContactResponseType}, ParticleEmitter, ParticleEmitterRegion,
+  },
+  toon::ToonMaterial,
+  utils::static_or_closure::StaticOrClosure,
+};
 
 pub struct TestScenePlugin;
 
@@ -18,7 +25,8 @@ impl Plugin for TestScenePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, setup_camera_and_lights)
-      .add_systems(Startup, setup_scene_props);
+      .add_systems(Startup, setup_scene_props)
+      .add_systems(Startup, setup_particle_emitter);
   }
 }
 
@@ -96,5 +104,44 @@ fn setup_scene_props(
     },
     Collider::cuboid(500.0, 0.05, 500.0),
     Name::new("ground_plane"),
+  ));
+}
+
+fn setup_particle_emitter(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut toon_materials: ResMut<Assets<ToonMaterial>>,
+) {
+  commands.spawn((
+    SpatialBundle {
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    },
+    ParticleEmitter::new(
+      ParticleDescriptor {
+        size: 0.1,
+        material: toon_materials.add(ToonMaterial {
+          color: Color::rgb(1.0, 0.5, 0.0),
+          outline_scale: 0.0,
+          ..default()
+        }),
+        shape: meshes.add(
+          Mesh::try_from(shape::Icosphere {
+            radius:       0.5,
+            subdivisions: 0,
+          })
+          .unwrap(),
+        ),
+        behavior: ParticleBehavior {
+          initial_velocity: ParticleVelocity::Conic { cone_angle: StaticOrClosure::Static(15.0), cone_direction: StaticOrClosure::Static(Vec3::Y), strength: StaticOrClosure::Static(10.0) },
+          acceleration: ParticleAcceleration::None,
+          contact_response: ParticleContactResponseType::None,
+        }
+      },
+      ParticleEmitterRegion::Point { offset: None },
+      100.0,
+      true,
+    ),
+    Name::new("particle_emitter"),
   ));
 }
