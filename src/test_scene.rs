@@ -14,8 +14,7 @@ use crate::{
   low_res::LowResCamera,
   particle::{
     descriptor::{
-      ParticleAcceleration, ParticleAngularVelocity, ParticleBehavior,
-      ParticleContactResponseType, ParticleDescriptor, ParticleLinearVelocity,
+      ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity,
     },
     ParticleEmitter, ParticleEmitterRegion,
   },

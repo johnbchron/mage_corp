@@ -1,7 +1,7 @@
-use rand::Rng;
+use nanorand::Rng;
 pub mod descriptor;
 
-use std::time::Duration;
+
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -116,6 +116,8 @@ fn spawn_particles(
     let new_particle_count = emitter.accumulator.floor() as u32;
     emitter.accumulator -= new_particle_count as f32;
 
+    let mut rng = nanorand::tls_rng();
+
     for _ in 0..new_particle_count {
       // calculate the transform of the new particle
       let transform: Transform = match emitter.region {
@@ -134,9 +136,9 @@ fn spawn_particles(
           } => Velocity::linear(*direction * *magnitude),
           ParticleLinearVelocity::Spherical { magnitude } => Velocity::linear(
             Vec3::new(
-              rand::random::<f32>() * 2.0 - 1.0,
-              rand::random::<f32>() * 2.0 - 1.0,
-              rand::random::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
             )
             .normalize()
               * *magnitude,
@@ -150,13 +152,12 @@ fn spawn_particles(
             let cone_direction = (*cone_direction).normalize();
             let strength = *strength;
 
-            let mut rng = rand::thread_rng();
             let angle =
-              f32::to_radians((rng.gen::<f32>() * 2.0 - 1.0) * cone_angle);
+              f32::to_radians((rng.generate::<f32>() * 2.0 - 1.0) * cone_angle);
             let axis = Vec3::new(
-              rng.gen::<f32>() * 2.0 - 1.0,
-              rng.gen::<f32>() * 2.0 - 1.0,
-              rng.gen::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
             )
             .normalize();
 
