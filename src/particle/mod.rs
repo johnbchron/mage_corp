@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
-use self::descriptor::ParticleSizeBehavior;
+use self::descriptor::{ParticleSizeBehavior, ParticleAcceleration};
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
 /// Describes the region over which particles are emitted
@@ -78,7 +78,6 @@ pub struct ParticleBundle {
   pub material:   Handle<ToonMaterial>,
   pub mesh:       Handle<Mesh>,
   pub velocity:   Velocity,
-  pub rigid_body: RigidBody,
   pub transform:  Transform,
   pub lifetime:   TimerLifetime,
   pub computed:   ComputedVisibility,
@@ -180,12 +179,15 @@ fn spawn_particles(
           material: emitter.descriptor.material.clone(),
           mesh: emitter.descriptor.shape.clone(),
           velocity,
-          rigid_body: RigidBody::Dynamic,
           transform,
           lifetime: TimerLifetime::new(emitter.descriptor.behavior.lifetime),
           ..default()
         },
         AdditionalMassProperties::Mass(0.1),
+        match emitter.descriptor.behavior.acceleration {
+          ParticleAcceleration::None => RigidBody::KinematicVelocityBased,
+          ParticleAcceleration::Ballistic => RigidBody::Dynamic
+        }
       ));
       let id = particle_entity.id();
       particle_entity.insert(Name::new(format!("particle_{:?}", id)));

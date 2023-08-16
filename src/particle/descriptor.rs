@@ -79,6 +79,7 @@ pub enum ParticleAngularVelocity {
 pub enum ParticleAcceleration {
   #[default]
   None,
+  Ballistic,
 }
 
 /// Describes the contact response of emitted particles
