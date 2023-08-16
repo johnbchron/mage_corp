@@ -25,11 +25,11 @@ pub enum ParticleVelocity {
   SingleDirection {
     /// The direction emitted particles will travel. This will be normalized.
     direction: Vec3,
-    /// The strength with which the particle will exit.
+    /// The magnitude of the emitted particle's velocity.
     magnitude:  f32,
   },
   Spherical {
-    /// The strength with which the particle will exit.
+    /// The magnitude of the emitted particle's velocity.
     magnitude: f32,
   },
   Conic {
@@ -37,7 +37,7 @@ pub enum ParticleVelocity {
     cone_angle:     f32,
     /// The direction of the center of the cone. This will be normalized.
     direction: Vec3,
-    /// The strength with which the particle will exit.
+    /// The magnitude of the emitted particle's velocity.
     magnitude:       f32,
   },
   None,
