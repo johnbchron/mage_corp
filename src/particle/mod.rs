@@ -112,7 +112,7 @@ fn spawn_particles(
           ParticleVelocity::SingleDirection {
             direction,
             strength,
-          } => Velocity::linear(direction.get() * strength.get()),
+          } => Velocity::linear(*direction * *strength),
           ParticleVelocity::Spherical { strength } => Velocity::linear(
             Vec3::new(
               rand::random::<f32>() * 2.0 - 1.0,
@@ -120,16 +120,16 @@ fn spawn_particles(
               rand::random::<f32>() * 2.0 - 1.0,
             )
             .normalize()
-              * strength.get(),
+              * *strength,
           ),
           ParticleVelocity::Conic {
             cone_angle,
             cone_direction,
             strength,
           } => {
-            let cone_angle = cone_angle.get();
-            let cone_direction = cone_direction.get().normalize();
-            let strength = strength.get();
+            let cone_angle = *cone_angle;
+            let cone_direction = (*cone_direction).normalize();
+            let strength = *strength;
 
             let mut rng = rand::thread_rng();
             let angle =
