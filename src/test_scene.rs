@@ -14,7 +14,7 @@ use crate::{
   low_res::LowResCamera,
   particle::{
     descriptor::{
-      ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity,
+      ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity, ParticleSizeBehavior,
     },
     ParticleEmitter, ParticleEmitterRegion,
   },
@@ -136,11 +136,12 @@ fn setup_particle_emitter(
         ),
         behavior: ParticleBehavior {
           initial_linear_velocity: ParticleLinearVelocity::Conic {
-            cone_angle: 15.0,
+            cone_angle: 30.0,
             direction:  Vec3::Y,
-            magnitude:  10.0,
+            magnitude:  5.0,
           },
-          lifetime: std::time::Duration::from_secs_f32(5.0),
+          lifetime: std::time::Duration::from_secs_f32(2.0),
+          size_behavior: ParticleSizeBehavior::LinearShrink,
           ..default()
         },
       },

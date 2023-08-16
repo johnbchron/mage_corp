@@ -1,12 +1,11 @@
 use nanorand::Rng;
 pub mod descriptor;
 
-
-
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
+use self::descriptor::ParticleSizeBehavior;
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
 /// Describes the region over which particles are emitted
@@ -173,7 +172,10 @@ fn spawn_particles(
         ParticleBundle {
           particle: Particle {
             original_scale:   Vec3::ONE * emitter.descriptor.size,
-            shrink_with_life: false,
+            shrink_with_life: matches!(
+              emitter.descriptor.behavior.size_behavior,
+              ParticleSizeBehavior::LinearShrink
+            ),
           },
           material: emitter.descriptor.material.clone(),
           mesh: emitter.descriptor.shape.clone(),

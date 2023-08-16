@@ -21,15 +21,17 @@ pub struct ParticleBehavior {
   pub acceleration:             ParticleAcceleration,
   pub contact_response:         ParticleContactResponseType,
   pub lifetime:                 Duration,
+  pub size_behavior:            ParticleSizeBehavior,
 }
 
 impl Default for ParticleBehavior {
   fn default() -> Self {
     Self {
-      initial_linear_velocity:  ParticleLinearVelocity::default(),
-      initial_angular_velocity: ParticleAngularVelocity::default(),
-      acceleration:             ParticleAcceleration::default(),
-      contact_response:         ParticleContactResponseType::default(),
+      initial_linear_velocity:  default(),
+      initial_angular_velocity: default(),
+      acceleration:             default(),
+      contact_response:         default(),
+      size_behavior:            default(),
       lifetime:                 Duration::from_secs(2),
     }
   }
@@ -84,4 +86,12 @@ pub enum ParticleAcceleration {
 pub enum ParticleContactResponseType {
   #[default]
   None,
+}
+
+/// Describes the size behavior of emitted particles
+#[derive(Default, Reflect)]
+pub enum ParticleSizeBehavior {
+  #[default]
+  None,
+  LinearShrink,
 }
