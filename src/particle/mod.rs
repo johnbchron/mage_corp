@@ -111,21 +111,21 @@ fn spawn_particles(
         match &emitter.descriptor.behavior.initial_velocity {
           ParticleVelocity::SingleDirection {
             direction,
-            strength,
-          } => Velocity::linear(*direction * *strength),
-          ParticleVelocity::Spherical { strength } => Velocity::linear(
+            magnitude,
+          } => Velocity::linear(*direction * *magnitude),
+          ParticleVelocity::Spherical { magnitude } => Velocity::linear(
             Vec3::new(
               rand::random::<f32>() * 2.0 - 1.0,
               rand::random::<f32>() * 2.0 - 1.0,
               rand::random::<f32>() * 2.0 - 1.0,
             )
             .normalize()
-              * *strength,
+              * *magnitude,
           ),
           ParticleVelocity::Conic {
             cone_angle,
-            cone_direction,
-            strength,
+            direction: cone_direction,
+            magnitude: strength,
           } => {
             let cone_angle = *cone_angle;
             let cone_direction = (*cone_direction).normalize();

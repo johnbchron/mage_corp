@@ -138,8 +138,8 @@ fn setup_particle_emitter(
         behavior: ParticleBehavior {
           initial_velocity: ParticleVelocity::Conic {
             cone_angle:     15.0,
-            cone_direction: Vec3::Y,
-            strength:       10.0,
+            direction: Vec3::Y,
+            magnitude:       10.0,
           },
           acceleration:     ParticleAcceleration::None,
           contact_response: ParticleContactResponseType::None,

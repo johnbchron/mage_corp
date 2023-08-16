@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::toon::ToonMaterial;
 
+/// Describes the properties of emitted particles
 #[derive(Default, Reflect)]
 pub struct ParticleDescriptor {
   pub size:     f32,
@@ -10,6 +11,7 @@ pub struct ParticleDescriptor {
   pub behavior: ParticleBehavior,
 }
 
+/// Describes the behavior of emitted particles
 #[derive(Default, Reflect)]
 pub struct ParticleBehavior {
   pub initial_velocity: ParticleVelocity,
@@ -17,27 +19,26 @@ pub struct ParticleBehavior {
   pub contact_response: ParticleContactResponseType,
 }
 
+/// Describes the initial velocity of emitted particles
 #[derive(Reflect)]
 pub enum ParticleVelocity {
   SingleDirection {
-    /// The direction the smoke will travel. This will be normalized.
+    /// The direction emitted particles will travel. This will be normalized.
     direction: Vec3,
     /// The strength with which the particle will exit.
-    strength:  f32,
+    magnitude:  f32,
   },
   Spherical {
     /// The strength with which the particle will exit.
-    strength: f32,
+    magnitude: f32,
   },
   Conic {
     /// The angle of the cone.
     cone_angle:     f32,
     /// The direction of the center of the cone. This will be normalized.
-    #[reflect(ignore)]
-    cone_direction: Vec3,
+    direction: Vec3,
     /// The strength with which the particle will exit.
-    #[reflect(ignore)]
-    strength:       f32,
+    magnitude:       f32,
   },
   None,
 }
@@ -45,17 +46,19 @@ pub enum ParticleVelocity {
 impl Default for ParticleVelocity {
   fn default() -> Self {
     Self::Spherical {
-      strength: 1.0,
+      magnitude: 1.0,
     }
   }
 }
 
+/// Describes the acceleration acting on emitted particles
 #[derive(Default, Reflect)]
 pub enum ParticleAcceleration {
   #[default]
   None,
 }
 
+/// Describes the contact response of emitted particles
 #[derive(Default, Reflect)]
 pub enum ParticleContactResponseType {
   #[default]
