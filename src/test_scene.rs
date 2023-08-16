@@ -14,8 +14,8 @@ use crate::{
   low_res::LowResCamera,
   particle::{
     descriptor::{
-      ParticleAcceleration, ParticleBehavior, ParticleContactResponseType,
-      ParticleDescriptor, ParticleVelocity,
+      ParticleAcceleration, ParticleAngularVelocity, ParticleBehavior,
+      ParticleContactResponseType, ParticleDescriptor, ParticleLinearVelocity,
     },
     ParticleEmitter, ParticleEmitterRegion,
   },
@@ -136,13 +136,14 @@ fn setup_particle_emitter(
           .unwrap(),
         ),
         behavior: ParticleBehavior {
-          initial_velocity: ParticleVelocity::Conic {
-            cone_angle:     15.0,
-            direction: Vec3::Y,
-            magnitude:       10.0,
+          initial_linear_velocity:  ParticleLinearVelocity::Conic {
+            cone_angle: 15.0,
+            direction:  Vec3::Y,
+            magnitude:  10.0,
           },
-          acceleration:     ParticleAcceleration::None,
-          contact_response: ParticleContactResponseType::None,
+          initial_angular_velocity: ParticleAngularVelocity::None,
+          acceleration:             ParticleAcceleration::None,
+          contact_response:         ParticleContactResponseType::None,
         },
       },
       ParticleEmitterRegion::Point { offset: None },

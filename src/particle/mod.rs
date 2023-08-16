@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use descriptor::{ParticleDescriptor, ParticleVelocity};
+use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
@@ -108,12 +108,12 @@ fn spawn_particles(
 
       // calculate the velocity of the new particle
       let velocity: Velocity =
-        match &emitter.descriptor.behavior.initial_velocity {
-          ParticleVelocity::SingleDirection {
+        match &emitter.descriptor.behavior.initial_linear_velocity {
+          ParticleLinearVelocity::SingleDirection {
             direction,
             magnitude,
           } => Velocity::linear(*direction * *magnitude),
-          ParticleVelocity::Spherical { magnitude } => Velocity::linear(
+          ParticleLinearVelocity::Spherical { magnitude } => Velocity::linear(
             Vec3::new(
               rand::random::<f32>() * 2.0 - 1.0,
               rand::random::<f32>() * 2.0 - 1.0,
@@ -122,7 +122,7 @@ fn spawn_particles(
             .normalize()
               * *magnitude,
           ),
-          ParticleVelocity::Conic {
+          ParticleLinearVelocity::Conic {
             cone_angle,
             direction: cone_direction,
             magnitude: strength,
@@ -146,7 +146,7 @@ fn spawn_particles(
 
             Velocity::linear(direction * strength)
           }
-          ParticleVelocity::None => Velocity::zero(),
+          ParticleLinearVelocity::None => Velocity::zero(),
         };
 
       let mut particle_entity = commands.spawn((

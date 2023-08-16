@@ -14,19 +14,20 @@ pub struct ParticleDescriptor {
 /// Describes the behavior of emitted particles
 #[derive(Default, Reflect)]
 pub struct ParticleBehavior {
-  pub initial_velocity: ParticleVelocity,
-  pub acceleration:     ParticleAcceleration,
-  pub contact_response: ParticleContactResponseType,
+  pub initial_linear_velocity:  ParticleLinearVelocity,
+  pub initial_angular_velocity: ParticleAngularVelocity,
+  pub acceleration:             ParticleAcceleration,
+  pub contact_response:         ParticleContactResponseType,
 }
 
 /// Describes the initial velocity of emitted particles
 #[derive(Reflect)]
-pub enum ParticleVelocity {
+pub enum ParticleLinearVelocity {
   SingleDirection {
     /// The direction emitted particles will travel. This will be normalized.
     direction: Vec3,
     /// The magnitude of the emitted particle's velocity.
-    magnitude:  f32,
+    magnitude: f32,
   },
   Spherical {
     /// The magnitude of the emitted particle's velocity.
@@ -34,21 +35,26 @@ pub enum ParticleVelocity {
   },
   Conic {
     /// The angle of the cone.
-    cone_angle:     f32,
+    cone_angle: f32,
     /// The direction of the center of the cone. This will be normalized.
-    direction: Vec3,
+    direction:  Vec3,
     /// The magnitude of the emitted particle's velocity.
-    magnitude:       f32,
+    magnitude:  f32,
   },
   None,
 }
 
-impl Default for ParticleVelocity {
+impl Default for ParticleLinearVelocity {
   fn default() -> Self {
-    Self::Spherical {
-      magnitude: 1.0,
-    }
+    Self::Spherical { magnitude: 1.0 }
   }
+}
+
+/// Describes the initial velocity of emitted particles
+#[derive(Default, Reflect)]
+pub enum ParticleAngularVelocity {
+  #[default]
+  None,
 }
 
 /// Describes the acceleration acting on emitted particles
