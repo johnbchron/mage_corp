@@ -179,7 +179,7 @@ fn spawn_particles(
           velocity,
           rigid_body: RigidBody::Dynamic,
           transform,
-          lifetime: TimerLifetime::new(Duration::from_secs_f32(5.0)),
+          lifetime: TimerLifetime::new(emitter.descriptor.behavior.lifetime),
           ..default()
         },
         AdditionalMassProperties::Mass(0.1),

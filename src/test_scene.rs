@@ -136,14 +136,13 @@ fn setup_particle_emitter(
           .unwrap(),
         ),
         behavior: ParticleBehavior {
-          initial_linear_velocity:  ParticleLinearVelocity::Conic {
+          initial_linear_velocity: ParticleLinearVelocity::Conic {
             cone_angle: 15.0,
             direction:  Vec3::Y,
             magnitude:  10.0,
           },
-          initial_angular_velocity: ParticleAngularVelocity::None,
-          acceleration:             ParticleAcceleration::None,
-          contact_response:         ParticleContactResponseType::None,
+          lifetime: std::time::Duration::from_secs_f32(5.0),
+          ..default()
         },
       },
       ParticleEmitterRegion::Point { offset: None },

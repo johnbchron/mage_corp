@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::toon::ToonMaterial;
@@ -12,12 +14,25 @@ pub struct ParticleDescriptor {
 }
 
 /// Describes the behavior of emitted particles
-#[derive(Default, Reflect)]
+#[derive(Reflect)]
 pub struct ParticleBehavior {
   pub initial_linear_velocity:  ParticleLinearVelocity,
   pub initial_angular_velocity: ParticleAngularVelocity,
   pub acceleration:             ParticleAcceleration,
   pub contact_response:         ParticleContactResponseType,
+  pub lifetime:                 Duration,
+}
+
+impl Default for ParticleBehavior {
+  fn default() -> Self {
+    Self {
+      initial_linear_velocity:  ParticleLinearVelocity::default(),
+      initial_angular_velocity: ParticleAngularVelocity::default(),
+      acceleration:             ParticleAcceleration::default(),
+      contact_response:         ParticleContactResponseType::default(),
+      lifetime:                 Duration::from_secs(2),
+    }
+  }
 }
 
 /// Describes the initial velocity of emitted particles
