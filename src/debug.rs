@@ -16,9 +16,9 @@ impl Plugin for DebugPlugin {
     app
 	    .add_plugins(LogDiagnosticsPlugin::default())
 	    .add_plugins(FrameTimeDiagnosticsPlugin)
-	    .add_plugins(EntityCountDiagnosticsPlugin::default())
+	    .add_plugins(EntityCountDiagnosticsPlugin)
 	    .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
-	    .add_plugins(VertexCountDiagnosticsPlugin::default())
+	    .add_plugins(VertexCountDiagnosticsPlugin)
 	    // .add_plugins(RapierDebugRenderPlugin::default())
 	    ;
   }

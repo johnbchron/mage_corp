@@ -13,7 +13,7 @@ pub struct ParticleDescriptor {
 #[derive(Default, Reflect)]
 pub struct ParticleBehavior {
   pub initial_velocity: ParticleVelocity,
-  pub acceleration:      ParticleAcceleration,
+  pub acceleration:     ParticleAcceleration,
   pub contact_response: ParticleContactResponseType,
 }
 

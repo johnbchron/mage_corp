@@ -13,7 +13,11 @@ use bevy_rapier3d::prelude::Collider;
 use crate::{
   low_res::LowResCamera,
   particle::{
-    descriptor::{ParticleDescriptor, ParticleBehavior, ParticleVelocity, ParticleAcceleration, ParticleContactResponseType}, ParticleEmitter, ParticleEmitterRegion,
+    descriptor::{
+      ParticleAcceleration, ParticleBehavior, ParticleContactResponseType,
+      ParticleDescriptor, ParticleVelocity,
+    },
+    ParticleEmitter, ParticleEmitterRegion,
   },
   toon::ToonMaterial,
   utils::static_or_closure::StaticOrClosure,
@@ -119,13 +123,13 @@ fn setup_particle_emitter(
     },
     ParticleEmitter::new(
       ParticleDescriptor {
-        size: 0.1,
+        size:     0.1,
         material: toon_materials.add(ToonMaterial {
           color: Color::rgb(1.0, 0.5, 0.0),
           outline_scale: 0.0,
           ..default()
         }),
-        shape: meshes.add(
+        shape:    meshes.add(
           Mesh::try_from(shape::Icosphere {
             radius:       0.5,
             subdivisions: 0,
@@ -133,10 +137,14 @@ fn setup_particle_emitter(
           .unwrap(),
         ),
         behavior: ParticleBehavior {
-          initial_velocity: ParticleVelocity::Conic { cone_angle: StaticOrClosure::Static(15.0), cone_direction: StaticOrClosure::Static(Vec3::Y), strength: StaticOrClosure::Static(10.0) },
-          acceleration: ParticleAcceleration::None,
+          initial_velocity: ParticleVelocity::Conic {
+            cone_angle:     StaticOrClosure::Static(15.0),
+            cone_direction: StaticOrClosure::Static(Vec3::Y),
+            strength:       StaticOrClosure::Static(10.0),
+          },
+          acceleration:     ParticleAcceleration::None,
           contact_response: ParticleContactResponseType::None,
-        }
+        },
       },
       ParticleEmitterRegion::Point { offset: None },
       100.0,

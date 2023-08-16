@@ -143,7 +143,6 @@ fn setup_target_camera(mut commands: Commands) {
     Camera2dBundle {
       camera_2d: Camera2d {
         clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)),
-        ..default()
       },
       transform: Transform::from_xyz(0.0, 0.0, 1.0)
         .looking_at(Vec3::default(), Vec3::Y),
@@ -155,15 +154,13 @@ fn setup_target_camera(mut commands: Commands) {
           height: 1.0,
         },
         ..default()
-      }
-      .into(),
+      },
       camera: Camera {
         order: 1,
         ..default()
       },
       ..default()
     },
-    // Camera2dBundle::default(),
     second_pass_layer,
     Name::new("lowres_output_camera"),
   ));

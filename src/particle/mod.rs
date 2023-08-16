@@ -5,10 +5,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use descriptor::{
-  ParticleAcceleration, ParticleBehavior, ParticleContactResponseType,
-  ParticleDescriptor, ParticleVelocity,
-};
+use descriptor::{ParticleDescriptor, ParticleVelocity};
 
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
@@ -125,38 +122,48 @@ fn spawn_particles(
             .normalize()
               * strength.get(),
           ),
-          ParticleVelocity::Conic { cone_angle, cone_direction, strength } => {
-	          let cone_angle = cone_angle.get();
-	          let cone_direction = cone_direction.get().normalize();
-	          let strength = strength.get();
-	          
-	          let mut rng = rand::thread_rng();
-	          let angle = f32::to_radians((rng.gen::<f32>() * 2.0 - 1.0) * cone_angle);
-	          let axis = Vec3::new(rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0, rng.gen::<f32>() * 2.0 - 1.0).normalize();
-	          
-	          let rotation = Quat::from_axis_angle(axis, angle);
-	          let direction = Mat3::from_quat(rotation) * cone_direction;
-	          
-	          Velocity::linear(direction * strength)
+          ParticleVelocity::Conic {
+            cone_angle,
+            cone_direction,
+            strength,
+          } => {
+            let cone_angle = cone_angle.get();
+            let cone_direction = cone_direction.get().normalize();
+            let strength = strength.get();
+
+            let mut rng = rand::thread_rng();
+            let angle =
+              f32::to_radians((rng.gen::<f32>() * 2.0 - 1.0) * cone_angle);
+            let axis = Vec3::new(
+              rng.gen::<f32>() * 2.0 - 1.0,
+              rng.gen::<f32>() * 2.0 - 1.0,
+              rng.gen::<f32>() * 2.0 - 1.0,
+            )
+            .normalize();
+
+            let rotation = Quat::from_axis_angle(axis, angle);
+            let direction = Mat3::from_quat(rotation) * cone_direction;
+
+            Velocity::linear(direction * strength)
           }
           ParticleVelocity::None => Velocity::zero(),
         };
 
       let mut particle_entity = commands.spawn((
-      	ParticleBundle {
-	        particle: Particle {
-	          original_scale:   Vec3::ONE * emitter.descriptor.size,
-	          shrink_with_life: false,
-	        },
-	        material: emitter.descriptor.material.clone(),
-	        mesh: emitter.descriptor.shape.clone(),
-	        velocity: velocity,
-	        rigid_body: RigidBody::Dynamic,
-	        transform: transform,
-	        lifetime: TimerLifetime::new(Duration::from_secs_f32(5.0)),
-	        ..default()
-	      },
-	      AdditionalMassProperties::Mass(0.1),
+        ParticleBundle {
+          particle: Particle {
+            original_scale:   Vec3::ONE * emitter.descriptor.size,
+            shrink_with_life: false,
+          },
+          material: emitter.descriptor.material.clone(),
+          mesh: emitter.descriptor.shape.clone(),
+          velocity,
+          rigid_body: RigidBody::Dynamic,
+          transform,
+          lifetime: TimerLifetime::new(Duration::from_secs_f32(5.0)),
+          ..default()
+        },
+        AdditionalMassProperties::Mass(0.1),
       ));
       let id = particle_entity.id();
       particle_entity.insert(Name::new(format!("particle_{:?}", id)));

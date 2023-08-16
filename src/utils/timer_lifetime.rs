@@ -33,10 +33,6 @@ impl TimerLifetime {
     self.remaining <= Duration::ZERO
   }
 
-  pub fn remaining(&self) -> Duration {
-    self.remaining
-  }
-
   pub fn remaining_frac(&self) -> f32 {
     self.remaining.as_secs_f32() / self.lifetime.as_secs_f32()
   }
@@ -59,11 +55,8 @@ fn remove_expired_lifetimes(
 ) {
   for (entity, timer_lifetime) in timer_lifetimes.iter() {
     if timer_lifetime.is_expired() {
-      match commands.get_entity(entity) {
-        Some(mut entity_commands) => {
-          entity_commands.insert(Despawn);
-        }
-        _ => {}
+      if let Some(mut entity_commands) = commands.get_entity(entity) {
+        entity_commands.insert(Despawn);
       }
     }
   }
