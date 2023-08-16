@@ -9,6 +9,7 @@ use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
+/// Describes the region over which particles are emitted
 #[derive(Reflect)]
 pub enum ParticleEmitterRegion {
   Point { offset: Option<Vec3> },
@@ -20,17 +21,29 @@ impl Default for ParticleEmitterRegion {
   }
 }
 
+/// A component for emitting particles.
+///
+/// Requires a `Transform` to emit particles.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct ParticleEmitter {
+  /// A particle descriptor. Serves as instructions for spawning emitted
+  /// particles.
   pub descriptor:  ParticleDescriptor,
+  /// The region over which particles are emitted
   pub region:      ParticleEmitterRegion,
+  /// How many particles are emitted per second
   pub rate:        f32,
+  /// Keeps track of leftover unspawned particles between frames. It should not
+  /// be modified manually.
+  #[reflect(ignore)]
   pub accumulator: f32,
+  /// Whether the emitter is enabled or not
   pub enabled:     bool,
 }
 
 impl ParticleEmitter {
+  /// Creates a new particle emitter
   pub fn new(
     descriptor: ParticleDescriptor,
     pattern: ParticleEmitterRegion,
@@ -47,6 +60,11 @@ impl ParticleEmitter {
   }
 }
 
+/// A component for emitted particles.
+///
+/// This component both serves as a marker for emitted particles and contains
+/// information about their original state, used to interpolate their properties
+/// over their lifetime.
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
 pub struct Particle {
@@ -54,6 +72,7 @@ pub struct Particle {
   shrink_with_life: bool,
 }
 
+/// A bundle for spawning emitted particles
 #[derive(Bundle, Default)]
 pub struct ParticleBundle {
   pub particle:   Particle,
@@ -185,6 +204,7 @@ fn update_particle(
   );
 }
 
+/// A plugin for managing particles
 pub struct ParticlePlugin;
 
 impl Plugin for ParticlePlugin {
