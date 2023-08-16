@@ -1,14 +1,14 @@
-use rand::Rng;
+use nanorand::Rng;
 pub mod descriptor;
-
-use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use descriptor::{ParticleDescriptor, ParticleVelocity};
+use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
+use self::descriptor::{ParticleSizeBehavior, ParticleAcceleration};
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
+/// Describes the region over which particles are emitted
 #[derive(Reflect)]
 pub enum ParticleEmitterRegion {
   Point { offset: Option<Vec3> },
@@ -20,17 +20,29 @@ impl Default for ParticleEmitterRegion {
   }
 }
 
+/// A component for emitting particles.
+///
+/// Requires a `Transform` to emit particles.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct ParticleEmitter {
+  /// A particle descriptor. Serves as instructions for spawning emitted
+  /// particles.
   pub descriptor:  ParticleDescriptor,
+  /// The region over which particles are emitted
   pub region:      ParticleEmitterRegion,
+  /// How many particles are emitted per second
   pub rate:        f32,
+  /// Keeps track of leftover unspawned particles between frames. It should not
+  /// be modified manually.
+  #[reflect(ignore)]
   pub accumulator: f32,
+  /// Whether the emitter is enabled or not
   pub enabled:     bool,
 }
 
 impl ParticleEmitter {
+  /// Creates a new particle emitter
   pub fn new(
     descriptor: ParticleDescriptor,
     pattern: ParticleEmitterRegion,
@@ -47,6 +59,11 @@ impl ParticleEmitter {
   }
 }
 
+/// A component for emitted particles.
+///
+/// This component both serves as a marker for emitted particles and contains
+/// information about their original state, used to interpolate their properties
+/// over their lifetime.
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
 pub struct Particle {
@@ -54,13 +71,13 @@ pub struct Particle {
   shrink_with_life: bool,
 }
 
+/// A bundle for spawning emitted particles
 #[derive(Bundle, Default)]
 pub struct ParticleBundle {
   pub particle:   Particle,
   pub material:   Handle<ToonMaterial>,
   pub mesh:       Handle<Mesh>,
   pub velocity:   Velocity,
-  pub rigid_body: RigidBody,
   pub transform:  Transform,
   pub lifetime:   TimerLifetime,
   pub computed:   ComputedVisibility,
@@ -97,6 +114,8 @@ fn spawn_particles(
     let new_particle_count = emitter.accumulator.floor() as u32;
     emitter.accumulator -= new_particle_count as f32;
 
+    let mut rng = nanorand::tls_rng();
+
     for _ in 0..new_particle_count {
       // calculate the transform of the new particle
       let transform: Transform = match emitter.region {
@@ -108,36 +127,35 @@ fn spawn_particles(
 
       // calculate the velocity of the new particle
       let velocity: Velocity =
-        match &emitter.descriptor.behavior.initial_velocity {
-          ParticleVelocity::SingleDirection {
+        match &emitter.descriptor.behavior.initial_linear_velocity {
+          ParticleLinearVelocity::SingleDirection {
             direction,
-            strength,
-          } => Velocity::linear(direction.get() * strength.get()),
-          ParticleVelocity::Spherical { strength } => Velocity::linear(
+            magnitude,
+          } => Velocity::linear(*direction * *magnitude),
+          ParticleLinearVelocity::Spherical { magnitude } => Velocity::linear(
             Vec3::new(
-              rand::random::<f32>() * 2.0 - 1.0,
-              rand::random::<f32>() * 2.0 - 1.0,
-              rand::random::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
             )
             .normalize()
-              * strength.get(),
+              * *magnitude,
           ),
-          ParticleVelocity::Conic {
+          ParticleLinearVelocity::Conic {
             cone_angle,
-            cone_direction,
-            strength,
+            direction: cone_direction,
+            magnitude: strength,
           } => {
-            let cone_angle = cone_angle.get();
-            let cone_direction = cone_direction.get().normalize();
-            let strength = strength.get();
+            let cone_angle = *cone_angle;
+            let cone_direction = (*cone_direction).normalize();
+            let strength = *strength;
 
-            let mut rng = rand::thread_rng();
             let angle =
-              f32::to_radians((rng.gen::<f32>() * 2.0 - 1.0) * cone_angle);
+              f32::to_radians((rng.generate::<f32>() * 2.0 - 1.0) * cone_angle);
             let axis = Vec3::new(
-              rng.gen::<f32>() * 2.0 - 1.0,
-              rng.gen::<f32>() * 2.0 - 1.0,
-              rng.gen::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
             )
             .normalize();
 
@@ -146,24 +164,30 @@ fn spawn_particles(
 
             Velocity::linear(direction * strength)
           }
-          ParticleVelocity::None => Velocity::zero(),
+          ParticleLinearVelocity::None => Velocity::zero(),
         };
 
       let mut particle_entity = commands.spawn((
         ParticleBundle {
           particle: Particle {
             original_scale:   Vec3::ONE * emitter.descriptor.size,
-            shrink_with_life: false,
+            shrink_with_life: matches!(
+              emitter.descriptor.behavior.size_behavior,
+              ParticleSizeBehavior::LinearShrink
+            ),
           },
           material: emitter.descriptor.material.clone(),
           mesh: emitter.descriptor.shape.clone(),
           velocity,
-          rigid_body: RigidBody::Dynamic,
           transform,
-          lifetime: TimerLifetime::new(Duration::from_secs_f32(5.0)),
+          lifetime: TimerLifetime::new(emitter.descriptor.behavior.lifetime),
           ..default()
         },
         AdditionalMassProperties::Mass(0.1),
+        match emitter.descriptor.behavior.acceleration {
+          ParticleAcceleration::None => RigidBody::KinematicVelocityBased,
+          ParticleAcceleration::Ballistic => RigidBody::Dynamic
+        }
       ));
       let id = particle_entity.id();
       particle_entity.insert(Name::new(format!("particle_{:?}", id)));
@@ -185,6 +209,7 @@ fn update_particle(
   );
 }
 
+/// A plugin for managing particles
 pub struct ParticlePlugin;
 
 impl Plugin for ParticlePlugin {

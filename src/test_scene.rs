@@ -14,13 +14,11 @@ use crate::{
   low_res::LowResCamera,
   particle::{
     descriptor::{
-      ParticleAcceleration, ParticleBehavior, ParticleContactResponseType,
-      ParticleDescriptor, ParticleVelocity,
+      ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity, ParticleSizeBehavior,
     },
     ParticleEmitter, ParticleEmitterRegion,
   },
   toon::ToonMaterial,
-  utils::static_or_closure::StaticOrClosure,
 };
 
 pub struct TestScenePlugin;
@@ -137,13 +135,14 @@ fn setup_particle_emitter(
           .unwrap(),
         ),
         behavior: ParticleBehavior {
-          initial_velocity: ParticleVelocity::Conic {
-            cone_angle:     StaticOrClosure::Static(15.0),
-            cone_direction: StaticOrClosure::Static(Vec3::Y),
-            strength:       StaticOrClosure::Static(10.0),
+          initial_linear_velocity: ParticleLinearVelocity::Conic {
+            cone_angle: 30.0,
+            direction:  Vec3::Y,
+            magnitude:  5.0,
           },
-          acceleration:     ParticleAcceleration::None,
-          contact_response: ParticleContactResponseType::None,
+          lifetime: std::time::Duration::from_secs_f32(2.0),
+          size_behavior: ParticleSizeBehavior::LinearShrink,
+          ..default()
         },
       },
       ParticleEmitterRegion::Point { offset: None },
