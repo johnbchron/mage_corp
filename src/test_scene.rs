@@ -172,11 +172,11 @@ fn setup_translucent_ball(
         .unwrap(),
       ),
       material: force_materials
-        .add(ForceMaterial::from(Color::rgba(0.392, 0.584, 0.929, 0.2))),
+        .add(ForceMaterial::from(Color::rgba(0.392, 0.584, 0.929, 0.1))),
       transform: Transform::from_xyz(1.5, 0.0, 0.0),
       ..default()
     },
-    Collider::cuboid(0.5, 0.5, 0.5),
+    // Collider::cuboid(0.5, 0.5, 0.5),
     Name::new("translucent_ball"),
   ));
 }
