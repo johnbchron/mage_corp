@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
-use self::descriptor::{ParticleSizeBehavior, ParticleAcceleration};
+use self::descriptor::{ParticleAcceleration, ParticleSizeBehavior};
 use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
 
 /// Describes the region over which particles are emitted
@@ -186,8 +186,8 @@ fn spawn_particles(
         AdditionalMassProperties::Mass(0.1),
         match emitter.descriptor.behavior.acceleration {
           ParticleAcceleration::None => RigidBody::KinematicVelocityBased,
-          ParticleAcceleration::Ballistic => RigidBody::Dynamic
-        }
+          ParticleAcceleration::Ballistic => RigidBody::Dynamic,
+        },
       ));
       let id = particle_entity.id();
       particle_entity.insert(Name::new(format!("particle_{:?}", id)));
