@@ -29,7 +29,8 @@ impl Plugin for TestScenePlugin {
     app
       .add_systems(Startup, setup_camera_and_lights)
       .add_systems(Startup, setup_scene_props)
-      .add_systems(Startup, setup_particle_emitter);
+      .add_systems(Startup, setup_particle_emitter)
+      .add_systems(Startup, setup_translucent_ball);
   }
 }
 
@@ -148,8 +149,34 @@ fn setup_particle_emitter(
       },
       ParticleEmitterRegion::Point { offset: None },
       100.0,
-      true,
+      false,
     ),
     Name::new("particle_emitter"),
+  ));
+}
+
+fn setup_translucent_ball(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  // mut toon_materials: ResMut<Assets<ToonMaterial>>,
+  mut std_materials: ResMut<Assets<StandardMaterial>>,
+) {
+  commands.spawn((
+    MaterialMeshBundle {
+      mesh: meshes.add(
+        Mesh::try_from(shape::Icosphere {
+          radius:       0.5,
+          subdivisions: 3,
+        })
+        .unwrap(),
+      ),
+      material: std_materials.add(StandardMaterial::from(Color::rgba(
+        0.392, 0.584, 0.929, 0.2,
+      ))),
+      transform: Transform::from_xyz(1.5, 0.0, 0.0),
+      ..default()
+    },
+    Collider::cuboid(0.5, 0.5, 0.5),
+    Name::new("translucent_ball"),
   ));
 }
