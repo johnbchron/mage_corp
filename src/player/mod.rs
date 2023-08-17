@@ -7,7 +7,7 @@ use bevy_mod_wanderlust::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes};
 
-use crate::toon::ConvertToToonMaterial;
+use crate::materials::toon::ConvertToToonMaterial;
 
 pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
   commands

@@ -1,9 +1,9 @@
 mod debug;
 mod low_res;
+mod materials;
 mod particle;
 mod player;
 mod test_scene;
-mod toon;
 mod utils;
 
 use bevy::{
@@ -35,7 +35,7 @@ fn main() {
         .set(ImagePlugin::default_nearest()),
     )
     // graphics
-    .add_plugins(toon::ToonPlugin)
+    .add_plugins(materials::toon::ToonPlugin)
     .add_plugins(low_res::LowResPlugin)
     .insert_resource(Msaa::Off)
     // physics

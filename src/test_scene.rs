@@ -12,6 +12,7 @@ use bevy_rapier3d::prelude::Collider;
 
 use crate::{
   low_res::LowResCamera,
+  materials::toon::ToonMaterial,
   particle::{
     descriptor::{
       ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity,
@@ -19,7 +20,6 @@ use crate::{
     },
     ParticleEmitter, ParticleEmitterRegion,
   },
-  toon::ToonMaterial,
 };
 
 pub struct TestScenePlugin;

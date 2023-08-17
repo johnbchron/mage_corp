@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::toon::ToonMaterial;
+use crate::materials::toon::ToonMaterial;
 
 /// Describes the properties of emitted particles
 #[derive(Default, Reflect)]

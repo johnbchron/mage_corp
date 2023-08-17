@@ -6,7 +6,9 @@ use bevy_rapier3d::prelude::*;
 use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
 use self::descriptor::{ParticleAcceleration, ParticleSizeBehavior};
-use crate::{toon::ToonMaterial, utils::timer_lifetime::TimerLifetime};
+use crate::{
+  materials::toon::ToonMaterial, utils::timer_lifetime::TimerLifetime,
+};
 
 /// Describes the region over which particles are emitted
 #[derive(Reflect)]
