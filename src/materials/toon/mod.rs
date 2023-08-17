@@ -3,9 +3,9 @@ mod material;
 use bevy::{prelude::*, scene::SceneInstance};
 pub use material::ToonMaterial;
 
-pub struct ToonPlugin;
+pub struct ToonMaterialPlugin;
 
-impl Plugin for ToonPlugin {
+impl Plugin for ToonMaterialPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugins(MaterialPlugin::<ToonMaterial>::default())

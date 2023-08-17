@@ -12,7 +12,7 @@ use bevy_rapier3d::prelude::Collider;
 
 use crate::{
   low_res::LowResCamera,
-  materials::toon::ToonMaterial,
+  materials::{force::ForceMaterial, toon::ToonMaterial},
   particle::{
     descriptor::{
       ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity,
@@ -159,7 +159,8 @@ fn setup_translucent_ball(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   // mut toon_materials: ResMut<Assets<ToonMaterial>>,
-  mut std_materials: ResMut<Assets<StandardMaterial>>,
+  // mut std_materials: ResMut<Assets<StandardMaterial>>,
+  mut force_materials: ResMut<Assets<ForceMaterial>>,
 ) {
   commands.spawn((
     MaterialMeshBundle {
@@ -170,9 +171,8 @@ fn setup_translucent_ball(
         })
         .unwrap(),
       ),
-      material: std_materials.add(StandardMaterial::from(Color::rgba(
-        0.392, 0.584, 0.929, 0.2,
-      ))),
+      material: force_materials
+        .add(ForceMaterial::from(Color::rgba(0.392, 0.584, 0.929, 0.2))),
       transform: Transform::from_xyz(1.5, 0.0, 0.0),
       ..default()
     },

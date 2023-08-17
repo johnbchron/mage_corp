@@ -35,7 +35,8 @@ fn main() {
         .set(ImagePlugin::default_nearest()),
     )
     // graphics
-    .add_plugins(materials::toon::ToonPlugin)
+    .add_plugins(materials::toon::ToonMaterialPlugin)
+    .add_plugins(materials::force::ForceMaterialPlugin)
     .add_plugins(low_res::LowResPlugin)
     .insert_resource(Msaa::Off)
     // physics
