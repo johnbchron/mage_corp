@@ -5,6 +5,7 @@ use bevy::{
     clear_color::ClearColorConfig,
     prepass::{DepthPrepass, NormalPrepass},
   },
+  pbr::NotShadowCaster,
   prelude::*,
   render::camera::ScalingMode,
 };
@@ -176,7 +177,7 @@ fn setup_translucent_ball(
       transform: Transform::from_xyz(1.5, 0.0, 0.0),
       ..default()
     },
-    // Collider::cuboid(0.5, 0.5, 0.5),
+    NotShadowCaster,
     Name::new("translucent_ball"),
   ));
 }
