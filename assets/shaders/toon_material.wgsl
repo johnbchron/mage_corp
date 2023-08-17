@@ -20,14 +20,6 @@ var<private> neighbours: array<vec2<f32>, 9> = array<vec2<f32>, 9>(
   vec2<f32>(1.0, -1.0),  // 8. bottom right
 );
 
-// var<private> sobel_x: array<f32, 9> = array<f32, 9>(
-//   1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0,
-// );
-
-// var<private> sobel_y: array<f32, 9> = array<f32, 9>(
-//   1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0,
-// );
-
 var<private> equidistant: array<f32, 9> = array<f32, 9>(
   0.707, 1.0, 0.707, 1.0, 0.0, 1.0, 0.707, 1.0, 0.707,
 );
@@ -56,23 +48,6 @@ var<uniform> material: ToonMaterial;
 var material_color_texture: texture_2d<f32>;
 @group(1) @binding(2)
 var material_color_texture_sampler: sampler;
-
-// fn get_depth(pos: vec2<f32>) -> f32 {
-//   return bevy_pbr::prepass_utils::prepass_depth(vec4(pos, 0.0, 0.0), 0u);
-// }
-// 
-// fn get_normal(pos: vec2<f32>) -> vec3<f32> {
-//   return bevy_pbr::prepass_utils::prepass_normal(vec4(pos, 0.0, 0.0), 0u);
-// }
-
-// fn get_pixel_world_distance() -> f32 {
-//   let camera_view = bevy_pbr::mesh_view_bindings::view;
-//   
-//   let camera_view_width = 2.0 / camera_view.view_proj[0][0];
-//   let pixel_world_distance = camera_view_width / camera_view.viewport.z;
-//   
-//   return camera_view_width;
-// }
 
 fn detect_edge_depth(frag_coord: vec2<f32>, scale: f32) -> f32 {
   // this is to make up for the far field of the camera
