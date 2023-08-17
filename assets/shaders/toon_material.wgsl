@@ -5,6 +5,9 @@
 #import bevy_pbr::shadows as shadows
 #import bevy_core_pipeline::tonemapping screen_space_dither
 
+#import mage_corp::prepass get_depth
+#import mage_corp::prepass get_normal
+
 var<private> neighbours: array<vec2<f32>, 9> = array<vec2<f32>, 9>(
   vec2<f32>(-1.0, 1.0),  // 0. top left
   vec2<f32>(0.0, 1.0),   // 1. top center
@@ -54,13 +57,13 @@ var material_color_texture: texture_2d<f32>;
 @group(1) @binding(2)
 var material_color_texture_sampler: sampler;
 
-fn get_depth(pos: vec2<f32>) -> f32 {
-  return bevy_pbr::prepass_utils::prepass_depth(vec4(pos, 0.0, 0.0), 0u);
-}
-
-fn get_normal(pos: vec2<f32>) -> vec3<f32> {
-  return bevy_pbr::prepass_utils::prepass_normal(vec4(pos, 0.0, 0.0), 0u);
-}
+// fn get_depth(pos: vec2<f32>) -> f32 {
+//   return bevy_pbr::prepass_utils::prepass_depth(vec4(pos, 0.0, 0.0), 0u);
+// }
+// 
+// fn get_normal(pos: vec2<f32>) -> vec3<f32> {
+//   return bevy_pbr::prepass_utils::prepass_normal(vec4(pos, 0.0, 0.0), 0u);
+// }
 
 // fn get_pixel_world_distance() -> f32 {
 //   let camera_view = bevy_pbr::mesh_view_bindings::view;
