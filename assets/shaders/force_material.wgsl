@@ -22,7 +22,7 @@ fn fragment(
   let camera_view = bevy_pbr::mesh_view_bindings::view;
   let camera_forward = normalize(vec3(camera_view.view[2][0], camera_view.view[2][1], camera_view.view[2][2]));
   
-  let intensity = pow(1.0 - saturate(dot(surface_normal, camera_forward)), material.influence);
+  let intensity = pow(1.0 - abs(dot(surface_normal, camera_forward)), material.influence);
   
   let alpha = mix(material.alpha_min, material.alpha_max, intensity);
   

@@ -1,7 +1,14 @@
 use bevy::{
+  pbr::{MaterialPipeline, MaterialPipelineKey},
   prelude::*,
   reflect::TypeUuid,
-  render::render_resource::{AsBindGroup, ShaderRef},
+  render::{
+    mesh::MeshVertexBufferLayout,
+    render_resource::{
+      AsBindGroup, RenderPipelineDescriptor, ShaderRef,
+      SpecializedMeshPipelineError,
+    },
+  },
 };
 
 #[derive(AsBindGroup, TypeUuid, Reflect, Debug, Clone)]
@@ -24,7 +31,7 @@ impl Default for ForceMaterial {
       color:     Color::rgba(0.392, 0.584, 0.929, 0.2),
       alpha_min: 0.05,
       alpha_max: 0.5,
-      influence: 3.0,
+      influence: 5.0,
     }
   }
 }
@@ -42,5 +49,15 @@ impl Material for ForceMaterial {
 
   fn alpha_mode(&self) -> AlphaMode {
     AlphaMode::Blend
+  }
+
+  fn specialize(
+    _pipeline: &MaterialPipeline<Self>,
+    descriptor: &mut RenderPipelineDescriptor,
+    _layout: &MeshVertexBufferLayout,
+    _key: MaterialPipelineKey<Self>,
+  ) -> Result<(), SpecializedMeshPipelineError> {
+    descriptor.primitive.cull_mode = None;
+    Ok(())
   }
 }
