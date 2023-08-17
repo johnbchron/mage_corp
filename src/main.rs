@@ -6,16 +6,30 @@ mod test_scene;
 mod toon;
 mod utils;
 
-use bevy::{prelude::*, asset::ChangeWatcher};
+use bevy::{
+  asset::ChangeWatcher,
+  ecs::schedule::{LogLevel, ScheduleBuildSettings},
+  prelude::*,
+};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 
 fn main() {
   App::new()
+    // explicitly report system ordering ambiguities
+    .edit_schedule(Main, |schedule| {
+      schedule.set_build_settings(ScheduleBuildSettings {
+        ambiguity_detection: LogLevel::Warn,
+        ..default()
+      });
+    })
+    // add default plugins
     .add_plugins(
       DefaultPlugins
         .set(AssetPlugin {
-          watch_for_changes: Some(ChangeWatcher { delay: std::time::Duration::from_secs(1) }),
+          watch_for_changes: Some(ChangeWatcher {
+            delay: std::time::Duration::from_secs(1),
+          }),
           ..default()
         })
         .set(ImagePlugin::default_nearest()),
