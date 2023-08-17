@@ -6,7 +6,7 @@ mod test_scene;
 mod toon;
 mod utils;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, asset::ChangeWatcher};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 
@@ -14,12 +14,9 @@ fn main() {
   App::new()
     .add_plugins(
       DefaultPlugins
-        .set(WindowPlugin {
-          primary_window: Some(Window {
-            present_mode: bevy::window::PresentMode::AutoNoVsync,
-            ..Default::default()
-          }),
-          ..Default::default()
+        .set(AssetPlugin {
+          watch_for_changes: Some(ChangeWatcher { delay: std::time::Duration::from_secs(1) }),
+          ..default()
         })
         .set(ImagePlugin::default_nearest()),
     )
