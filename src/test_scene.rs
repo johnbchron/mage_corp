@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+
+use crate::materials::toon::ConvertToToonMaterial;
 use std::f32::consts::{FRAC_PI_4, PI};
 
 use bevy::{
@@ -30,8 +33,10 @@ impl Plugin for TestScenePlugin {
     app
       .add_systems(Startup, setup_camera_and_lights)
       .add_systems(Startup, setup_scene_props)
-      .add_systems(Startup, setup_particle_emitter)
-      .add_systems(Startup, setup_translucent_ball);
+      // .add_systems(Startup, setup_particle_emitter)
+      .add_systems(Startup, setup_translucent_ball)
+      // .add_systems(Startup, setup_npc_scene)
+      ;
   }
 }
 
@@ -179,5 +184,23 @@ fn setup_translucent_ball(
     },
     NotShadowCaster,
     Name::new("translucent_ball"),
+  ));
+}
+
+fn setup_npc_scene(
+  mut commands: Commands,
+  asset_server: Res<AssetServer>,
+) {
+  commands.spawn((
+    SceneBundle {
+      scene: asset_server.load("scenes/boy.glb#Scene0"),
+      transform: Transform::from_xyz(0.0, -0.5, 0.0),
+      ..default()
+    },
+    ConvertToToonMaterial {
+      outline_scale: Some(1.0),
+      ..default()
+    },
+    Name::new("npc_boy"),
   ));
 }
