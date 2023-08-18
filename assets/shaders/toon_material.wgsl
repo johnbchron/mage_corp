@@ -91,7 +91,12 @@ fn detect_edge_normal(frag_coord: vec2<f32>, scale: f32) -> f32 {
     // we get first the difference between the current pixel and the sample,
     // and then weight it by the distance to the current pixel, and then
     // weight it by how much the current pixel is facing the camera
-    total += (1.0 - dot(samples[4], samples[i])) / 2.0 * equidistant[i] * saturate(dot(samples[4], camera_forward) + 0.2);
+    
+    // difference in direction between center pixel and current pixel
+    // from 0, identical, to 1, opposite
+    let pixel_direction_difference = (1.0 - dot(samples[i], camera_forward)) / 2.0;
+    let facing_camera = pow(saturate(dot(normalize(samples[4] + samples[i]), camera_forward)), 1.4);
+    total += pixel_direction_difference * equidistant[i] * facing_camera;
   }
   total = total / 8.0;
   
@@ -155,7 +160,7 @@ fn fragment(
   var color: vec4<f32> = unlit_color * light;
   
   if (material.outline_scale > 0.0) {
-    let normal_edge = detect_edge_normal(mesh.position.xy, material.outline_scale / 2.0);
+    let normal_edge = detect_edge_normal(mesh.position.xy, material.outline_scale) + detect_edge_normal(mesh.position.xy, material.outline_scale / 2.0);
     let depth_edge = detect_edge_depth(mesh.position.xy, material.outline_scale);
     
     var edge: vec2<f32> = vec2(normal_edge, depth_edge);
@@ -167,6 +172,8 @@ fn fragment(
     let outline_stencil = mix(vec4(1.0), edge_color, length(edge));
     color = color * outline_stencil;
     // return vec4(edge, 0.0, 1.0);
+    
+    // return vec4(vec3(pow(dot(get_normal(mesh.position.xy), camera_forward), 2.0)), 1.0);
   }
   
   return color;
