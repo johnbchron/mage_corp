@@ -1,7 +1,7 @@
 use nanorand::Rng;
 pub mod descriptor;
 
-use bevy::prelude::*;
+use bevy::{pbr::NotShadowCaster, prelude::*};
 use bevy_rapier3d::prelude::*;
 use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
 
@@ -85,6 +85,7 @@ pub struct ParticleBundle {
   pub computed:   ComputedVisibility,
   pub visibility: Visibility,
   pub global:     GlobalTransform,
+  pub no_shadows: NotShadowCaster,
 }
 
 impl Default for ParticleEmitter {
