@@ -33,8 +33,10 @@ impl Plugin for TestScenePlugin {
     app
       .add_systems(Startup, setup_camera_and_lights)
       .add_systems(Startup, setup_scene_props)
+      // .add_plugins(bevy_obj::ObjPlugin)
+      // .add_systems(Startup, setup_barn_scene)
       // .add_systems(Startup, setup_particle_emitter)
-      .add_systems(Startup, setup_translucent_ball)
+      // .add_systems(Startup, setup_translucent_ball)
       // .add_systems(Startup, setup_npc_scene)
       ;
   }
@@ -202,5 +204,23 @@ fn setup_npc_scene(
       ..default()
     },
     Name::new("npc_boy"),
+  ));
+}
+
+fn setup_barn_scene(
+  mut commands: Commands,
+  asset_server: Res<AssetServer>,
+) {
+  commands.spawn((
+    SceneBundle {
+      scene: asset_server.load("models/Barn.obj"),
+      transform: Transform::from_xyz(0.0, -0.5, 0.0),
+      ..default()
+    },
+    ConvertToToonMaterial {
+      outline_scale: Some(1.0),
+      ..default()
+    },
+    Name::new("barn"),
   ));
 }
