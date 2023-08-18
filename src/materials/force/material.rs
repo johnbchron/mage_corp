@@ -16,22 +16,25 @@ use bevy::{
 #[reflect(Default, Debug)]
 pub struct ForceMaterial {
   #[uniform(0)]
-  pub color:     Color,
+  pub color:          Color,
   #[uniform(0)]
-  pub alpha_min: f32,
+  pub alpha_min:      f32,
   #[uniform(0)]
-  pub alpha_max: f32,
+  pub alpha_max:      f32,
   #[uniform(0)]
-  pub influence: f32,
+  pub influence:      f32,
+  #[storage(1, read_only)]
+  pub contact_points: Vec<[f32; 4]>,
 }
 
 impl Default for ForceMaterial {
   fn default() -> Self {
     Self {
-      color:     Color::rgba(0.392, 0.584, 0.929, 0.2),
-      alpha_min: 0.05,
-      alpha_max: 0.5,
-      influence: 5.0,
+      color:          Color::rgb(0.392, 0.584, 0.929),
+      alpha_min:      0.05,
+      alpha_max:      0.5,
+      influence:      5.0,
+      contact_points: vec![],
     }
   }
 }

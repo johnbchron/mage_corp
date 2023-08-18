@@ -173,7 +173,7 @@ fn setup_translucent_ball(
         .unwrap(),
       ),
       material: force_materials
-        .add(ForceMaterial::from(Color::rgba(0.392, 0.584, 0.929, 0.1))),
+        .add(ForceMaterial::from(Color::rgb(0.392, 0.584, 0.929))),
       transform: Transform::from_xyz(1.5, 0.0, 0.0),
       ..default()
     },
