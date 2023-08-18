@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use crate::materials::toon::ConvertToToonMaterial;
 use std::f32::consts::{FRAC_PI_4, PI};
 
 use bevy::{
@@ -16,7 +15,10 @@ use bevy_rapier3d::prelude::Collider;
 
 use crate::{
   low_res::LowResCamera,
-  materials::{force::ForceMaterial, toon::ToonMaterial},
+  materials::{
+    force::ForceMaterial,
+    toon::{ConvertToToonMaterial, ToonMaterial},
+  },
   particle::{
     descriptor::{
       ParticleBehavior, ParticleDescriptor, ParticleLinearVelocity,
@@ -189,10 +191,7 @@ fn setup_translucent_ball(
   ));
 }
 
-fn setup_npc_scene(
-  mut commands: Commands,
-  asset_server: Res<AssetServer>,
-) {
+fn setup_npc_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
   commands.spawn((
     SceneBundle {
       scene: asset_server.load("scenes/boy.glb#Scene0"),
@@ -207,10 +206,7 @@ fn setup_npc_scene(
   ));
 }
 
-fn setup_barn_scene(
-  mut commands: Commands,
-  asset_server: Res<AssetServer>,
-) {
+fn setup_barn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
   commands.spawn((
     SceneBundle {
       scene: asset_server.load("models/Barn.obj"),
