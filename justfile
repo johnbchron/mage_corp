@@ -7,7 +7,5 @@ run:
 pre-c:
 	cargo fmt
 	cargo clippy
-	cargo test
-	cargo build
-	
+	cargo test	
 	
