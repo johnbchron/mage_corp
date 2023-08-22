@@ -44,6 +44,7 @@ fn main() {
     .add_plugins(player::PlayerPlugin)
     // QoL
     .add_plugins(WorldInspectorPlugin::new())
+    .add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
     // background logic
     .add_plugins(particle::ParticlePlugin)
     .add_plugins(utils::timer_lifetime::TimerLifetimePlugin)

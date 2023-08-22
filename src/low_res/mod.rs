@@ -1,3 +1,5 @@
+mod panorbit_compat;
+
 use bevy::{
   core_pipeline::clear_color::ClearColorConfig,
   prelude::*,
@@ -29,7 +31,7 @@ impl Default for LowResCamera {
 pub struct LowResCameraTarget;
 
 // when the window gets resized, update the camera's resolution
-fn calculate_texture_resolution(
+pub fn calculate_texture_resolution(
   window_x: f32,
   window_y: f32,
   pixel_size: u8,
@@ -92,6 +94,10 @@ fn trigger_projection_rescaling(
     );
     projection.update(desired_texture_size.x, desired_texture_size.y);
   }
+}
+
+fn window_size_changed(window_q: Query<Entity, (With<PrimaryWindow>, Changed<Window>)>) -> bool {
+  window_q.iter().next().is_some()
 }
 
 fn build_texture_image(x: f32, y: f32) -> Image {
@@ -172,8 +178,9 @@ impl Plugin for LowResPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, setup_target_camera)
-      .add_systems(Update, rebuild_texture_setup)
-      .add_systems(Update, trigger_projection_rescaling)
+      .add_systems(Update, rebuild_texture_setup.run_if(window_size_changed))
+      .add_systems(Update, trigger_projection_rescaling.run_if(window_size_changed))
+      .add_plugins(panorbit_compat::LowResPanOrbitCompatPlugin)
       .register_type::<LowResCamera>()
       .register_type::<LowResCameraTarget>();
   }

@@ -545,6 +545,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_easings"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d940ec0558d8ac2a4a755783a4704f71d2d98cbffc9449d191e1bf7aad2ce8a4"
+dependencies = [
+ "bevy",
+ "interpolation",
+]
+
+[[package]]
 name = "bevy_ecs"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -808,6 +818,16 @@ dependencies = [
  "bevy_utils",
  "thiserror",
  "tobj",
+]
+
+[[package]]
+name = "bevy_panorbit_camera"
+version = "0.7.0"
+source = "git+https://github.com/Plonq/bevy_panorbit_camera?branch=manual-input-override#5f6deb2da05d7d28b3cca6d2fdb4f25bcfb07e5c"
+dependencies = [
+ "bevy",
+ "bevy_easings",
+ "bevy_egui",
 ]
 
 [[package]]
@@ -2219,6 +2239,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "interpolation"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3b7357d2bbc5ee92f8e899ab645233e43d21407573cceb37fed8bc3dede2c02"
+
+[[package]]
 name = "io-kit-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2447,6 +2473,7 @@ dependencies = [
  "bevy_diagnostic_vertex_count",
  "bevy_mod_wanderlust",
  "bevy_obj",
+ "bevy_panorbit_camera",
  "bevy_rapier3d",
  "bevy_shader_utils",
  "nanorand",

@@ -12,6 +12,7 @@ use bevy::{
   render::camera::ScalingMode,
 };
 use bevy_rapier3d::prelude::Collider;
+use bevy_panorbit_camera::PanOrbitCamera;
 
 use crate::{
   low_res::LowResCamera,
@@ -67,6 +68,9 @@ fn setup_camera_and_lights(mut commands: Commands) {
     DepthPrepass,
     NormalPrepass,
     LowResCamera { pixel_size: 4 },
+    PanOrbitCamera {
+      ..default()
+    },
     Name::new("lowres_camera"),
   ));
 
