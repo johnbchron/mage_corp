@@ -4,6 +4,7 @@ mod markers;
 mod materials;
 mod particle;
 mod player;
+mod terrain;
 mod test_scene;
 mod utils;
 
