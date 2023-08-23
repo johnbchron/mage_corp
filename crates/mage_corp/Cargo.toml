@@ -14,4 +14,4 @@ bevy_rapier3d = "0.22.0"
 bevy_diagnostic_vertex_count = { git = "https://github.com/johnbchron/bevy_diagnostic_vertex_count", tag = "v0.4" }
 nanorand = "0.7.0"
 bevy_shader_utils = "0.5.2"
-bevy_panorbit_camera = { git = "https://github.com/Plonq/bevy_panorbit_camera", branch = "manual-input-override", version = "0.7.0", features = ["bevy_egui"] }
+bevy_panorbit_camera = { version = "0.8.0", features = ["bevy_egui"] }

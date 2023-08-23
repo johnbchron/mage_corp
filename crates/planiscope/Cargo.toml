@@ -1,0 +1,12 @@
+[package]
+name = "planiscope"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh"] }
+glam = "0.24.0"
+bevy_render = "0.11.2"
+colorsys = "0.6.7"
+rhai = { version = "1.15.1", features = ["f32_float", "no_time", "no_module", "no_closure", "no_custom_syntax", "only_i32"] }
+anyhow = "1.0.71"
