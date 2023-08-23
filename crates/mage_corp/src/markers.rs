@@ -6,8 +6,7 @@ pub struct MainCamera;
 pub struct MarkerPlugin;
 
 impl Plugin for MarkerPlugin {
-	fn build(&self, app: &mut App) {
-		app
-			.register_type::<MainCamera>();
-	}
+  fn build(&self, app: &mut App) {
+    app.register_type::<MainCamera>();
+  }
 }

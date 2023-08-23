@@ -9,13 +9,13 @@ use bevy::{
   },
   pbr::NotShadowCaster,
   prelude::*,
-  render::camera::ScalingMode,
 };
-use bevy_rapier3d::prelude::Collider;
 use bevy_panorbit_camera::PanOrbitCamera;
+use bevy_rapier3d::prelude::Collider;
 
 use crate::{
   low_res::LowResCamera,
+  markers::MainCamera,
   materials::{
     force::ForceMaterial,
     toon::{ConvertToToonMaterial, ToonMaterial},
@@ -26,7 +26,7 @@ use crate::{
       ParticleSizeBehavior,
     },
     ParticleEmitter, ParticleEmitterRegion,
-  }, markers::MainCamera,
+  },
 };
 
 pub struct TestScenePlugin;
@@ -69,9 +69,7 @@ fn setup_camera_and_lights(mut commands: Commands) {
     NormalPrepass,
     MainCamera,
     LowResCamera { pixel_size: 4 },
-    PanOrbitCamera {
-      ..default()
-    },
+    PanOrbitCamera { ..default() },
     Name::new("lowres_camera"),
   ));
 

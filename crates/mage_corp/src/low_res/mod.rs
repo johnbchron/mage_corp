@@ -96,7 +96,9 @@ fn trigger_projection_rescaling(
   }
 }
 
-fn window_size_changed(window_q: Query<Entity, (With<PrimaryWindow>, Changed<Window>)>) -> bool {
+fn window_size_changed(
+  window_q: Query<Entity, (With<PrimaryWindow>, Changed<Window>)>,
+) -> bool {
   window_q.iter().next().is_some()
 }
 
@@ -180,7 +182,10 @@ impl Plugin for LowResPlugin {
       .insert_resource(Msaa::Off)
       .add_systems(Startup, setup_target_camera)
       .add_systems(Update, rebuild_texture_setup.run_if(window_size_changed))
-      .add_systems(Update, trigger_projection_rescaling.run_if(window_size_changed))
+      .add_systems(
+        Update,
+        trigger_projection_rescaling.run_if(window_size_changed),
+      )
       .add_plugins(panorbit_compat::LowResPanOrbitCompatPlugin)
       .register_type::<LowResCamera>()
       .register_type::<LowResCameraTarget>();
