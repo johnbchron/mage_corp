@@ -26,7 +26,7 @@ use crate::{
       ParticleSizeBehavior,
     },
     ParticleEmitter, ParticleEmitterRegion,
-  },
+  }, markers::MainCamera,
 };
 
 pub struct TestScenePlugin;
@@ -58,15 +58,16 @@ fn setup_camera_and_lights(mut commands: Commands) {
         8.0,
       )
       .looking_at(Vec3::default(), Vec3::Y),
-      projection: OrthographicProjection {
-        scaling_mode: ScalingMode::WindowSize(50.0),
-        ..default()
-      }
-      .into(),
+      // projection: OrthographicProjection {
+      //   scaling_mode: ScalingMode::WindowSize(50.0),
+      //   ..default()
+      // }
+      // .into(),
       ..default()
     },
     DepthPrepass,
     NormalPrepass,
+    MainCamera,
     LowResCamera { pixel_size: 4 },
     PanOrbitCamera {
       ..default()
