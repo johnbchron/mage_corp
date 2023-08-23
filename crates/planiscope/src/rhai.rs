@@ -11,7 +11,7 @@
 //! # Example
 //!
 //! ```
-//! use mage_corp::rhai;
+//! use planiscope::rhai;
 //!
 //! let rhai_code = r#"
 //! [
@@ -21,17 +21,18 @@
 //!     )
 //! ]
 //! "#;
-//! let shape = rhai::eval().unwrap();
+//! let shape = rhai::eval(rhai_code).unwrap();
 //! ```
 
 use anyhow::{Error, Result};
 use rhai::{Dynamic, Engine, Scope};
+use serde::{Deserialize, Serialize};
 
 use crate::{builder, shape::Shape};
 
 /// A convenience for defining a shape with its translation. Produced by the
 /// `shape` function.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 struct ShapeWithTranslate(Shape, [f32; 3]);
 
 fn attach_translate(
