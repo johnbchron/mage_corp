@@ -7,6 +7,7 @@
 //! Use the `ShapeLike` trait to implement your own shapes.
 
 use fidget::{context::Node, Context};
+use serde::{Deserialize, Serialize};
 
 use crate::{comp::CompilationSettings, nso::*};
 
@@ -39,7 +40,7 @@ pub trait ShapeLike {
 }
 
 /// A shape. Contains either a shape definition or a shape operation.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Shape {
   /// A shape definition.
   ShapeDef(ShapeDef),
@@ -71,7 +72,7 @@ impl ShapeLike for Shape {
 }
 
 /// A shape definition. Shape definitions are pre-defined primitives.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ShapeDef {
   SpherePrimitive { radius: f32 },
   RectPrismPrimitive { x: f32, y: f32, z: f32 },
@@ -151,7 +152,7 @@ impl ShapeLike for ShapeDef {
 }
 
 /// A shape operation. Shape operations are operations between 1 or 2 shapes.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ShapeOp {
   /// A unary operation. This takes modifies 1 shape, with the modification
   /// specified in the `UnaryOp` enum.
@@ -194,7 +195,7 @@ impl ShapeLike for ShapeOp {
 
 /// A unary operation. This enum defines the possible unary operations and their
 /// parameters.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum UnaryOp {
   /// Translates a shape by a vector.
   Translate { pos: [f32; 3] },
@@ -259,7 +260,7 @@ impl UnaryOp {
 
 /// A binary operation. This enum defines the possible binary operations and
 /// their parameters.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BinaryOp {
   /// A union operation. This combines 2 shapes into 1.
   Union,

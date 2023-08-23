@@ -5,12 +5,13 @@ use fidget::{
   eval::{Family, Tape},
   mesh::{Mesh as FidgetMesh, Octree, Settings},
 };
+use serde::{Deserialize, Serialize};
 
 /// A wrapper around a mesh and its attributes.
 ///
 /// A `FullMesh` can be converted into a `bevy::render::mesh::Mesh` using
 /// `From`.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FullMesh {
   pub vertices:  Vec<glam::Vec3A>,
   pub triangles: Vec<glam::UVec3>,

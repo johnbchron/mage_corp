@@ -3222,6 +3222,7 @@ dependencies = [
  "fidget",
  "glam",
  "rhai",
+ "serde",
 ]
 
 [[package]]

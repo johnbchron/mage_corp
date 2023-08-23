@@ -1,6 +1,7 @@
 //! Provides `Composition`, a collection of shapes.
 
 use fidget::{context::Node, Context};
+use serde::{Deserialize, Serialize};
 
 use crate::{
   nso::nso_translate,
@@ -10,7 +11,7 @@ use crate::{
 type Position = [f32; 3];
 
 /// Settings for compiling a `Composition` into node-space.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationSettings {
   /// The minimum voxel size that can be used for a shape.
   /// This will cause `ShapeOp::Abbreviate` to drop its contents if its
@@ -24,7 +25,7 @@ pub struct CompilationSettings {
 /// to add a shape to the composition. Use `compile_solid()` or
 /// `compile_color()` to compile the composition's solid or color contents,
 /// respectively, into node-space.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Composition {
   shapes: Vec<(Shape, Position)>,
 }

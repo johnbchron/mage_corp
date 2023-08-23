@@ -10,3 +10,4 @@ bevy_render = "0.11.2"
 colorsys = "0.6.7"
 rhai = { version = "1.15.1", features = ["f32_float", "no_time", "no_module", "no_closure", "no_custom_syntax", "only_i32"] }
 anyhow = "1.0.71"
+serde = { version = "1.0.185", features = ["derive"] }
