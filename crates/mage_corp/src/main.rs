@@ -1,5 +1,6 @@
 mod debug;
 mod low_res;
+mod markers;
 mod materials;
 mod particle;
 mod player;
@@ -34,10 +35,11 @@ fn main() {
         })
         .set(ImagePlugin::default_nearest()),
     )
+    // semantics
+    .add_plugins(markers::MarkerPlugin)
     // graphics
     .add_plugins(materials::MaterialsPlugin)
     .add_plugins(low_res::LowResPlugin)
-    .insert_resource(Msaa::Off)
     // physics
     .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
     // player

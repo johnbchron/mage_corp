@@ -177,6 +177,7 @@ pub struct LowResPlugin;
 impl Plugin for LowResPlugin {
   fn build(&self, app: &mut App) {
     app
+      .insert_resource(Msaa::Off)
       .add_systems(Startup, setup_target_camera)
       .add_systems(Update, rebuild_texture_setup.run_if(window_size_changed))
       .add_systems(Update, trigger_projection_rescaling.run_if(window_size_changed))
