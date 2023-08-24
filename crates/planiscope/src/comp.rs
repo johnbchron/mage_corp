@@ -1,5 +1,8 @@
 //! Provides `Composition`, a collection of shapes.
 
+use core::hash::Hash;
+use std::hash::Hasher;
+
 use fidget::{context::Node, Context};
 use serde::{Deserialize, Serialize};
 
@@ -39,6 +42,13 @@ impl Default for Composition {
 impl From<Vec<(Shape, Position)>> for Composition {
   fn from(shapes: Vec<(Shape, Position)>) -> Self {
     Composition { shapes }
+  }
+}
+
+impl Hash for Composition {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    // use serde to serialize and then hash the result
+    serde_json::to_string(self).unwrap().hash(state);
   }
 }
 
