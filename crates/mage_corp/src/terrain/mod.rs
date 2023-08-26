@@ -16,7 +16,7 @@ use bevy::{
   prelude::*,
   tasks::{AsyncComputeTaskPool, Task},
 };
-use planiscope::{builder::box_, comp::Composition};
+use planiscope::{builder::{box_, sphere}, comp::Composition};
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
@@ -47,8 +47,8 @@ impl Default for TerrainConfig {
     Self {
       render_dist: 500.0,
       render_cube_translation_increment: 50.0,
-      mesh_max_subdivs: 8,
-      mesh_min_subdivs: 3,
+      mesh_max_subdivs: 7,
+      mesh_min_subdivs: 4,
       n_same_size_meshes: 2,
       n_sizes: 3,
     }
@@ -63,9 +63,7 @@ pub struct TerrainCurrentComposition {
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    comp.add_shape(box_(100.0, 5.0, 100.0), [0.0, -3.5, 0.0]);
-    comp.add_shape(box_(100.0, 20.0, 100.0), [-50.0, 25.0, 0.0]);
-
+    comp.add_shape(box_(1000.0, 5.0, 1000.0), [0.0, -3.5, 0.0]);
     Self { comp }
   }
 }
@@ -198,6 +196,7 @@ fn flush_assets_from_next_generation(
     for (index, terrain_mesh) in finished_tasks {
       std::mem::drop(next_gen.mesh_gen_tasks.remove(index));
       next_gen.resulting_terrain_meshes.push(terrain_mesh);
+      info!("flushed terrain mesh {}", index);
     }
   }
 }
@@ -208,6 +207,7 @@ fn spawn_next_generation_entities(
   mut commands: Commands,
   next_gen: Option<Res<TerrainNextGeneration>>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
+  mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
   if let Some(next_gen) = next_gen {
@@ -220,22 +220,32 @@ fn spawn_next_generation_entities(
       .iter()
       .map(|terrain_mesh_handle| {
         if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
-          Some(
-            commands
-              .spawn((
-                SpatialBundle::from_transform(Transform::from_translation(
-                  terrain_mesh.region.position,
-                )),
-                terrain_mesh.mesh.clone(),
-                terrain_mesh_handle.clone(),
-                toon_materials.add(ToonMaterial {
-                  color: Color::rgb(0.180, 0.267, 0.169),
-                  outline_scale: 0.0,
-                  ..default()
-                }),
-              ))
-              .id(),
-          )
+          let entity =  commands.spawn((
+            SpatialBundle::from_transform(Transform::from_translation(
+              terrain_mesh.region.position,
+            )),
+            terrain_mesh.mesh.clone(),
+            terrain_mesh_handle.clone(),
+            toon_materials.add(ToonMaterial {
+              color: Color::rgb(0.180, 0.267, 0.169),
+              outline_scale: 0.0,
+              ..default()
+            }),
+          ))
+          .id();
+
+          commands.entity(entity).with_children(|parent| {
+            parent.spawn(MaterialMeshBundle {
+              mesh: meshes.add(Mesh::from(shape::Cube::new(1.0))),
+              material: toon_materials.add(ToonMaterial {
+                color: Color::WHITE,
+                outline_scale: 0.0,
+                ..default()
+              }),
+              ..default()
+            });
+          });
+          Some(entity)
         } else {
           None
         }

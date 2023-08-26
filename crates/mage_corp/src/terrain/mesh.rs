@@ -46,16 +46,16 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
     None,
     true,
     region.max_subdivs,
-    region.max_subdivs,
+    region.min_subdivs,
   );
 
   // remove any vertices outside -1..1
-  full_mesh.prune();
+  // full_mesh.prune();
   // scale but don't translate; we'll do that with bevy
   full_mesh.transform(Vec3::ZERO.into(), region.scale.into());
 
   let mesh: Mesh = full_mesh.into();
-  info!("generated terrain mesh for position {:?} with {:?} vertices", region.position, mesh.count_vertices());
+  info!("generated terrain mesh for position {:?} and scale {:?} with {:?} vertices", region.position, region.scale, mesh.count_vertices());
 
   mesh
 }

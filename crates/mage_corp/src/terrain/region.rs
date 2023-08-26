@@ -40,9 +40,9 @@ pub fn calculate_regions(
       // take the chunk's coords, map them from 0.0..1.0 to -1.0..1.0, then
       // un-normalize them from the render cube
       let pos = (Vec3::from_array(chunk.position().float_coords()) * 2.0 - 1.0)
-        * config.render_dist
+        * config.render_dist * 2.0
         + render_cube_origin;
-      let scale = chunk.position().float_size() * config.render_dist;
+      let scale = chunk.position().float_size() * config.render_dist * 2.0;
       TerrainRegion {
         position:    pos,
         scale:       Vec3::splat(scale),
