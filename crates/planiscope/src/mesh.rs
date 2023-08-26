@@ -5,6 +5,7 @@ use fidget::{
   eval::{Family, Tape},
   mesh::{Mesh as FidgetMesh, Octree, Settings},
 };
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 /// A wrapper around a mesh and its attributes.
@@ -54,42 +55,42 @@ impl FullMesh {
       max_depth: min_depth,
     };
 
-    println!("building octree");
+    debug!("building octree");
     let octree = Octree::build::<T>(solid_tape, settings);
     let fidget_mesh = octree.walk_dual(settings);
-    println!("octree built");
+    debug!("octree built");
 
     // this converts from nalgebra vectors to glam vectors
-    println!("transforming vertices");
+    debug!("transforming vertices");
     let vertices = fidget_mesh
       .vertices
       .iter()
       .map(|v| glam::Vec3A::new(v.x, v.y, v.z))
       .collect();
-    println!("vertices transformed");
+    debug!("vertices transformed");
 
     // same conversion here
-    println!("transforming triangles");
+    debug!("transforming triangles");
     let triangles = fidget_mesh
       .triangles
       .iter()
       .map(|t| glam::UVec3::new(t[0] as u32, t[1] as u32, t[2] as u32))
       .collect();
-    println!("triangles transformed");
+    debug!("triangles transformed");
 
     let normals = if smooth_normals {
-      println!("calculating normals from surface");
+      debug!("calculating normals from surface");
       let normals = implicit_normals(&fidget_mesh, solid_tape);
-      println!("normals calculated");
+      debug!("normals calculated");
       Some(normals)
     } else {
       None
     };
 
     let colors = if let Some(color_tape) = color_tape {
-      println!("calculating colors from surface");
+      debug!("calculating colors from surface");
       let colors = implicit_colors(&fidget_mesh, color_tape);
-      println!("colors calculated");
+      debug!("colors calculated");
       Some(colors)
     } else {
       None

@@ -7,7 +7,9 @@ use bevy_mod_wanderlust::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes};
 
-use crate::materials::toon::ConvertToToonMaterial;
+use crate::{
+  materials::toon::ConvertToToonMaterial, terrain::TerrainDetailTarget,
+};
 
 pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
   commands
@@ -54,6 +56,7 @@ pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
         transform: Transform::from_xyz(0.0, 0.0, 0.0),
         ..default()
       },
+      TerrainDetailTarget,
       Name::new("player"),
     ))
     .with_children(|parent| {

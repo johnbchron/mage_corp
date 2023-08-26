@@ -41,7 +41,7 @@ impl Plugin for TestScenePlugin {
       // .add_systems(Startup, setup_particle_emitter)
       // .add_systems(Startup, setup_translucent_ball)
       // .add_systems(Startup, setup_npc_scene)
-      ;
+      .add_systems(Startup, setup_tree_scene);
   }
 }
 
@@ -221,5 +221,20 @@ fn setup_barn_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
       ..default()
     },
     Name::new("barn"),
+  ));
+}
+
+fn setup_tree_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+  commands.spawn((
+    SceneBundle {
+      scene: asset_server.load("scenes/tree.glb#Scene0"),
+      transform: Transform::from_xyz(0.0, -0.5, 0.0),
+      ..default()
+    },
+    ConvertToToonMaterial {
+      outline_scale: Some(0.0),
+      ..default()
+    },
+    Name::new("tree"),
   ));
 }

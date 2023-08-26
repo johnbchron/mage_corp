@@ -17,3 +17,5 @@ bevy_shader_utils = "0.5.2"
 bevy_panorbit_camera = { version = "0.8.0", features = ["bevy_egui"] }
 planiscope = { path = "../planiscope" }
 fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh"] }
+spatialtree = "0.1.1"
+futures-lite = "1.13.0"
