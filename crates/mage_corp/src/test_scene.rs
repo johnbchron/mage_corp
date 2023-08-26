@@ -68,7 +68,7 @@ fn setup_camera_and_lights(mut commands: Commands) {
     DepthPrepass,
     NormalPrepass,
     MainCamera,
-    LowResCamera { pixel_size: 4 },
+    LowResCamera { pixel_size: 1 },
     PanOrbitCamera { ..default() },
     Name::new("lowres_camera"),
   ));

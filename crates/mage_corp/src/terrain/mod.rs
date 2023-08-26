@@ -35,6 +35,8 @@ pub struct TerrainConfig {
   pub mesh_max_subdivs: u8,
   /// Controls the minimum number of subdivisions of each mesh.
   pub mesh_min_subdivs: u8,
+  /// Controls how much each mesh bleeds into the next.
+  pub mesh_bleed: f32,
   /// Controls the minimum number of same-sized meshes that form the border
   /// between two sizes.
   pub n_same_size_meshes: u8,
@@ -48,9 +50,10 @@ impl Default for TerrainConfig {
       render_dist: 500.0,
       render_cube_translation_increment: 50.0,
       mesh_max_subdivs: 7,
-      mesh_min_subdivs: 4,
-      n_same_size_meshes: 2,
-      n_sizes: 3,
+      mesh_min_subdivs: 1,
+      mesh_bleed: 1.1,
+      n_same_size_meshes: 1,
+      n_sizes: 6,
     }
   }
 }
@@ -63,7 +66,8 @@ pub struct TerrainCurrentComposition {
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    comp.add_shape(box_(1000.0, 5.0, 1000.0), [0.0, -3.5, 0.0]);
+    comp.add_shape(sphere(10000.0), [0.0, -10001.0, 0.0]);
+    // comp.add_shape(box_(100.0, 20.0, 100.0), [0.0, -15.0, 0.0]);
     Self { comp }
   }
 }
@@ -116,7 +120,7 @@ fn init_next_generation(
   config: TerrainConfig,
   current_comp: Composition,
 ) {
-  let regions = region::calculate_regions(&config, target_location);
+  let regions = region::calculate_regions_with_static_render_cube_origin(&config, target_location);
   let thread_pool = AsyncComputeTaskPool::get();
 
   let mut hasher = DefaultHasher::new();
@@ -196,7 +200,7 @@ fn flush_assets_from_next_generation(
     for (index, terrain_mesh) in finished_tasks {
       std::mem::drop(next_gen.mesh_gen_tasks.remove(index));
       next_gen.resulting_terrain_meshes.push(terrain_mesh);
-      info!("flushed terrain mesh {}", index);
+      // info!("flushed terrain mesh {}", index);
     }
   }
 }
@@ -242,6 +246,7 @@ fn spawn_next_generation_entities(
                 outline_scale: 0.0,
                 ..default()
               }),
+              transform: Transform::from_scale(terrain_mesh.region.scale / 8.0),
               ..default()
             });
           });

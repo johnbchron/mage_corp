@@ -52,3 +52,41 @@ pub fn calculate_regions(
     })
     .collect()
 }
+
+pub fn calculate_regions_with_static_render_cube_origin(
+  config: &TerrainConfig,
+  target_location: Vec3,
+) -> Vec<TerrainRegion> {
+  // map to 0.0..1.0
+  let target_float_coords = ((target_location / config.render_dist) + 1.0) / 2.0;
+  let target_lod_coords =
+    OctVec::from_float_coords(target_float_coords.into(), config.n_sizes);
+
+  let mut tree: OctTree<(), OctVec> = OctTree::with_capacity(32, 32);
+  tree.lod_update(
+    &[target_lod_coords],
+    config.n_same_size_meshes.into(),
+    |_| (),
+    |_, _| {},
+  );
+
+  tree
+    .iter_chunks()
+    .map(|(_, chunk)| {
+      // take the chunk's coords, map them from 0.0..1.0 to -1.0..1.0, then
+      // un-normalize them from the render cube
+      let float_size = chunk.position().float_size();
+      let float_coords = Vec3::from_array(chunk.position().float_coords());
+
+      let pos = ((float_coords + float_size / 2.0) * 2.0 - 1.0) * config.render_dist;
+      let scale = float_size * config.render_dist * config.mesh_bleed;
+      info!("pos: {:?}, scale: {:?}", pos, scale);
+      TerrainRegion {
+        position:    pos,
+        scale:       Vec3::splat(scale),
+        max_subdivs: config.mesh_max_subdivs,
+        min_subdivs: config.mesh_min_subdivs,
+      }
+    })
+    .collect()
+}

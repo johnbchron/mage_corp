@@ -94,13 +94,13 @@ pub fn nso_normalize_region(
   let size_x = ctx.constant(size[0].into());
   let size_y = ctx.constant(size[1].into());
   let size_z = ctx.constant(size[2].into());
-  let moved_x = ctx.add(x, pos_x).unwrap();
-  let moved_y = ctx.add(y, pos_y).unwrap();
-  let moved_z = ctx.add(z, pos_z).unwrap();
-  let new_x = ctx.mul(moved_x, size_x).unwrap();
-  let new_y = ctx.mul(moved_y, size_y).unwrap();
-  let new_z = ctx.mul(moved_z, size_z).unwrap();
-  ctx.remap_xyz(shape, [new_x, new_y, new_z]).unwrap()
+  let new_x = ctx.mul(x, size_x).unwrap();
+  let new_y = ctx.mul(y, size_y).unwrap();
+  let new_z = ctx.mul(z, size_z).unwrap();
+  let moved_x = ctx.add(new_x, pos_x).unwrap();
+  let moved_y = ctx.add(new_y, pos_y).unwrap();
+  let moved_z = ctx.add(new_z, pos_z).unwrap();
+  ctx.remap_xyz(shape, [moved_x, moved_y, moved_z]).unwrap()
 }
 
 /// Transform unit cube volume to a volume of size `size` centered at `pos`.
