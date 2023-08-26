@@ -1,9 +1,13 @@
-use futures_lite::future::FutureExt;
-use crate::terrain::mesh::TerrainMesh;
-use crate::terrain::region::TerrainRegion;
 use std::{
   collections::hash_map::DefaultHasher,
-  hash::{Hash, Hasher}, task::Poll,
+  hash::{Hash, Hasher},
+};
+
+use futures_lite::future::{block_on, poll_once};
+
+use crate::{
+  materials::toon::ToonMaterial,
+  terrain::{mesh::TerrainMesh, region::TerrainRegion},
 };
 mod mesh;
 mod region;
@@ -43,7 +47,7 @@ impl Default for TerrainConfig {
     Self {
       render_dist: 500.0,
       render_cube_translation_increment: 50.0,
-      mesh_max_subdivs: 6,
+      mesh_max_subdivs: 8,
       mesh_min_subdivs: 3,
       n_same_size_meshes: 2,
       n_sizes: 3,
@@ -59,7 +63,9 @@ pub struct TerrainCurrentComposition {
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    comp.add_shape(box_(100.0, 1.0, 100.0), [0.0, -0.5, 0.0]);
+    comp.add_shape(box_(100.0, 5.0, 100.0), [0.0, -3.5, 0.0]);
+    comp.add_shape(box_(100.0, 20.0, 100.0), [-50.0, 25.0, 0.0]);
+
     Self { comp }
   }
 }
@@ -76,14 +82,14 @@ pub struct TerrainCurrentGeneration {
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
 pub struct TerrainNextGeneration {
-  pub target_location: Vec3,
-  pub regions:         Vec<region::TerrainRegion>,
+  pub target_location:          Vec3,
+  pub regions:                  Vec<region::TerrainRegion>,
   #[reflect(ignore)]
-  pub mesh_gen_tasks:   Vec<Task<(Mesh, TerrainRegion)>>,
+  pub mesh_gen_tasks:           Vec<Task<(Mesh, TerrainRegion)>>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
   #[reflect(ignore)]
-  pub comp:            Composition,
-  pub comp_hash:       u64,
+  pub comp:                     Composition,
+  pub comp_hash:                u64,
 }
 
 pub struct TerrainPlugin;
@@ -91,13 +97,18 @@ pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_asset::<TerrainMesh>()
+      .register_type::<TerrainMesh>()
+      .register_asset_reflect::<TerrainMesh>()
       .register_type::<TerrainDetailTarget>()
       .register_type::<TerrainConfig>()
       .register_type::<TerrainCurrentGeneration>()
       .register_type::<TerrainNextGeneration>()
       .init_resource::<TerrainConfig>()
       .init_resource::<TerrainCurrentComposition>()
-      .add_systems(Update, kickstart_terrain_if_none);
+      .add_systems(Update, kickstart_terrain_if_none)
+      .add_systems(Update, flush_assets_from_next_generation)
+      .add_systems(Update, spawn_next_generation_entities);
   }
 }
 
@@ -107,8 +118,7 @@ fn init_next_generation(
   config: TerrainConfig,
   current_comp: Composition,
 ) {
-  let regions =
-    region::calculate_regions(&config, target_location);
+  let regions = region::calculate_regions(&config, target_location);
   let thread_pool = AsyncComputeTaskPool::get();
 
   let mut hasher = DefaultHasher::new();
@@ -116,7 +126,7 @@ fn init_next_generation(
   let comp_hash = hasher.finish();
 
   commands.insert_resource(TerrainNextGeneration {
-    target_location: target_location,
+    target_location,
     regions: regions.clone(),
     mesh_gen_tasks: regions
       .into_iter()
@@ -133,6 +143,8 @@ fn init_next_generation(
   });
 }
 
+/// Builds `TerrainNextGeneration` if neither `TerrainCurrentGeneration` nor
+/// `TerrainNextGeneration` exist.
 fn kickstart_terrain_if_none(
   mut commands: Commands,
   target_query: Query<&Transform, With<TerrainDetailTarget>>,
@@ -143,7 +155,7 @@ fn kickstart_terrain_if_none(
 ) {
   if let Some(target_transform) = target_query.iter().next() {
     if current_gen.is_none() && next_gen.is_none() {
-      info!("running `kickstart_terrain_if_none`");
+      // info!("running `kickstart_terrain_if_none`");
 
       init_next_generation(
         &mut commands,
@@ -155,26 +167,89 @@ fn kickstart_terrain_if_none(
   }
 }
 
+/// Moves built meshes out of tasks, adds them as assets, and stores them in
+/// `TerrainNextGeneration`.
 fn flush_assets_from_next_generation(
-  mut commands: Commands,
   next_gen: Option<ResMut<TerrainNextGeneration>>,
-  meshes: ResMut<Assets<Mesh>>,
-  terrain_meshes: ResMut<Assets<TerrainMesh>>,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut terrain_meshes: ResMut<Assets<TerrainMesh>>,
 ) {
-  if let Some(next_gen) = next_gen {
-    next_gen.mesh_gen_tasks.iter().enumerate().for_each(|(index, task)| {
-      match task.poll() {
-        Poll::Ready((mesh, region)) => {
-          terrain_meshes.add(
-            TerrainMesh {
+  if let Some(mut next_gen) = next_gen {
+    let mut finished_tasks = vec![];
+    let comp_hash = next_gen.comp_hash;
+    next_gen
+      .mesh_gen_tasks
+      .iter_mut()
+      .enumerate()
+      .for_each(|(index, task)| {
+        if let Some((mesh, region)) = block_on(poll_once(task)) {
+          finished_tasks.push((
+            index,
+            terrain_meshes.add(TerrainMesh {
               mesh: meshes.add(mesh),
               region,
-              comp_hash: next_gen.comp_hash,
-            }
-          );
-        },
-        Poll::Pending => (),
-      }
-    })
+              comp_hash,
+            }),
+          ));
+        }
+      });
+
+    finished_tasks.reverse();
+    for (index, terrain_mesh) in finished_tasks {
+      std::mem::drop(next_gen.mesh_gen_tasks.remove(index));
+      next_gen.resulting_terrain_meshes.push(terrain_mesh);
+    }
+  }
+}
+
+/// If `TerrainNextGeneration` is fully built, spawns entities from it and
+/// creates `TerrainCurrentGeneration`.
+fn spawn_next_generation_entities(
+  mut commands: Commands,
+  next_gen: Option<Res<TerrainNextGeneration>>,
+  terrain_meshes: Res<Assets<TerrainMesh>>,
+  mut toon_materials: ResMut<Assets<ToonMaterial>>,
+) {
+  if let Some(next_gen) = next_gen {
+    if !next_gen.mesh_gen_tasks.is_empty() {
+      return;
+    }
+
+    let entites = next_gen
+      .resulting_terrain_meshes
+      .iter()
+      .map(|terrain_mesh_handle| {
+        if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
+          Some(
+            commands
+              .spawn((
+                SpatialBundle::from_transform(Transform::from_translation(
+                  terrain_mesh.region.position,
+                )),
+                terrain_mesh.mesh.clone(),
+                terrain_mesh_handle.clone(),
+                toon_materials.add(ToonMaterial {
+                  color: Color::rgb(0.180, 0.267, 0.169),
+                  outline_scale: 0.0,
+                  ..default()
+                }),
+              ))
+              .id(),
+          )
+        } else {
+          None
+        }
+      })
+      .filter(|entity| entity.is_some())
+      .map(|entity| entity.unwrap())
+      .collect::<Vec<Entity>>();
+
+    commands.insert_resource(TerrainCurrentGeneration {
+      target_location:  next_gen.target_location,
+      terrain_entities: entites,
+      comp:             next_gen.comp.clone(),
+    });
+
+    commands.remove_resource::<TerrainNextGeneration>();
   }
 }

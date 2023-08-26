@@ -35,7 +35,7 @@ impl Plugin for TestScenePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, setup_camera_and_lights)
-      .add_systems(Startup, setup_scene_props)
+      // .add_systems(Startup, setup_scene_props)
       // .add_plugins(bevy_obj::ObjPlugin)
       // .add_systems(Startup, setup_barn_scene)
       // .add_systems(Startup, setup_particle_emitter)

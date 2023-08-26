@@ -1,12 +1,4 @@
-use std::{
-  collections::hash_map::DefaultHasher,
-  hash::{Hash, Hasher},
-};
-
-use bevy::{
-  prelude::*,
-  reflect::{TypePath, TypeUuid},
-};
+use bevy::{prelude::*, reflect::TypeUuid};
 use planiscope::{
   comp::{CompilationSettings, Composition},
   mesh::FullMesh,
@@ -14,15 +6,15 @@ use planiscope::{
 
 use super::region::TerrainRegion;
 
-#[derive(Debug, TypeUuid, TypePath)]
+#[derive(Debug, TypeUuid, Reflect)]
 #[uuid = "3dc0b7c0-e829-4634-b490-2f5f53873a1d"]
 pub struct TerrainMesh {
   /// Contains the bevy mesh for this terrain mesh.
-  mesh:      Handle<Mesh>,
+  pub mesh:      Handle<Mesh>,
   /// Describes the region that the composition was evaluated over.
-  region:    TerrainRegion,
+  pub region:    TerrainRegion,
   /// The hash of the composition.
-  comp_hash: u64,
+  pub comp_hash: u64,
 }
 
 pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
@@ -59,8 +51,11 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
 
   // remove any vertices outside -1..1
   full_mesh.prune();
-  // might not want to translate, not sure
-  full_mesh.transform(region.position.into(), region.scale.into());
+  // scale but don't translate; we'll do that with bevy
+  full_mesh.transform(Vec3::ZERO.into(), region.scale.into());
 
-  full_mesh.into()
+  let mesh: Mesh = full_mesh.into();
+  info!("generated terrain mesh for position {:?} with {:?} vertices", region.position, mesh.count_vertices());
+
+  mesh
 }
