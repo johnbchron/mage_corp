@@ -56,7 +56,13 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
 
   let mesh: Mesh = full_mesh.into();
   if mesh.count_vertices() != 0 {
-    info!("generated terrain mesh for position {:?} and scale {:?} with {:?} vertices", region.position, region.scale, mesh.count_vertices());
+    info!(
+      "generated terrain mesh for position {:?} and scale {:?} with {:?} \
+       vertices",
+      region.position,
+      region.scale,
+      mesh.count_vertices()
+    );
   }
 
   mesh

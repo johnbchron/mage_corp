@@ -16,7 +16,10 @@ use bevy::{
   prelude::*,
   tasks::{AsyncComputeTaskPool, Task},
 };
-use planiscope::{builder::{box_, sphere}, comp::Composition};
+use planiscope::{
+  builder::{box_, sphere},
+  comp::Composition,
+};
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
@@ -48,7 +51,7 @@ impl Default for TerrainConfig {
   fn default() -> Self {
     Self {
       render_dist: 500.0,
-      render_cube_translation_increment: 50.0,
+      render_cube_translation_increment: 500.0 / 8.0,
       mesh_max_subdivs: 7,
       mesh_min_subdivs: 1,
       mesh_bleed: 1.1,
@@ -120,7 +123,10 @@ fn init_next_generation(
   config: TerrainConfig,
   current_comp: Composition,
 ) {
-  let regions = region::calculate_regions_with_static_render_cube_origin(&config, target_location);
+  let regions = region::calculate_regions_with_static_render_cube_origin(
+    &config,
+    target_location,
+  );
   let thread_pool = AsyncComputeTaskPool::get();
 
   let mut hasher = DefaultHasher::new();
@@ -224,19 +230,20 @@ fn spawn_next_generation_entities(
       .iter()
       .map(|terrain_mesh_handle| {
         if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
-          let entity =  commands.spawn((
-            SpatialBundle::from_transform(Transform::from_translation(
-              terrain_mesh.region.position,
-            )),
-            terrain_mesh.mesh.clone(),
-            terrain_mesh_handle.clone(),
-            toon_materials.add(ToonMaterial {
-              color: Color::rgb(0.180, 0.267, 0.169),
-              outline_scale: 0.0,
-              ..default()
-            }),
-          ))
-          .id();
+          let entity = commands
+            .spawn((
+              SpatialBundle::from_transform(Transform::from_translation(
+                terrain_mesh.region.position,
+              )),
+              terrain_mesh.mesh.clone(),
+              terrain_mesh_handle.clone(),
+              toon_materials.add(ToonMaterial {
+                color: Color::rgb(0.180, 0.267, 0.169),
+                outline_scale: 0.0,
+                ..default()
+              }),
+            ))
+            .id();
 
           commands.entity(entity).with_children(|parent| {
             parent.spawn(MaterialMeshBundle {

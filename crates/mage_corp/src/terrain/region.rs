@@ -40,7 +40,8 @@ pub fn calculate_regions(
       // take the chunk's coords, map them from 0.0..1.0 to -1.0..1.0, then
       // un-normalize them from the render cube
       let pos = (Vec3::from_array(chunk.position().float_coords()) * 2.0 - 1.0)
-        * config.render_dist * 2.0
+        * config.render_dist
+        * 2.0
         + render_cube_origin;
       let scale = chunk.position().float_size() * config.render_dist * 2.0;
       TerrainRegion {
@@ -57,8 +58,13 @@ pub fn calculate_regions_with_static_render_cube_origin(
   config: &TerrainConfig,
   target_location: Vec3,
 ) -> Vec<TerrainRegion> {
+  let render_cube_origin = target_location
+    - target_location.rem(config.render_cube_translation_increment);
+  // the target relative to the render cube
+  let offset_target = target_location - render_cube_origin;
   // map to 0.0..1.0
-  let target_float_coords = ((target_location / config.render_dist) + 1.0) / 2.0;
+  let target_float_coords =
+    ((offset_target / config.render_dist) + 1.0) / 2.0;
   let target_lod_coords =
     OctVec::from_float_coords(target_float_coords.into(), config.n_sizes);
 
@@ -78,7 +84,8 @@ pub fn calculate_regions_with_static_render_cube_origin(
       let float_size = chunk.position().float_size();
       let float_coords = Vec3::from_array(chunk.position().float_coords());
 
-      let pos = ((float_coords + float_size / 2.0) * 2.0 - 1.0) * config.render_dist;
+      let pos =
+        ((float_coords + float_size / 2.0) * 2.0 - 1.0) * config.render_dist + render_cube_origin;
       let scale = float_size * config.render_dist * config.mesh_bleed;
       info!("pos: {:?}, scale: {:?}", pos, scale);
       TerrainRegion {
