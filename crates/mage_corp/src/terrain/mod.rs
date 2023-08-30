@@ -45,6 +45,8 @@ pub struct TerrainConfig {
   pub n_same_size_meshes: u8,
   /// Controls how many times to subdivide the world box.
   pub n_sizes: u8,
+  /// Whether to place 1/8th scale cubes at the position of each mesh.
+  pub debug_transform_cubes: bool,
 }
 
 impl Default for TerrainConfig {
@@ -56,7 +58,8 @@ impl Default for TerrainConfig {
       mesh_min_subdivs: 1,
       mesh_bleed: 1.1,
       n_same_size_meshes: 1,
-      n_sizes: 6,
+      n_sizes: 5,
+      debug_transform_cubes: false,
     }
   }
 }
@@ -69,8 +72,8 @@ pub struct TerrainCurrentComposition {
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    comp.add_shape(sphere(10000.0), [0.0, -10001.0, 0.0]);
-    // comp.add_shape(box_(100.0, 20.0, 100.0), [0.0, -15.0, 0.0]);
+    // comp.add_shape(sphere(1000.0), [0.0, -1000.0, 0.0]);
+    comp.add_shape(box_(100.0, 20.0, 100.0), [0.0, -15.0, 0.0]);
     Self { comp }
   }
 }
@@ -217,6 +220,7 @@ fn spawn_next_generation_entities(
   mut commands: Commands,
   next_gen: Option<Res<TerrainNextGeneration>>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
+  config: Res<TerrainConfig>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
@@ -245,18 +249,20 @@ fn spawn_next_generation_entities(
             ))
             .id();
 
-          commands.entity(entity).with_children(|parent| {
-            parent.spawn(MaterialMeshBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube::new(1.0))),
-              material: toon_materials.add(ToonMaterial {
-                color: Color::WHITE,
-                outline_scale: 0.0,
+          if config.debug_transform_cubes {
+            commands.entity(entity).with_children(|parent| {
+              parent.spawn(MaterialMeshBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube::new(1.0))),
+                material: toon_materials.add(ToonMaterial {
+                  color: Color::WHITE,
+                  outline_scale: 0.0,
+                  ..default()
+                }),
+                transform: Transform::from_scale(terrain_mesh.region.scale / 8.0),
                 ..default()
-              }),
-              transform: Transform::from_scale(terrain_mesh.region.scale / 8.0),
-              ..default()
+              });
             });
-          });
+          }
           Some(entity)
         } else {
           None
