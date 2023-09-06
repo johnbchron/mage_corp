@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::{comp::CompilationSettings, nso::*};
 
 /// A trait with methods for compiling Fidget nodes from shape definitions.
-pub trait ShapeLike {
+pub trait ShapeLike: Serialize {
   /// Compiles the solid field of a shape.
   fn compile_solid(
     &self,

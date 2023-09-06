@@ -4,7 +4,7 @@ use planiscope::{
   mesh::FullMesh,
 };
 
-use super::region::TerrainRegion;
+use super::{components, region::TerrainRegion};
 
 #[derive(Debug, TypeUuid, Reflect)]
 #[uuid = "3dc0b7c0-e829-4634-b490-2f5f53873a1d"]
@@ -17,7 +17,10 @@ pub struct TerrainMesh {
   pub comp_hash: u64,
 }
 
-pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
+pub fn generate(
+  comp: &Composition<components::HillyLand>,
+  region: &TerrainRegion,
+) -> Mesh {
   // start a new fidget context
   let mut ctx = fidget::Context::new();
 

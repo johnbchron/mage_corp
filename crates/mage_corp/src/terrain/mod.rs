@@ -1,24 +1,25 @@
+mod components;
+mod mesh;
+mod region;
+
 use std::{
   collections::hash_map::DefaultHasher,
   hash::{Hash, Hasher},
 };
 
-use futures_lite::future::{block_on, poll_once};
-
-use crate::{
-  materials::toon::ToonMaterial,
-  terrain::{mesh::TerrainMesh, region::TerrainRegion},
-};
-mod mesh;
-mod region;
-
 use bevy::{
   prelude::*,
   tasks::{AsyncComputeTaskPool, Task},
 };
+use futures_lite::future::{block_on, poll_once};
 use planiscope::{
   builder::{box_, sphere},
   comp::Composition,
+};
+
+use crate::{
+  materials::toon::ToonMaterial,
+  terrain::{mesh::TerrainMesh, region::TerrainRegion},
 };
 
 #[derive(Component, Reflect, Default)]
@@ -66,14 +67,13 @@ impl Default for TerrainConfig {
 
 #[derive(Resource)]
 pub struct TerrainCurrentComposition {
-  pub comp: Composition,
+  pub comp: Composition<components::HillyLand>,
 }
 
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    // comp.add_shape(sphere(1000.0), [0.0, -1000.0, 0.0]);
-    comp.add_shape(box_(100.0, 20.0, 100.0), [0.0, -15.0, 0.0]);
+    comp.add_shape(components::HillyLand {}, [0.0, 0.0, 0.0] );
     Self { comp }
   }
 }
@@ -84,7 +84,7 @@ pub struct TerrainCurrentGeneration {
   pub target_location:  Vec3,
   pub terrain_entities: Vec<Entity>,
   #[reflect(ignore)]
-  pub comp:             Composition,
+  pub comp:             Composition<components::HillyLand>,
 }
 
 #[derive(Resource, Reflect, Default)]
@@ -96,7 +96,7 @@ pub struct TerrainNextGeneration {
   pub mesh_gen_tasks:           Vec<Task<(Mesh, TerrainRegion)>>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
   #[reflect(ignore)]
-  pub comp:                     Composition,
+  pub comp:                     Composition<components::HillyLand>,
   pub comp_hash:                u64,
 }
 
@@ -124,7 +124,7 @@ fn init_next_generation(
   commands: &mut Commands,
   target_location: Vec3,
   config: TerrainConfig,
-  current_comp: Composition,
+  current_comp: Composition<components::HillyLand>,
 ) {
   let regions = region::calculate_regions_with_static_render_cube_origin(
     &config,
@@ -258,7 +258,9 @@ fn spawn_next_generation_entities(
                   outline_scale: 0.0,
                   ..default()
                 }),
-                transform: Transform::from_scale(terrain_mesh.region.scale / 8.0),
+                transform: Transform::from_scale(
+                  terrain_mesh.region.scale / 8.0,
+                ),
                 ..default()
               });
             });

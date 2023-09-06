@@ -35,26 +35,26 @@ fn main() {
 
 #[derive(Resource, Clone, PartialEq)]
 struct UiSettings {
-  name:          String,
-  parsing_error: Option<String>,
-  translate:     [f32; 3],
-  scale:         [f32; 3],
-  max_depth:     usize,
-  min_depth:     usize,
-  use_colors:    bool,
+  name:           String,
+  parsing_error:  Option<String>,
+  translate:      [f32; 3],
+  scale:          [f32; 3],
+  max_depth:      usize,
+  min_depth:      usize,
+  use_colors:     bool,
   smooth_normals: bool,
 }
 
 impl Default for UiSettings {
   fn default() -> Self {
     Self {
-      name:          "shape_name".to_string(),
-      parsing_error: None,
-      translate:     [0.0, 0.0, 0.0],
-      scale:         [5.0, 5.0, 5.0],
-      max_depth:     6,
-      min_depth:     0,
-      use_colors:    true,
+      name:           "shape_name".to_string(),
+      parsing_error:  None,
+      translate:      [0.0, 0.0, 0.0],
+      scale:          [5.0, 5.0, 5.0],
+      max_depth:      6,
+      min_depth:      0,
+      use_colors:     true,
       smooth_normals: true,
     }
   }
@@ -100,7 +100,8 @@ fn configure_ui_state_system(
     sphere(1.0),
     [0.0, 0.0, 0.0]
   )
-]"#.to_string();
+]"#
+    .to_string();
 }
 
 fn ui_system(
@@ -128,7 +129,7 @@ fn ui_system(
       });
 
       ui.label(ui_settings.parsing_error.clone().unwrap_or("".to_string()));
-      
+
       ui.separator();
 
       ui.label("Viewing Cube");
@@ -168,9 +169,9 @@ fn ui_system(
             .clamp_range(-100.0..=100.0),
         );
       });
-      
+
       ui.separator();
-      
+
       ui.label("Depth");
       ui.horizontal(|ui| {
         ui.label("Max: ");
@@ -188,21 +189,19 @@ fn ui_system(
             .clamp_range(0..=10),
         );
       });
-      
+
       ui.separator();
-      
+
       ui.horizontal(|ui| {
         ui.checkbox(&mut ui_settings.use_colors, "Use Colors");
         ui.checkbox(&mut ui_settings.smooth_normals, "Smooth Normals");
       });
     });
-    
-    
 }
 
 fn setup_3d_env(mut commands: Commands, mut gizmo_config: ResMut<GizmoConfig>) {
   gizmo_config.depth_bias = -1.0;
-  
+
   // lights
   commands.spawn(DirectionalLightBundle {
     directional_light: DirectionalLight {
@@ -242,21 +241,9 @@ fn animate_light_direction(
 
 fn draw_gizmos(mut gizmos: Gizmos) {
   // draw axes at origin
-  gizmos.line(
-    Vec3::ZERO,
-    Vec3::X * 0.5,
-    Color::rgb(1.0, 0.0, 0.0),
-  );
-  gizmos.line(
-    Vec3::ZERO,
-    Vec3::Y * 0.5,
-    Color::rgb(0.0, 1.0, 0.0),
-  );
-  gizmos.line(
-    Vec3::ZERO,
-    Vec3::Z * 0.5,
-    Color::rgb(0.0, 0.0, 1.0),
-  );
+  gizmos.line(Vec3::ZERO, Vec3::X * 0.5, Color::rgb(1.0, 0.0, 0.0));
+  gizmos.line(Vec3::ZERO, Vec3::Y * 0.5, Color::rgb(0.0, 1.0, 0.0));
+  gizmos.line(Vec3::ZERO, Vec3::Z * 0.5, Color::rgb(0.0, 0.0, 1.0));
 }
 
 fn compute_mesh(

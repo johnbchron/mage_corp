@@ -6,10 +6,7 @@ use std::hash::Hasher;
 use fidget::{context::Node, Context};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-  nso::nso_translate,
-  shape::{Shape, ShapeLike},
-};
+use crate::{nso::nso_translate, shape::ShapeLike};
 
 type Position = [f32; 3];
 
@@ -29,37 +26,37 @@ pub struct CompilationSettings {
 /// `compile_color()` to compile the composition's solid or color contents,
 /// respectively, into node-space.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Composition {
-  shapes: Vec<(Shape, Position)>,
+pub struct Composition<S: ShapeLike> {
+  shapes: Vec<(S, Position)>,
 }
 
-impl Default for Composition {
+impl<S: ShapeLike> Default for Composition<S> {
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl From<Vec<(Shape, Position)>> for Composition {
-  fn from(shapes: Vec<(Shape, Position)>) -> Self {
+impl<S: ShapeLike> From<Vec<(S, Position)>> for Composition<S> {
+  fn from(shapes: Vec<(S, Position)>) -> Self {
     Composition { shapes }
   }
 }
 
-impl Hash for Composition {
+impl<S: ShapeLike> Hash for Composition<S> {
   fn hash<H: Hasher>(&self, state: &mut H) {
     // use serde to serialize and then hash the result
     serde_json::to_string(self).unwrap().hash(state);
   }
 }
 
-impl Composition {
+impl<S: ShapeLike> Composition<S> {
   /// Create a new, empty `Composition`.
   pub fn new() -> Self {
     Composition { shapes: Vec::new() }
   }
 
   /// Add a shape to the composition.
-  pub fn add_shape(&mut self, shape: Shape, translation: Position) {
+  pub fn add_shape(&mut self, shape: S, translation: Position) {
     self.shapes.push((shape, translation));
   }
 

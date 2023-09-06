@@ -19,3 +19,4 @@ planiscope = { path = "../planiscope" }
 fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh"] }
 spatialtree = "0.1.1"
 futures-lite = "1.13.0"
+serde = { version = "1.0.188", features = ["derive"] }
