@@ -1,10 +1,14 @@
-use bevy::{prelude::*, reflect::TypeUuid};
+use bevy::{
+  prelude::*,
+  reflect::TypeUuid,
+  render::{mesh::Indices, render_resource::PrimitiveTopology},
+};
 use planiscope::{
-  comp::{CompilationSettings, Composition},
-  mesh::FullMesh,
+  comp::Composition,
+  mesher::{FidgetMesher, FullMesh, Mesher, MesherInputs},
 };
 
-use super::{components, region::TerrainRegion};
+use super::region::TerrainRegion;
 
 #[derive(Debug, TypeUuid, Reflect)]
 #[uuid = "3dc0b7c0-e829-4634-b490-2f5f53873a1d"]
@@ -17,47 +21,17 @@ pub struct TerrainMesh {
   pub comp_hash: u64,
 }
 
-pub fn generate(
-  comp: &Composition<components::HillyLand>,
-  region: &TerrainRegion,
-) -> Mesh {
-  // start a new fidget context
-  let mut ctx = fidget::Context::new();
-
-  // maybe make this configurable?
-  let compilation_settings = CompilationSettings {
-    min_voxel_size: 0.01,
+pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
+  let mesher_inputs = MesherInputs {
+    position: region.position.into(),
+    scale:    region.scale.into(),
+    subdivs:  region.subdivs,
+    prune:    true,
   };
 
-  // get the node for the solid field
-  let solid_root_node = comp.compile_solid(&mut ctx, &compilation_settings);
-  // transform the desired region into -1..1
-  let solid_root_node = planiscope::nso::nso_normalize_region(
-    solid_root_node,
-    [region.position.x, region.position.y, region.position.z],
-    [region.scale.x, region.scale.y, region.scale.z],
-    &mut ctx,
-  );
+  let full_mesh = FidgetMesher::build_mesh(comp, mesher_inputs).unwrap();
 
-  // get the tape
-  let solid_tape: fidget::eval::Tape<fidget::vm::Eval> =
-    ctx.get_tape(solid_root_node).unwrap();
-
-  // tesselate
-  let mut full_mesh = FullMesh::tesselate(
-    &solid_tape,
-    None,
-    true,
-    region.max_subdivs,
-    region.min_subdivs,
-  );
-
-  // remove any vertices outside -1..1
-  full_mesh.prune();
-  // scale but don't translate; we'll do that with bevy
-  full_mesh.transform(Vec3::ZERO.into(), region.scale.into());
-
-  let mesh: Mesh = full_mesh.into();
+  let mesh: Mesh = bevy_mesh_from_pls_mesh(full_mesh);
   if mesh.count_vertices() != 0 {
     info!(
       "generated terrain mesh for position {:?} and scale {:?} with {:?} \
@@ -69,4 +43,34 @@ pub fn generate(
   }
 
   mesh
+}
+
+fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
+  let mut bevy_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  bevy_mesh.insert_attribute(
+    Mesh::ATTRIBUTE_POSITION,
+    mesh
+      .vertices
+      .clone()
+      .into_iter()
+      .map(Into::<[f32; 3]>::into)
+      .collect::<Vec<_>>(),
+  );
+  bevy_mesh.insert_attribute(
+    Mesh::ATTRIBUTE_NORMAL,
+    mesh
+      .normals
+      .into_iter()
+      .map(Into::<[f32; 3]>::into)
+      .collect::<Vec<_>>(),
+  );
+
+  bevy_mesh.set_indices(Some(Indices::U32(
+    mesh
+      .triangles
+      .into_iter()
+      .flat_map(|v| [v.x, v.y, v.z])
+      .collect(),
+  )));
+  bevy_mesh
 }
