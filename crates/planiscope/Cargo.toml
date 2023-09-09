@@ -4,13 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-fidget = { git = "https://github.com/johnbchron/fidget", rev = "044608f", default-features = false, features = ["mesh"] }
+fidget = { git = "https://github.com/johnbchron/fidget", rev = "ca8e0b0", default-features = false, features = ["mesh", "rhai"] }
 glam = "0.24.0"
-bevy_render = "0.11.2"
-colorsys = "0.6.7"
-rhai = { version = "1.15.1", features = ["f32_float", "no_time", "no_module", "no_closure", "no_custom_syntax", "only_i32"] }
-anyhow = "1.0.71"
-serde = { version = "1.0.185", features = ["derive"] }
-serde_json = "1.0.105"
-log = "0.4.20"
-timing = "0.2.3"
+serde = { version = "1.0.188", features = ["derive"] }

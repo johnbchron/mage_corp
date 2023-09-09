@@ -1381,12 +1381,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
-name = "colorsys"
-version = "0.6.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54261aba646433cb567ec89844be4c4825ca92a4f8afba52fc4dd88436e31bbd"
-
-[[package]]
 name = "com-rs"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1855,6 +1849,25 @@ dependencies = [
  "num-traits",
  "once_cell",
  "ordered-float",
+ "static_assertions",
+ "thiserror",
+]
+
+[[package]]
+name = "fidget"
+version = "0.2.0"
+source = "git+https://github.com/johnbchron/fidget?rev=ca8e0b0#ca8e0b0889b72394d739121d51f2c38ed3f0eec8"
+dependencies = [
+ "arrayvec",
+ "crossbeam-deque",
+ "document-features",
+ "ieee754",
+ "nalgebra 0.31.4",
+ "num-derive",
+ "num-traits",
+ "once_cell",
+ "ordered-float",
+ "rhai",
  "static_assertions",
  "thiserror",
 ]
@@ -2556,7 +2569,7 @@ dependencies = [
  "bevy_panorbit_camera",
  "bevy_rapier3d",
  "bevy_shader_utils",
- "fidget",
+ "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=044608f)",
  "futures-lite",
  "nanorand",
  "planiscope",
@@ -3226,16 +3239,9 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 name = "planiscope"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "bevy_render",
- "colorsys",
- "fidget",
+ "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=ca8e0b0)",
  "glam",
- "log",
- "rhai",
  "serde",
- "serde_json",
- "timing",
 ]
 
 [[package]]
@@ -3245,7 +3251,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_egui",
- "fidget",
+ "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=044608f)",
  "futures-lite",
  "planiscope",
 ]
@@ -3489,14 +3495,15 @@ checksum = "216080ab382b992234dda86873c18d4c48358f5cfcb70fd693d7f6f2131b628b"
 
 [[package]]
 name = "rhai"
-version = "1.15.1"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c2a11a646ef5d4e4a9d5cf80c7e4ecb20f9b1954292d5c5e6d6cbc8d33728ec"
+checksum = "896e97ee277f7874f5737d02961357688b471e8fabe823f81f7f410d008e4138"
 dependencies = [
  "ahash 0.8.3",
- "bitflags 1.3.2",
+ "bitflags 2.4.0",
  "instant",
  "num-traits",
+ "once_cell",
  "rhai_codegen",
  "smallvec",
  "smartstring",
@@ -3504,13 +3511,13 @@ dependencies = [
 
 [[package]]
 name = "rhai_codegen"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db74e3fdd29d969a0ec1f8e79171a6f0f71d0429293656901db382d248c4c021"
+checksum = "853977598f084a492323fe2f7896b4100a86284ee8473612de60021ea341310f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.31",
 ]
 
 [[package]]
@@ -3932,12 +3939,6 @@ dependencies = [
  "jpeg-decoder",
  "weezl",
 ]
-
-[[package]]
-name = "timing"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ef973380ab2960e2b4e49d552291930c217b947ee831f73000ebc5439074bf0"
 
 [[package]]
 name = "tiny-keccak"
