@@ -5,7 +5,7 @@ use fidget::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Shape {
   FidgetRhai { expr: String },
 }
@@ -33,43 +33,10 @@ impl IntoNode for &Shape {
 
 #[cfg(test)]
 mod tests {
-  use fidget::vm;
-
   use super::*;
 
   #[test]
-  fn uses_a_context() {
-    let shape = Shape::FidgetRhai {
-      expr: "x + 1".to_string(),
-    };
-
-    let mut ctx = Context::new();
-    let node = shape.into_node(&mut ctx);
-
-    // make sure it translate correctly from rhai
-    assert!(node.is_ok());
-    let node = node.unwrap();
-
-    // this is 5 because the engine declares x, y, and z by default
-    // and we add a constant node for 1.0 and an addition node
-    assert_eq!(ctx.len(), 5);
-
-    // make sure we can get a tape
-    let tape = ctx.get_tape::<vm::Eval>(node);
-    assert!(tape.is_ok());
-    let tape = tape.unwrap();
-
-    // build an evaluator and make sure the result is correct
-    let evaluator = tape.new_point_evaluator();
-    let eval_result = evaluator.eval(0.0, 0.0, 0.0, &[]);
-    assert!(eval_result.is_ok());
-    let eval_result = eval_result.unwrap();
-
-    assert_eq!(eval_result.0, 1.0);
-  }
-
-  #[test]
-  fn converts_to_node() {
+  fn rhai_shape_converts_to_node() {
     let mut ctx = Context::new();
 
     let x_plus_one = (&Shape::new_rhai("x + 1")).into_node(&mut ctx);
@@ -84,7 +51,7 @@ mod tests {
   }
 
   #[test]
-  fn does_not_mangle_a_context() {
+  fn rhai_shape_eval_does_not_mangle_a_context() {
     let mut ctx = Context::new();
 
     let x = ctx.x();
