@@ -72,5 +72,17 @@ pub fn fidget_normals(
   vertices: &[glam::Vec3A],
   tape: &Tape<MeshingEvaluatorFamily>,
 ) -> Result<Vec<glam::Vec3A>, fidget::Error> {
-  todo!()
+  Ok(
+    tape
+      .new_grad_slice_evaluator()
+      .eval(
+        &vertices.iter().map(|v| v.x).collect::<Vec<_>>(),
+        &vertices.iter().map(|v| v.y).collect::<Vec<_>>(),
+        &vertices.iter().map(|v| v.z).collect::<Vec<_>>(),
+        &[],
+      )?
+      .into_iter()
+      .map(|g| glam::Vec3A::new(g.dx, g.dy, g.dz))
+      .collect(),
+  )
 }
