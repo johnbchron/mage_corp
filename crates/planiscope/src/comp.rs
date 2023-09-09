@@ -2,9 +2,11 @@ use fidget::{
   context::{IntoNode, Node},
   Context,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::shape::Shape;
 
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Composition {
   shapes: Vec<Shape>,
 }
@@ -12,6 +14,12 @@ pub struct Composition {
 impl Composition {
   pub fn new(shapes: Vec<Shape>) -> Self {
     Self { shapes }
+  }
+}
+
+impl Default for Composition {
+  fn default() -> Self {
+    Self::new(vec![Shape::new_rhai("y - 1")])
   }
 }
 

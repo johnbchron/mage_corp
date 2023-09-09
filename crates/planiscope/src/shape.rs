@@ -5,7 +5,7 @@ use fidget::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub enum Shape {
   FidgetRhai { expr: String },
 }

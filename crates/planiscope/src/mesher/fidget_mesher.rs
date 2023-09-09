@@ -10,7 +10,7 @@ use crate::{
 
 impl Mesher for FidgetMesher {
   fn build_mesh(
-    comp: Composition,
+    comp: &Composition,
     inputs: MesherInputs,
   ) -> Result<FullMesh, fidget::Error> {
     // get a node for the composition
@@ -55,10 +55,10 @@ impl Mesher for FidgetMesher {
       triangles,
       normals,
     };
-    mesh.transform(inputs.position, inputs.scale);
     if inputs.prune {
       mesh.prune();
     }
+    mesh.transform(glam::Vec3A::ZERO, inputs.scale);
 
     Ok(mesh)
   }

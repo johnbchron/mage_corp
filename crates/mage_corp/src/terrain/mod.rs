@@ -1,4 +1,4 @@
-mod components;
+// mod components;
 mod mesh;
 mod region;
 
@@ -12,10 +12,7 @@ use bevy::{
   tasks::{AsyncComputeTaskPool, Task},
 };
 use futures_lite::future::{block_on, poll_once};
-use planiscope::{
-  builder::{box_, sphere},
-  comp::Composition,
-};
+use planiscope::{comp::Composition, shape::Shape};
 
 use crate::{
   materials::toon::ToonMaterial,
@@ -36,9 +33,7 @@ pub struct TerrainConfig {
   /// to follow the player. Should change proportionally to render_dist.
   pub render_cube_translation_increment: f32,
   /// Controls the maximum subdivisions of each mesh.
-  pub mesh_max_subdivs: u8,
-  /// Controls the minimum number of subdivisions of each mesh.
-  pub mesh_min_subdivs: u8,
+  pub mesh_subdivs: u8,
   /// Controls how much each mesh bleeds into the next.
   pub mesh_bleed: f32,
   /// Controls the minimum number of same-sized meshes that form the border
@@ -55,8 +50,7 @@ impl Default for TerrainConfig {
     Self {
       render_dist: 500.0,
       render_cube_translation_increment: 500.0 / 8.0,
-      mesh_max_subdivs: 7,
-      mesh_min_subdivs: 1,
+      mesh_subdivs: 5,
       mesh_bleed: 1.1,
       n_same_size_meshes: 1,
       n_sizes: 5,
@@ -67,13 +61,14 @@ impl Default for TerrainConfig {
 
 #[derive(Resource)]
 pub struct TerrainCurrentComposition {
-  pub comp: Composition<components::HillyLand>,
+  pub comp: Composition,
 }
 
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
-    let mut comp = Composition::new();
-    comp.add_shape(components::HillyLand {}, [0.0, 0.0, 0.0]);
+    let comp = Composition::new(vec![Shape::new_rhai(
+      "(y - 1.0) + ((sin(x / 10.0) + sin(z / 10.0)) * 2.0)",
+    )]);
     Self { comp }
   }
 }
@@ -84,7 +79,7 @@ pub struct TerrainCurrentGeneration {
   pub target_location:  Vec3,
   pub terrain_entities: Vec<Entity>,
   #[reflect(ignore)]
-  pub comp:             Composition<components::HillyLand>,
+  pub comp:             Composition,
 }
 
 #[derive(Resource, Reflect, Default)]
@@ -96,7 +91,7 @@ pub struct TerrainNextGeneration {
   pub mesh_gen_tasks:           Vec<Task<(Mesh, TerrainRegion)>>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
   #[reflect(ignore)]
-  pub comp:                     Composition<components::HillyLand>,
+  pub comp:                     Composition,
   pub comp_hash:                u64,
 }
 
@@ -124,7 +119,7 @@ fn init_next_generation(
   commands: &mut Commands,
   target_location: Vec3,
   config: TerrainConfig,
-  current_comp: Composition<components::HillyLand>,
+  current_comp: Composition,
 ) {
   let regions = region::calculate_regions_with_static_render_cube_origin(
     &config,
@@ -232,7 +227,7 @@ fn spawn_next_generation_entities(
     let entites = next_gen
       .resulting_terrain_meshes
       .iter()
-      .map(|terrain_mesh_handle| {
+      .filter_map(|terrain_mesh_handle| {
         if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
           let entity = commands
             .spawn((
@@ -270,8 +265,6 @@ fn spawn_next_generation_entities(
           None
         }
       })
-      .filter(|entity| entity.is_some())
-      .map(|entity| entity.unwrap())
       .collect::<Vec<Entity>>();
 
     commands.insert_resource(TerrainCurrentGeneration {

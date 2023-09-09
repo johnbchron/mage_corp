@@ -28,7 +28,7 @@ pub struct FastSurfaceNetsMesher;
 
 pub trait Mesher {
   fn build_mesh(
-    comp: Composition,
+    comp: &Composition,
     inputs: MesherInputs,
   ) -> Result<FullMesh, fidget::Error>;
 }

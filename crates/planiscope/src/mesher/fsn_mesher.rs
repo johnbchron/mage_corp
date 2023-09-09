@@ -4,8 +4,8 @@ use crate::mesher::{
 
 impl Mesher for FastSurfaceNetsMesher {
   fn build_mesh(
-    comp: Composition,
-    inputs: MesherInputs,
+    _comp: &Composition,
+    _inputs: MesherInputs,
   ) -> Result<FullMesh, fidget::Error> {
     todo!()
   }
