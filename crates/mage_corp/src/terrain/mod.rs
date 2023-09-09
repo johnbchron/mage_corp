@@ -73,7 +73,7 @@ pub struct TerrainCurrentComposition {
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
     let mut comp = Composition::new();
-    comp.add_shape(components::HillyLand {}, [0.0, 0.0, 0.0] );
+    comp.add_shape(components::HillyLand {}, [0.0, 0.0, 0.0]);
     Self { comp }
   }
 }
