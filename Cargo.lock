@@ -1856,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "fidget"
 version = "0.2.0"
-source = "git+https://github.com/johnbchron/fidget?rev=ca8e0b0#ca8e0b0889b72394d739121d51f2c38ed3f0eec8"
+source = "git+https://github.com/johnbchron/fidget?rev=21b468a#21b468aa0747eea396eef17b1cb86503e4bdd5be"
 dependencies = [
  "arrayvec",
  "crossbeam-deque",
@@ -3239,7 +3239,7 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 name = "planiscope"
 version = "0.1.0"
 dependencies = [
- "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=ca8e0b0)",
+ "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=21b468a)",
  "glam",
  "serde",
 ]

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-fidget = { git = "https://github.com/johnbchron/fidget", rev = "ca8e0b0", default-features = false, features = ["mesh", "rhai"] }
+fidget = { git = "https://github.com/johnbchron/fidget", rev = "21b468a", default-features = false, features = ["mesh", "rhai"] }
+# fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh", "rhai"] }
 glam = "0.24.0"
 serde = { version = "1.0.188", features = ["derive"] }
