@@ -29,7 +29,8 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
     prune:    true,
   };
 
-  let full_mesh = FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap();
+  let full_mesh =
+    FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap();
 
   let mesh: Mesh = bevy_mesh_from_pls_mesh(full_mesh);
   if mesh.count_vertices() != 0 {

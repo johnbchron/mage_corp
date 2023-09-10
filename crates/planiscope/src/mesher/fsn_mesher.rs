@@ -42,10 +42,13 @@ impl Mesher for FastSurfaceNetsMesher {
 
     // all of the delinearized points from the shape descriptor, in -1..1
     let points = (0u32..ndshape_descriptor.size())
-      .into_iter()
       .map(|x| ndshape_descriptor.delinearize(x))
       .map(|p| {
-        glam::Vec3A::new(normalize_shape_coords(p[0]), normalize_shape_coords(p[1]), normalize_shape_coords(p[2]))
+        glam::Vec3A::new(
+          normalize_shape_coords(p[0]),
+          normalize_shape_coords(p[1]),
+          normalize_shape_coords(p[2]),
+        )
       })
       .collect::<Vec<glam::Vec3A>>();
 
@@ -68,16 +71,17 @@ impl Mesher for FastSurfaceNetsMesher {
       &mut buffer,
     );
 
-    // convert vertices and triangles into something we can use (what full_mesh is expecting)
+    // convert vertices and triangles into something we can use (what full_mesh
+    // is expecting)
     let vertices = buffer
       .positions
       .iter()
       .map(|a| glam::Vec3A::from_array(*a) / (shape_length as f32 / 2.0) - 1.0)
       .collect::<Vec<glam::Vec3A>>();
-    // this uses a chunk operation on the slice because the indices aren't in triplets
+    // this uses a chunk operation on the slice because the indices aren't in
+    // triplets
     let triangles = (&buffer.indices)
       .chunks(3)
-      .into_iter()
       .map(|c| glam::UVec3::from_array([c[0], c[1], c[2]]))
       .collect::<Vec<glam::UVec3>>();
 
