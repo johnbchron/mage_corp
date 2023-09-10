@@ -1,4 +1,3 @@
-// mod components;
 mod mesh;
 mod region;
 
