@@ -46,7 +46,7 @@
                 --prefix XCURSOR_THEME : "Adwaita" \
                 --prefix ALSA_PLUGIN_DIR : ${pkgs.pipewire.lib}/lib/alsa-lib
               mkdir -p $out/bin/assets
-              cp -a assets $out/bin
+              cp -a crates/mage_corp/assets $out/bin
             '';
           };
         };
