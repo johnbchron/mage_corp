@@ -50,7 +50,7 @@ impl Default for TerrainConfig {
     Self {
       render_dist: 500.0,
       render_cube_translation_increment: 500.0 / 8.0,
-      mesh_subdivs: 5,
+      mesh_subdivs: 6,
       mesh_bleed: 1.1,
       n_same_size_meshes: 1,
       n_sizes: 5,

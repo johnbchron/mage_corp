@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+fast-surface-nets = "0.2.0"
 fidget = { git = "https://github.com/johnbchron/fidget", rev = "21b468a", default-features = false, features = ["mesh", "rhai"] }
 # fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh", "rhai"] }
 glam = { version = "0.24.0", features = ["serde"] }

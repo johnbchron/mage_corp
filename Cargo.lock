@@ -769,7 +769,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "267f2ec44aa948051768b1320c2dbff0871799e0a3b746f5fe5b6ee7258fbaf5"
 dependencies = [
- "glam",
+ "glam 0.24.1",
  "serde",
 ]
 
@@ -779,7 +779,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d98eaa7f40b97bb9b2d681ecf9fd439830a7eb88ad2846680d4f4acd285cf84"
 dependencies = [
- "glam",
+ "glam 0.24.1",
 ]
 
 [[package]]
@@ -875,7 +875,7 @@ dependencies = [
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
- "glam",
+ "glam 0.24.1",
  "once_cell",
  "parking_lot",
  "serde",
@@ -1737,7 +1737,7 @@ checksum = "8fce2eeef77fd4a293a54b62aa00ac9daebfbcda4bf8998c5a815635b004aa1c"
 dependencies = [
  "const_panic",
  "encase_derive",
- "glam",
+ "glam 0.24.1",
  "thiserror",
 ]
 
@@ -1816,6 +1816,16 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
+
+[[package]]
+name = "fast-surface-nets"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d332c6935fee77eb269b29eb27c92dbfe4b4043592c399fb3f6a4e5a1aa03ad3"
+dependencies = [
+ "glam 0.20.5",
+ "ndshape",
+]
 
 [[package]]
 name = "fastrand"
@@ -2030,6 +2040,12 @@ checksum = "6fb8d784f27acf97159b40fc4db5ecd8aa23b9ad5ef69cdd136d3bc80665f0c0"
 
 [[package]]
 name = "glam"
+version = "0.20.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f43e957e744be03f5801a55472f593d43fabdebf25a4585db250f04d86b1675f"
+
+[[package]]
+name = "glam"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42218cb640844e3872cc3c153dc975229e080a6c4733b34709ef445610550226"
@@ -2218,7 +2234,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cb3df16a7bcb1b5bc092abd55e14f77ca70aea14445026e264586fc62889a10"
 dependencies = [
  "constgebra",
- "glam",
+ "glam 0.24.1",
 ]
 
 [[package]]
@@ -2744,7 +2760,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "307ed9b18cc2423f29e83f84fd23a8e73628727990181f18641a8b5dc2ab1caa"
 dependencies = [
  "approx",
- "glam",
+ "glam 0.24.1",
  "matrixmultiply",
  "nalgebra-macros 0.2.1",
  "num-complex",
@@ -2809,6 +2825,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cf2aae958bd232cac5069850591667ad422d263686d75b52a065f9badeee5a3"
 dependencies = [
  "jni-sys",
+]
+
+[[package]]
+name = "ndshape"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "975bce586ad637e27f6dc26ee907c07050686a588695bfd64b7873a9d48a700c"
+dependencies = [
+ "static_assertions",
 ]
 
 [[package]]
@@ -3239,8 +3264,9 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 name = "planiscope"
 version = "0.1.0"
 dependencies = [
+ "fast-surface-nets",
  "fidget 0.2.0 (git+https://github.com/johnbchron/fidget?rev=21b468a)",
- "glam",
+ "glam 0.24.1",
  "serde",
 ]
 
