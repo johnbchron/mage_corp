@@ -53,7 +53,7 @@
 
         # For `nix develop`:
         devShells.default = pkgs.mkShell rec {
-          nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps;
+          nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps ++ [toolchain];
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
         };
       }
