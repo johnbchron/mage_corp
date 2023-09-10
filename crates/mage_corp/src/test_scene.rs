@@ -58,11 +58,11 @@ fn setup_camera_and_lights(mut commands: Commands) {
         8.0,
       )
       .looking_at(Vec3::default(), Vec3::Y),
-      // projection: OrthographicProjection {
-      //   scaling_mode: ScalingMode::WindowSize(50.0),
-      //   ..default()
-      // }
-      // .into(),
+      projection: PerspectiveProjection {
+        fov: 0.2,
+        ..default()
+      }
+      .into(),
       ..default()
     },
     DepthPrepass,
