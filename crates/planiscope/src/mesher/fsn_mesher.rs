@@ -89,9 +89,6 @@ impl Mesher for FastSurfaceNetsMesher {
       triangles,
       normals,
     };
-    // if inputs.prune {
-    //   mesh.prune();
-    // }
     mesh.transform(glam::Vec3A::ZERO, inputs.scale);
 
     Ok(mesh)
