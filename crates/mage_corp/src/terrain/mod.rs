@@ -1,12 +1,9 @@
-use std::ops::Rem;
-
-use crate::utils::despawn::Despawn;
 mod mesh;
 mod region;
-
 use std::{
   collections::hash_map::DefaultHasher,
   hash::{Hash, Hasher},
+  ops::Rem,
 };
 
 use bevy::{
@@ -19,6 +16,7 @@ use planiscope::{comp::Composition, shape::Shape};
 use crate::{
   materials::toon::ToonMaterial,
   terrain::{mesh::TerrainMesh, region::TerrainRegion},
+  utils::despawn::Despawn,
 };
 
 #[derive(Component, Reflect, Default)]
@@ -34,8 +32,9 @@ pub struct TerrainConfig {
   /// Controls how far from the previous target position the target needs to
   /// move to trigger a terrain regeneration. The trigger distance is equal
   /// to `render_dist / 2.0_f32.powf(render_cube_subdiv_trigger)`.
-  /// Should be greater than or equal to `render_cube_translation_subdiv_increment`,
-  /// and less than or equal to `n_sizes`.
+  /// Should be greater than or equal to
+  /// `render_cube_translation_subdiv_increment`, and less than or equal to
+  /// `n_sizes`.
   pub render_cube_subdiv_trigger: f32,
   /// Controls the increment in which the render cube will move from the origin
   /// to follow the player. The increment is equal to `render_dist /
@@ -214,8 +213,13 @@ fn init_next_generation(
         })
       })
       .collect();
-      
-    info!("starting terrain generation with {:?}% recycled regions", (existing_terrain_meshes.len() as f32) / ((existing_terrain_meshes.len() + regions.len()) as f32) * 100.0);
+
+    info!(
+      "starting terrain generation with {:?}% recycled regions",
+      (existing_terrain_meshes.len() as f32)
+        / ((existing_terrain_meshes.len() + regions.len()) as f32)
+        * 100.0
+    );
 
     // insert the `TerrainNextGeneration` resource
     commands.insert_resource(TerrainNextGeneration {
@@ -268,7 +272,10 @@ fn kickstart_terrain(
   mut trigger_regen_events: EventWriter<TerrainTriggerRegeneration>,
 ) {
   if let Some(target_transform) = target_query.iter().next() {
-    info!("sending TerrainTriggerRegeneration event with target: {:?}", target_transform);
+    info!(
+      "sending TerrainTriggerRegeneration event with target: {:?}",
+      target_transform
+    );
     trigger_regen_events.send(TerrainTriggerRegeneration {
       target_location: target_transform.translation,
     });
@@ -380,8 +387,11 @@ fn transition_generations(
       commands.entity(*entity).insert(Despawn);
     }
   }
-  
-  info!("completed terrain generation with {} terrain entities", entites.len());
+
+  info!(
+    "completed terrain generation with {} terrain entities",
+    entites.len()
+  );
 
   commands.insert_resource(TerrainCurrentGeneration {
     target_location:  next_gen.target_location,
