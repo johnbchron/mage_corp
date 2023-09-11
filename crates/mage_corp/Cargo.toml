@@ -15,7 +15,6 @@ nanorand = "0.7.0"
 bevy_shader_utils = "0.5.2"
 bevy_panorbit_camera = { version = "0.8.0", features = ["bevy_egui"] }
 planiscope = { path = "../planiscope" }
-fidget = { git = "https://github.com/johnbchron/fidget", rev = "044608f", default-features = false, features = ["mesh"] }
 spatialtree = "0.1.1"
 futures-lite = "1.13.0"
 serde = { version = "1.0.188", features = ["derive"] }
