@@ -254,14 +254,9 @@ fn eligible_for_new_gen(
   if let Some(target_transform) = target_query.iter().next() {
     let target_location = target_transform.translation;
     // we compare to 1.0 to give it a little margin
-    if (current_gen_target - target_location)
-      .rem(config.trigger_distance())
-      .length()
-      > 1.0
-    {
-      // :)
-      return true;
-    }
+    return (current_gen_target
+      - current_gen_target.rem(config.trigger_distance()))
+      != (target_location - target_location.rem(config.trigger_distance()));
   }
   false
 }
