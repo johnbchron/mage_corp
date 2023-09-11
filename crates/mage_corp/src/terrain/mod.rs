@@ -78,8 +78,17 @@ impl Default for TerrainConfig {
   }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
 pub struct TerrainCurrentComposition(pub Composition);
+
+impl TerrainCurrentComposition {
+  fn comp_hash(&self) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    self.0.hash(&mut hasher);
+    hasher.finish()
+  }
+}
 
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
@@ -98,6 +107,14 @@ pub struct TerrainCurrentGeneration {
   pub terrain_entities: Vec<Entity>,
   #[reflect(ignore)]
   pub comp:             Composition,
+}
+
+impl TerrainCurrentGeneration {
+  fn comp_hash(&self) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    self.comp.hash(&mut hasher);
+    hasher.finish()
+  }
 }
 
 #[derive(Resource, Reflect, Default)]
@@ -134,6 +151,7 @@ impl Plugin for TerrainPlugin {
       .register_type::<TerrainDetailTarget>()
       .register_type::<TerrainCurrentGeneration>()
       .register_type::<TerrainNextGeneration>()
+      .register_type::<TerrainCurrentComposition>()
       .init_resource::<TerrainCurrentComposition>()
       // configure events
       .add_event::<TerrainTriggerRegeneration>()
@@ -169,9 +187,7 @@ fn init_next_generation(
 ) {
   if let Some(event) = events.iter().next() {
     // hash the current composition
-    let mut hasher = DefaultHasher::new();
-    current_comp.0.hash(&mut hasher);
-    let comp_hash = hasher.finish();
+    let comp_hash = current_comp.comp_hash();
 
     // start a vector for `TerrainMesh`'s which have already been built
     let mut existing_terrain_meshes: Vec<Handle<TerrainMesh>> = vec![];
@@ -232,6 +248,7 @@ fn init_next_generation(
 }
 
 fn eligible_for_new_gen(
+  current_comp: Res<TerrainCurrentComposition>,
   current_gen: Option<Res<TerrainCurrentGeneration>>,
   next_gen: Option<Res<TerrainNextGeneration>>,
   target_query: Query<&Transform, With<TerrainDetailTarget>>,
@@ -247,13 +264,19 @@ fn eligible_for_new_gen(
   }
 
   // this means we have a current gen but no next gen
+  let current_gen = current_gen.unwrap();
+
+  // check if the current composition's hash matches the current gen's comp hash
+  if current_comp.comp_hash() != current_gen.comp_hash() {
+    return true;
+  }
+
   // check if the target is too far away from the current gen's target
-  let current_gen_target = current_gen.unwrap().target_location;
   if let Some(target_transform) = target_query.iter().next() {
     let target_location = target_transform.translation;
     // we compare to 1.0 to give it a little margin
-    return (current_gen_target
-      - current_gen_target.rem(config.trigger_distance()))
+    return (current_gen.target_location
+      - current_gen.target_location.rem(config.trigger_distance()))
       != (target_location - target_location.rem(config.trigger_distance()));
   } else {
     error!("no `TerrainDetailTarget` found");
