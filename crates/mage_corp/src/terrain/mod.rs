@@ -257,6 +257,8 @@ fn eligible_for_new_gen(
     return (current_gen_target
       - current_gen_target.rem(config.trigger_distance()))
       != (target_location - target_location.rem(config.trigger_distance()));
+  } else {
+    error!("no `TerrainDetailTarget` found");
   }
   false
 }
@@ -274,6 +276,8 @@ fn kickstart_terrain(
     trigger_regen_events.send(TerrainTriggerRegeneration {
       target_location: target_transform.translation,
     });
+  } else {
+    error!("no `TerrainDetailTarget` found");
   }
 }
 
@@ -301,9 +305,11 @@ fn flush_assets_from_next_generation(
             comp_hash,
           }),
         ));
-      }
+      } // no else clause bc a `None` just means the task isn't complete yet
     });
 
+  // we reverse the finished tasks so that the index order from the enumerate
+  // is preserved when we `.remove` from mesh_gen_tasks
   finished_tasks.reverse();
   for (index, terrain_mesh) in finished_tasks {
     std::mem::drop(next_gen.mesh_gen_tasks.remove(index));
@@ -381,7 +387,7 @@ fn transition_generations(
     for entity in current_gen.terrain_entities.iter() {
       commands.entity(*entity).insert(DespawnTag);
     }
-  }
+  } // no else clause because the old current_gen is allowed to not exist
 
   info!(
     "completed terrain generation with {} terrain entities",
