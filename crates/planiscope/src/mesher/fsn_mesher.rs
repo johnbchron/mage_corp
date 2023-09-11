@@ -80,7 +80,8 @@ impl Mesher for FastSurfaceNetsMesher {
       .collect::<Vec<glam::Vec3A>>();
     // this uses a chunk operation on the slice because the indices aren't in
     // triplets
-    let triangles = (&buffer.indices)
+    let triangles = buffer
+      .indices
       .chunks(3)
       .map(|c| glam::UVec3::from_array([c[0], c[1], c[2]]))
       .collect::<Vec<glam::UVec3>>();

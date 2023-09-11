@@ -783,16 +783,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_mod_wanderlust"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55467b2a1d6df65288730ec1b7eab3025f290b23489949d90802f173c2a56cf2"
-dependencies = [
- "bevy",
- "bevy_rapier3d",
-]
-
-[[package]]
 name = "bevy_obj"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2580,7 +2570,6 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_diagnostic_vertex_count",
- "bevy_mod_wanderlust",
  "bevy_obj",
  "bevy_panorbit_camera",
  "bevy_rapier3d",
