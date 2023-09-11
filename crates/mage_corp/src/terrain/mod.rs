@@ -16,7 +16,7 @@ use planiscope::{comp::Composition, shape::Shape};
 use crate::{
   materials::toon::ToonMaterial,
   terrain::{mesh::TerrainMesh, region::TerrainRegion},
-  utils::despawn::Despawn,
+  utils::despawn::DespawnTag,
 };
 
 #[derive(Component, Reflect, Default)]
@@ -384,7 +384,7 @@ fn transition_generations(
   // despawn the old entities if current_gen exists
   if let Some(current_gen) = current_gen {
     for entity in current_gen.terrain_entities.iter() {
-      commands.entity(*entity).insert(Despawn);
+      commands.entity(*entity).insert(DespawnTag);
     }
   }
 

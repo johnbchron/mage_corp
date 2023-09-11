@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::utils::despawn::Despawn;
+use crate::utils::despawn::DespawnTag;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -56,7 +56,7 @@ fn remove_expired_lifetimes(
   for (entity, timer_lifetime) in timer_lifetimes.iter() {
     if timer_lifetime.is_expired() {
       if let Some(mut entity_commands) = commands.get_entity(entity) {
-        entity_commands.insert(Despawn);
+        entity_commands.insert(DespawnTag);
       }
     }
   }
