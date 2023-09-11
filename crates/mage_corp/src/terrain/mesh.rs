@@ -34,7 +34,7 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
 
   let mesh: Mesh = bevy_mesh_from_pls_mesh(full_mesh);
   if mesh.count_vertices() != 0 {
-    info!(
+    debug!(
       "generated terrain mesh for position {:?} and scale {:?} with {:?} \
        vertices",
       region.position,

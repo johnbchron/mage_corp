@@ -69,7 +69,7 @@ impl Default for TerrainConfig {
     Self {
       render_dist: 500.0,
       render_cube_subdiv_trigger: 4.0,
-      render_cube_translation_subdiv_increment: 2.0,
+      render_cube_translation_subdiv_increment: 3.0,
       mesh_subdivs: 6,
       mesh_bleed: 1.05,
       n_same_size_meshes: 1,
@@ -193,7 +193,7 @@ fn init_next_generation(
             let mut handle = Handle::weak(t_mesh_handle_id);
             handle.make_strong(&terrain_meshes);
             existing_terrain_meshes.push(handle);
-            info!("recycling terrain mesh for region: {:?}", r);
+            debug!("recycling terrain mesh for region: {:?}", r);
             return false;
           }
         }
@@ -214,6 +214,8 @@ fn init_next_generation(
         })
       })
       .collect();
+      
+    info!("starting terrain generation with {:?}% recycled regions", (existing_terrain_meshes.len() as f32) / ((existing_terrain_meshes.len() + regions.len()) as f32) * 100.0);
 
     // insert the `TerrainNextGeneration` resource
     commands.insert_resource(TerrainNextGeneration {
@@ -248,10 +250,6 @@ fn eligible_for_new_gen(
   if let Some(target_transform) = target_query.iter().next() {
     let target_location = target_transform.translation;
     // we compare to 1.0 to give it a little margin
-    info!(
-      "current_gen_target: {:?}, target_location: {:?}",
-      current_gen_target, target_location
-    );
     if (current_gen_target - target_location)
       .rem(config.trigger_distance())
       .length()
@@ -270,6 +268,7 @@ fn kickstart_terrain(
   mut trigger_regen_events: EventWriter<TerrainTriggerRegeneration>,
 ) {
   if let Some(target_transform) = target_query.iter().next() {
+    info!("sending TerrainTriggerRegeneration event with target: {:?}", target_transform);
     trigger_regen_events.send(TerrainTriggerRegeneration {
       target_location: target_transform.translation,
     });
@@ -346,6 +345,7 @@ fn transition_generations(
               outline_scale: 0.0,
               ..default()
             }),
+            Name::new(format!("terrain_mesh_{:?}", terrain_mesh_handle.id())),
           ))
           .id();
 
@@ -380,6 +380,8 @@ fn transition_generations(
       commands.entity(*entity).insert(Despawn);
     }
   }
+  
+  info!("completed terrain generation with {} terrain entities", entites.len());
 
   commands.insert_resource(TerrainCurrentGeneration {
     target_location:  next_gen.target_location,
