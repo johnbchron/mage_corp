@@ -34,7 +34,8 @@ pub struct TerrainConfig {
   /// Controls how far from the previous target position the target needs to
   /// move to trigger a terrain regeneration. The trigger distance is equal
   /// to `render_dist / 2.0_f32.powf(render_cube_subdiv_trigger)`.
-  /// Should be larger than `render_cube_translation_subdiv_increment`.
+  /// Should be greater than or equal to `render_cube_translation_subdiv_increment`,
+  /// and less than or equal to `n_sizes`.
   pub render_cube_subdiv_trigger: f32,
   /// Controls the increment in which the render cube will move from the origin
   /// to follow the player. The increment is equal to `render_dist /
