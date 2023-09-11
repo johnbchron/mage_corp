@@ -79,9 +79,7 @@ impl Default for TerrainConfig {
 }
 
 #[derive(Resource)]
-pub struct TerrainCurrentComposition {
-  pub comp: Composition,
-}
+pub struct TerrainCurrentComposition(pub Composition);
 
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
@@ -89,7 +87,7 @@ impl Default for TerrainCurrentComposition {
       "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
        20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
     )]);
-    Self { comp }
+    Self(comp)
   }
 }
 
@@ -172,7 +170,7 @@ fn init_next_generation(
   if let Some(event) = events.iter().next() {
     // hash the current composition
     let mut hasher = DefaultHasher::new();
-    current_comp.comp.hash(&mut hasher);
+    current_comp.0.hash(&mut hasher);
     let comp_hash = hasher.finish();
 
     // start a vector for `TerrainMesh`'s which have already been built
@@ -208,7 +206,7 @@ fn init_next_generation(
       .into_iter()
       .map(|region| {
         thread_pool.spawn({
-          let current_comp = current_comp.comp.clone();
+          let current_comp = current_comp.0.clone();
           async move { (mesh::generate(&current_comp, &region), region) }
         })
       })
@@ -227,7 +225,7 @@ fn init_next_generation(
       regions,
       mesh_gen_tasks,
       resulting_terrain_meshes: existing_terrain_meshes,
-      comp: current_comp.comp.clone(),
+      comp: current_comp.0.clone(),
       comp_hash,
     });
   }
