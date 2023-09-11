@@ -1,3 +1,4 @@
+use bevy_reflect::Reflect;
 use fidget::{
   context::{IntoNode, Node},
   rhai::Engine,
@@ -5,7 +6,7 @@ use fidget::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize, Reflect)]
 pub enum Shape {
   FidgetRhai { expr: String },
 }

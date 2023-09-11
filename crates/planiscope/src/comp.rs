@@ -1,3 +1,4 @@
+use bevy_reflect::Reflect;
 use fidget::{
   context::{IntoNode, Node},
   Context,
@@ -6,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::shape::Shape;
 
-#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize, Reflect)]
 pub struct Composition {
   shapes: Vec<Shape>,
 }
