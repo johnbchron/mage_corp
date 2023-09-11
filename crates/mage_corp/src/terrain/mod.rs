@@ -1,3 +1,6 @@
+use std::ops::Rem;
+
+use crate::utils::despawn::Despawn;
 mod mesh;
 mod region;
 
@@ -28,9 +31,15 @@ pub struct TerrainConfig {
   /// The half-size of the render cube to build (smallest distance from player
   /// to edge).
   pub render_dist: f32,
+  /// Controls how far from the previous target position the target needs to
+  /// move to trigger a terrain regeneration. The trigger distance is equal
+  /// to `render_dist / 2.0_f32.powf(render_cube_subdiv_trigger)`.
+  /// Should be larger than `render_cube_translation_subdiv_increment`.
+  pub render_cube_subdiv_trigger: f32,
   /// Controls the increment in which the render cube will move from the origin
-  /// to follow the player. Should change proportionally to render_dist.
-  pub render_cube_translation_increment: f32,
+  /// to follow the player. The increment is equal to `render_dist /
+  /// 2.0_f32.powf(render_cube_translation_subdiv_increment)`.
+  pub render_cube_translation_subdiv_increment: f32,
   /// Controls the maximum subdivisions of each mesh.
   pub mesh_subdivs: u8,
   /// Controls how much each mesh bleeds into the next.
@@ -44,16 +53,27 @@ pub struct TerrainConfig {
   pub debug_transform_cubes: bool,
 }
 
+impl TerrainConfig {
+  pub fn render_cube_translation_increment(&self) -> f32 {
+    self.render_dist
+      / 2.0_f32.powf(self.render_cube_translation_subdiv_increment)
+  }
+  pub fn trigger_distance(&self) -> f32 {
+    self.render_dist / 2.0_f32.powf(self.render_cube_subdiv_trigger)
+  }
+}
+
 impl Default for TerrainConfig {
   fn default() -> Self {
     Self {
       render_dist: 500.0,
-      render_cube_translation_increment: 500.0 / 8.0,
+      render_cube_subdiv_trigger: 4.0,
+      render_cube_translation_subdiv_increment: 2.0,
       mesh_subdivs: 6,
       mesh_bleed: 1.05,
       n_same_size_meshes: 1,
       n_sizes: 5,
-      debug_transform_cubes: false,
+      debug_transform_cubes: true,
     }
   }
 }
@@ -124,7 +144,7 @@ impl Plugin for TerrainPlugin {
         Update,
         (
           (
-            kickstart_terrain.run_if(no_terrain_gens_exist),
+            kickstart_terrain.run_if(eligible_for_new_gen),
             init_next_generation
               .run_if(on_event::<TerrainTriggerRegeneration>()),
           )
@@ -147,18 +167,39 @@ fn init_next_generation(
   mut events: EventReader<TerrainTriggerRegeneration>,
   config: Res<TerrainConfig>,
   current_comp: Res<TerrainCurrentComposition>,
+  terrain_meshes: Res<Assets<TerrainMesh>>,
 ) {
   if let Some(event) = events.iter().next() {
-    // calculate the regions that need to be built
-    let regions = region::calculate_regions_with_static_render_cube_origin(
-      &config,
-      event.target_location,
-    );
-
     // hash the current composition
     let mut hasher = DefaultHasher::new();
     current_comp.comp.hash(&mut hasher);
     let comp_hash = hasher.finish();
+
+    // start a vector for `TerrainMesh`'s which have already been built
+    let mut existing_terrain_meshes: Vec<Handle<TerrainMesh>> = vec![];
+
+    // calculate the regions that need to be built
+    let regions = region::calculate_regions(&config, event.target_location)
+      .iter()
+      .filter(|r| {
+        // Iterate through all of the terrain meshes to look for ones which
+        // match the region and composition hash we're working with.
+        // It's fine to iterate through all of them every time because
+        // terrain meshes are actually only 88 bytes.
+        for (t_mesh_handle_id, t_mesh) in terrain_meshes.iter() {
+          if t_mesh.region == **r && t_mesh.comp_hash == comp_hash {
+            // build a strong handle out of the handle ID
+            let mut handle = Handle::weak(t_mesh_handle_id);
+            handle.make_strong(&terrain_meshes);
+            existing_terrain_meshes.push(handle);
+            info!("recycling terrain mesh for region: {:?}", r);
+            return false;
+          }
+        }
+        true
+      })
+      .copied()
+      .collect::<Vec<TerrainRegion>>();
 
     // spawn tasks for generating meshes for the regions
     let thread_pool = AsyncComputeTaskPool::get();
@@ -178,20 +219,48 @@ fn init_next_generation(
       target_location: event.target_location,
       regions,
       mesh_gen_tasks,
-      resulting_terrain_meshes: vec![],
+      resulting_terrain_meshes: existing_terrain_meshes,
       comp: current_comp.comp.clone(),
       comp_hash,
     });
   }
 }
 
-/// Returns `true` if neither `TerrainCurrentGeneration` nor
-/// `TerrainNextGeneration` exist.
-fn no_terrain_gens_exist(
+fn eligible_for_new_gen(
   current_gen: Option<Res<TerrainCurrentGeneration>>,
   next_gen: Option<Res<TerrainNextGeneration>>,
+  target_query: Query<&Transform, With<TerrainDetailTarget>>,
+  config: Res<TerrainConfig>,
 ) -> bool {
-  current_gen.is_none() && next_gen.is_none()
+  // if the next gen is already queued, don't bother
+  if next_gen.is_some() {
+    return false;
+  }
+  // if there is neither a current gen nor a next gen, go for it
+  if current_gen.is_none() {
+    return true;
+  }
+
+  // this means we have a current gen but no next gen
+  // check if the target is too far away from the current gen's target
+  let current_gen_target = current_gen.unwrap().target_location;
+  if let Some(target_transform) = target_query.iter().next() {
+    let target_location = target_transform.translation;
+    // we compare to 1.0 to give it a little margin
+    info!(
+      "current_gen_target: {:?}, target_location: {:?}",
+      current_gen_target, target_location
+    );
+    if (current_gen_target - target_location)
+      .rem(config.trigger_distance())
+      .length()
+      > 1.0
+    {
+      // :)
+      return true;
+    }
+  }
+  false
 }
 
 /// Sends a `TerrainTriggerRegeneration` event.
@@ -252,6 +321,7 @@ fn next_gen_is_ready(next_gen: Option<Res<TerrainNextGeneration>>) -> bool {
 /// creates `TerrainCurrentGeneration`.
 fn transition_generations(
   mut commands: Commands,
+  current_gen: Option<Res<TerrainCurrentGeneration>>,
   next_gen: Res<TerrainNextGeneration>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
   config: Res<TerrainConfig>,
@@ -302,6 +372,13 @@ fn transition_generations(
       }
     })
     .collect::<Vec<Entity>>();
+
+  // despawn the old entities if current_gen exists
+  if let Some(current_gen) = current_gen {
+    for entity in current_gen.terrain_entities.iter() {
+      commands.entity(*entity).insert(Despawn);
+    }
+  }
 
   commands.insert_resource(TerrainCurrentGeneration {
     target_location:  next_gen.target_location,
