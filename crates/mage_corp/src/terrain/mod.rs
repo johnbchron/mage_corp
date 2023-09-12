@@ -131,49 +131,99 @@ pub struct TerrainNextGeneration {
 }
 
 #[derive(Event)]
-struct TerrainTriggerRegeneration {
+pub struct TerrainTriggerRegeneration {
   pub target_location: Vec3,
 }
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
+pub enum TerrainEnabledState {
+  #[default]
+  Disabled,
+  Enabled,
+}
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub struct TerrainSystemSet;
 
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_state::<TerrainEnabledState>()
       // configure `TerrainMesh`
       .add_asset::<TerrainMesh>()
       .register_type::<TerrainMesh>()
       .register_asset_reflect::<TerrainMesh>()
       // configure `TerrainConfig`
       .register_type::<TerrainConfig>()
-      .init_resource::<TerrainConfig>()
       // register other components & resources
+      .register_type::<TerrainEnabledState>()
       .register_type::<TerrainDetailTarget>()
       .register_type::<TerrainCurrentGeneration>()
       .register_type::<TerrainNextGeneration>()
       .register_type::<TerrainCurrentComposition>()
-      .init_resource::<TerrainCurrentComposition>()
       // configure events
       .add_event::<TerrainTriggerRegeneration>()
+      // configure set
+      .configure_set(
+        Update,
+        TerrainSystemSet.run_if(in_state(TerrainEnabledState::Enabled)),
+      )
       // add systems
       .add_systems(
         Update,
         (
-          (
-            kickstart_terrain.run_if(eligible_for_new_gen),
-            init_next_generation
-              .run_if(on_event::<TerrainTriggerRegeneration>()),
-          )
-            .chain(),
-          (
-            flush_assets_from_next_generation
-              .run_if(resource_exists::<TerrainNextGeneration>()),
-            transition_generations.run_if(next_gen_is_ready),
-          )
-            .chain(),
-        ),
-      );
+          kickstart_terrain.run_if(
+            in_state(TerrainEnabledState::Enabled)
+              .and_then(eligible_for_new_gen),
+          ),
+          init_next_generation.run_if(
+            in_state(TerrainEnabledState::Enabled)
+              .and_then(on_event::<TerrainTriggerRegeneration>()),
+          ),
+          flush_assets_from_next_generation.run_if(
+            in_state(TerrainEnabledState::Enabled)
+              .and_then(resource_exists::<TerrainNextGeneration>()),
+          ),
+          transition_generations.run_if(
+            in_state(TerrainEnabledState::Enabled).and_then(next_gen_is_ready),
+          ),
+        )
+          .chain()
+          .in_set(TerrainSystemSet),
+      )
+      .add_systems(OnEnter(TerrainEnabledState::Enabled), setup_terrain)
+      .add_systems(OnExit(TerrainEnabledState::Enabled), cleanup_terrain);
   }
+}
+
+fn setup_terrain(mut commands: Commands) {
+  commands.insert_resource(TerrainConfig::default());
+  commands.insert_resource(TerrainCurrentComposition::default());
+  info!("setup terrain resources");
+}
+
+fn cleanup_terrain(world: &mut World) {
+  // despawn all the current entities
+  if let Some(current_gen) = world.remove_resource::<TerrainCurrentGeneration>()
+  {
+    current_gen.terrain_entities.iter().for_each(|entity| {
+      world.entity_mut(*entity).despawn_recursive();
+    });
+  }
+
+  // cancel all the next generation tasks
+  if let Some(next_gen) = world.remove_resource::<TerrainNextGeneration>() {
+    // the cancel method consumes the task
+    next_gen.mesh_gen_tasks.into_iter().for_each(|task| {
+      block_on(task.cancel());
+    });
+  }
+
+  // remove the rest of the resources
+  world.remove_resource::<TerrainConfig>();
+  world.remove_resource::<TerrainCurrentComposition>();
 }
 
 /// Builds `TerrainNextGeneration` when a `TerrainTriggerRegeneration` event is
@@ -292,7 +342,7 @@ fn kickstart_terrain(
   if let Some(target_transform) = target_query.iter().next() {
     info!(
       "sending TerrainTriggerRegeneration event with target: {:?}",
-      target_transform
+      target_transform.translation
     );
     trigger_regen_events.send(TerrainTriggerRegeneration {
       target_location: target_transform.translation,
