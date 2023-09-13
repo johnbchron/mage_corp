@@ -18,3 +18,4 @@ planiscope = { path = "../planiscope" }
 spatialtree = "0.1.1"
 futures-lite = "1.13.0"
 serde = { version = "1.0.188", features = ["derive"] }
+rmp = "0.8.12"

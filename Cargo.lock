@@ -2559,6 +2559,7 @@ dependencies = [
  "futures-lite",
  "nanorand",
  "planiscope",
+ "rmp",
  "serde",
  "spatialtree",
 ]
@@ -3503,6 +3504,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.32",
+]
+
+[[package]]
+name = "rmp"
+version = "0.8.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f9860a6cc38ed1da53456442089b4dfa35e7cedaa326df63017af88385e6b20"
+dependencies = [
+ "byteorder",
+ "num-traits",
+ "paste",
 ]
 
 [[package]]
