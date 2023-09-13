@@ -3,7 +3,7 @@ mod region;
 use std::{
   collections::hash_map::DefaultHasher,
   hash::{Hash, Hasher},
-  ops::Rem,
+  ops::Rem, time::Duration,
 };
 
 use bevy::{
@@ -128,6 +128,7 @@ pub struct TerrainNextGeneration {
   #[reflect(ignore)]
   pub comp:                     Composition,
   pub comp_hash:                u64,
+  pub start_time:               Duration,
 }
 
 #[derive(Event)]
@@ -234,6 +235,7 @@ fn init_next_generation(
   config: Res<TerrainConfig>,
   current_comp: Res<TerrainCurrentComposition>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
+  time: Res<Time>,
 ) {
   if let Some(event) = events.iter().next() {
     // hash the current composition
@@ -293,6 +295,7 @@ fn init_next_generation(
       resulting_terrain_meshes: existing_terrain_meshes,
       comp: current_comp.0.clone(),
       comp_hash,
+      start_time: time.elapsed(),
     });
   }
 }
@@ -404,6 +407,7 @@ fn transition_generations(
   next_gen: Res<TerrainNextGeneration>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
   config: Res<TerrainConfig>,
+  time: Res<Time>,
   mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
@@ -461,8 +465,9 @@ fn transition_generations(
   } // no else clause because the old current_gen is allowed to not exist
 
   info!(
-    "completed terrain generation with {} terrain entities",
-    entites.len()
+    "completed terrain generation with {} terrain entities in {}ms",
+    entites.len(),
+    (time.elapsed() - next_gen.start_time).as_millis()
   );
 
   commands.insert_resource(TerrainCurrentGeneration {

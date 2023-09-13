@@ -12,6 +12,14 @@ pub struct TerrainRegion {
   pub subdivs:  u8,
 }
 
+// TODO: this is terrible
+impl Hash for TerrainRegion {
+  fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    // use the debug format to hash
+    format!("{:?}", self).hash(state);
+  }
+}
+
 pub fn calculate_regions(
   config: &TerrainConfig,
   target_location: Vec3,
