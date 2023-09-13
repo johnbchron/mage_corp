@@ -66,14 +66,14 @@ impl TerrainConfig {
 impl Default for TerrainConfig {
   fn default() -> Self {
     Self {
-      render_dist: 500.0,
+      render_dist: 1000.0,
       render_cube_subdiv_trigger: 4.0,
       render_cube_translation_subdiv_increment: 3.0,
       mesh_subdivs: 6,
       mesh_bleed: 1.05,
       n_same_size_meshes: 1,
       n_sizes: 5,
-      debug_transform_cubes: true,
+      debug_transform_cubes: false,
     }
   }
 }
@@ -138,8 +138,8 @@ pub struct TerrainTriggerRegeneration {
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
 pub enum TerrainEnabledState {
   #[default]
-  Disabled,
   Enabled,
+  Disabled,
 }
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
