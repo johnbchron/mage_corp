@@ -39,17 +39,17 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
   
   match read_mesh_from_file(meta_hash) {
     Some(mesh) => {
-      info!("read mesh from file");
+      debug!("read mesh from file");
       bevy_mesh_from_pls_mesh(mesh)
     },
     None => {
       let full_mesh = FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap();
       if let Some(path) = write_mesh_to_file(meta_hash, &full_mesh) {
-        info!("wrote mesh to {}", path);
+        debug!("wrote mesh to {}", path);
       }
       let mesh: Mesh = bevy_mesh_from_pls_mesh(full_mesh);
       if mesh.count_vertices() != 0 {
-        info!(
+        debug!(
           "generated terrain mesh for position {:?} and scale {:?} with {:?} \
            vertices",
           region.position,
