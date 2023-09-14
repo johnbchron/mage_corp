@@ -11,8 +11,8 @@ use bevy::{
   prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCamera;
-use bevy_rapier3d::prelude::Collider;
 
+// use bevy_rapier3d::prelude::Collider;
 use crate::{
   low_res::LowResCamera,
   markers::MainCamera,
@@ -119,7 +119,7 @@ fn setup_scene_props(
       transform: Transform::from_xyz(0.0, -0.5, 0.0),
       ..default()
     },
-    Collider::cuboid(500.0, 0.05, 500.0),
+    // Collider::cuboid(500.0, 0.05, 500.0),
     Name::new("ground_plane"),
   ));
 }
