@@ -27,16 +27,13 @@ pub struct TerrainMesh {
   pub comp_hash: u64,
 }
 
-pub fn generate_mesh_and_collider(
+pub fn build_mesh_and_collider(
   comp: &Composition,
   region: &TerrainRegion,
 ) -> (Mesh, Option<Collider>) {
-  let full_mesh = generate_or_fetch_full_mesh(comp, region);
+  let (full_mesh, collider) = generate_or_fetch_pack(comp, region);
 
-  (
-    bevy_mesh_from_pls_mesh(full_mesh.clone()),
-    generate_collider(full_mesh),
-  )
+  (bevy_mesh_from_pls_mesh(full_mesh), collider)
 }
 
 pub fn generate_collider(full_mesh: FullMesh) -> Option<Collider> {
@@ -53,7 +50,7 @@ pub fn generate_collider(full_mesh: FullMesh) -> Option<Collider> {
   ))
 }
 
-pub fn generate_or_fetch_full_mesh(
+pub fn generate_full_mesh(
   comp: &Composition,
   region: &TerrainRegion,
 ) -> FullMesh {
@@ -64,29 +61,42 @@ pub fn generate_or_fetch_full_mesh(
     prune:    true,
   };
 
+  FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap()
+}
+
+pub fn generate_or_fetch_pack(
+  comp: &Composition,
+  region: &TerrainRegion,
+) -> (FullMesh, Option<Collider>) {
   let meta_hash = cache::mesh_meta_hash(comp, region);
 
-  match cache::read_mesh_from_file(meta_hash) {
-    Some(mesh) => {
-      debug!("read mesh from file");
-      mesh
+  let optional_pack: Option<(FullMesh, Option<Collider>)> =
+    cache::read_pack_from_file(meta_hash).map(|o| o.into());
+  match optional_pack {
+    Some(pack) => {
+      debug!("read pack from file");
+      pack
     }
     None => {
-      let full_mesh =
-        FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap();
-      if let Some(path) = cache::write_mesh_to_file(meta_hash, &full_mesh) {
-        debug!("wrote mesh to {}", path);
-      }
-      if full_mesh.vertices.len() != 0 {
+      let full_mesh = generate_full_mesh(comp, region);
+      let collider = generate_collider(full_mesh.clone());
+      let pack = (full_mesh, collider);
+
+      if pack.0.vertices.len() != 0 {
         debug!(
           "generated terrain mesh for position {:?} and scale {:?} with {:?} \
            vertices",
           region.position,
           region.scale,
-          full_mesh.vertices.len()
+          pack.0.vertices.len()
         );
       }
-      full_mesh
+      if let Some(path) =
+        cache::write_pack_to_file(meta_hash, &pack.clone().into())
+      {
+        debug!("wrote pack to {}", path);
+      }
+      pack
     }
   }
 }

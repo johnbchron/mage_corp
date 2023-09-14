@@ -19,3 +19,4 @@ futures-lite = "1.13.0"
 serde = { version = "1.0.188", features = ["derive"] }
 rmp-serde = "1.1.2"
 bevy_xpbd_3d = { version = "0.2.0", features = ["debug-plugin", "simd"] }
+parry3d = { version = "0.13.5", features = ["serde-serialize"] }
