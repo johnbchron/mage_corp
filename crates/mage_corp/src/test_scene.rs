@@ -12,7 +12,6 @@ use bevy::{
 };
 use bevy_panorbit_camera::PanOrbitCamera;
 
-// use bevy_rapier3d::prelude::Collider;
 use crate::{
   low_res::LowResCamera,
   markers::MainCamera,
@@ -35,7 +34,6 @@ impl Plugin for TestScenePlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, setup_camera_and_lights)
-      // .add_systems(Startup, setup_scene_props)
       // .add_plugins(bevy_obj::ObjPlugin)
       // .add_systems(Startup, setup_barn_scene)
       // .add_systems(Startup, setup_particle_emitter)
@@ -89,38 +87,6 @@ fn setup_camera_and_lights(mut commands: Commands) {
       ..default()
     },
     Name::new("directional_light"),
-  ));
-}
-
-fn setup_scene_props(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut toon_materials: ResMut<Assets<ToonMaterial>>,
-) {
-  // spawn a plane below the player
-  commands.spawn((
-    MaterialMeshBundle {
-      mesh: meshes.add(
-        Mesh::try_from(shape::Box {
-          min_x: -500.0,
-          max_x: 500.0,
-          min_y: -0.05,
-          max_y: 0.05,
-          min_z: -500.0,
-          max_z: 500.0,
-        })
-        .unwrap(),
-      ),
-      material: toon_materials.add(ToonMaterial {
-        color: Color::rgb(0.180, 0.267, 0.169),
-        outline_scale: 0.0,
-        ..default()
-      }),
-      transform: Transform::from_xyz(0.0, -0.5, 0.0),
-      ..default()
-    },
-    // Collider::cuboid(500.0, 0.05, 500.0),
-    Name::new("ground_plane"),
   ));
 }
 
