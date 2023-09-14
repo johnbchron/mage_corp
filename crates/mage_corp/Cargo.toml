@@ -18,3 +18,4 @@ spatialtree = "0.1.1"
 futures-lite = "1.13.0"
 serde = { version = "1.0.188", features = ["derive"] }
 rmp-serde = "1.1.2"
+bevy_xpbd_3d = "0.2.0"
