@@ -61,13 +61,13 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
 
 fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
   let mut bevy_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+
   bevy_mesh.insert_attribute(
     Mesh::ATTRIBUTE_POSITION,
     mesh
       .vertices
-      .clone()
       .into_iter()
-      .map(Into::<[f32; 3]>::into)
+      .map(|v| v.to_array())
       .collect::<Vec<_>>(),
   );
   bevy_mesh.insert_attribute(
@@ -75,7 +75,7 @@ fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
     mesh
       .normals
       .into_iter()
-      .map(Into::<[f32; 3]>::into)
+      .map(|v| v.to_array())
       .collect::<Vec<_>>(),
   );
 
@@ -83,7 +83,7 @@ fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
     mesh
       .triangles
       .into_iter()
-      .flat_map(|v| [v.x, v.y, v.z])
+      .flat_map(|v| v.to_array())
       .collect(),
   )));
   bevy_mesh
