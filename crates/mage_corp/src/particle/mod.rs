@@ -78,18 +78,19 @@ pub struct Particle {
 /// A bundle for spawning emitted particles
 #[derive(Bundle, Default)]
 pub struct ParticleBundle {
-  pub particle:   Particle,
-  pub material:   Handle<ToonMaterial>,
-  pub mesh:       Handle<Mesh>,
-  pub transform:  Transform,
-  pub position:   Position,
-  pub velocity:   LinearVelocity,
-  pub mass:       Mass,
-  pub lifetime:   TimerLifetime,
-  pub computed:   ComputedVisibility,
-  pub visibility: Visibility,
-  pub global:     GlobalTransform,
-  pub no_shadows: NotShadowCaster,
+  pub particle:        Particle,
+  pub material:        Handle<ToonMaterial>,
+  pub mesh:            Handle<Mesh>,
+  pub transform:       Transform,
+  pub position:        Position,
+  pub velocity:        LinearVelocity,
+  pub collider:        Collider,
+  pub mass_properties: MassPropertiesBundle,
+  pub lifetime:        TimerLifetime,
+  pub computed:        ComputedVisibility,
+  pub visibility:      Visibility,
+  pub global:          GlobalTransform,
+  pub no_shadows:      NotShadowCaster,
 }
 
 impl Default for ParticleEmitter {
@@ -188,7 +189,11 @@ fn spawn_particles(
           velocity,
           transform,
           position: Position(transform.translation),
-          mass: Mass(0.1),
+          collider: Collider::ball(emitter.descriptor.size),
+          mass_properties: MassPropertiesBundle::new_computed(
+            &Collider::ball(emitter.descriptor.size),
+            0.1,
+          ),
           lifetime: TimerLifetime::new(emitter.descriptor.behavior.lifetime),
           ..default()
         },

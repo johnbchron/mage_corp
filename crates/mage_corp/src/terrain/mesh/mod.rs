@@ -5,6 +5,7 @@ use bevy::{
   reflect::TypeUuid,
   render::{mesh::Indices, render_resource::PrimitiveTopology},
 };
+use bevy_xpbd_3d::prelude::*;
 use planiscope::{
   comp::Composition,
   mesher::{FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs},
@@ -19,11 +20,43 @@ pub struct TerrainMesh {
   pub mesh:      Handle<Mesh>,
   /// Describes the region that the composition was evaluated over.
   pub region:    TerrainRegion,
+  /// The collider for the generated mesh
+  #[reflect(ignore)]
+  pub collider:  Option<Collider>,
   /// The hash of the composition.
   pub comp_hash: u64,
 }
 
-pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
+pub fn generate_mesh_and_collider(
+  comp: &Composition,
+  region: &TerrainRegion,
+) -> (Mesh, Option<Collider>) {
+  let full_mesh = generate_or_fetch_full_mesh(comp, region);
+
+  (
+    bevy_mesh_from_pls_mesh(full_mesh.clone()),
+    generate_collider(full_mesh),
+  )
+}
+
+pub fn generate_collider(full_mesh: FullMesh) -> Option<Collider> {
+  if full_mesh.triangles.len() == 0 {
+    return None;
+  }
+  Some(Collider::convex_decomposition(
+    full_mesh.vertices.into_iter().map(|v| v.into()).collect(),
+    full_mesh
+      .triangles
+      .into_iter()
+      .map(|v| v.to_array())
+      .collect(),
+  ))
+}
+
+pub fn generate_or_fetch_full_mesh(
+  comp: &Composition,
+  region: &TerrainRegion,
+) -> FullMesh {
   let mesher_inputs = MesherInputs {
     position: region.position.into(),
     scale:    region.scale.into(),
@@ -36,7 +69,7 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
   match cache::read_mesh_from_file(meta_hash) {
     Some(mesh) => {
       debug!("read mesh from file");
-      bevy_mesh_from_pls_mesh(mesh)
+      mesh
     }
     None => {
       let full_mesh =
@@ -44,17 +77,16 @@ pub fn generate(comp: &Composition, region: &TerrainRegion) -> Mesh {
       if let Some(path) = cache::write_mesh_to_file(meta_hash, &full_mesh) {
         debug!("wrote mesh to {}", path);
       }
-      let mesh: Mesh = bevy_mesh_from_pls_mesh(full_mesh);
-      if mesh.count_vertices() != 0 {
+      if full_mesh.vertices.len() != 0 {
         debug!(
           "generated terrain mesh for position {:?} and scale {:?} with {:?} \
            vertices",
           region.position,
           region.scale,
-          mesh.count_vertices()
+          full_mesh.vertices.len()
         );
       }
-      mesh
+      full_mesh
     }
   }
 }

@@ -11,6 +11,7 @@ use bevy::{
   prelude::*,
   tasks::{AsyncComputeTaskPool, Task},
 };
+use bevy_xpbd_3d::prelude::*;
 use futures_lite::future::{block_on, poll_once};
 use planiscope::{comp::Composition, shape::Shape};
 
@@ -124,7 +125,7 @@ pub struct TerrainNextGeneration {
   pub target_location:          Vec3,
   pub regions:                  Vec<region::TerrainRegion>,
   #[reflect(ignore)]
-  pub mesh_gen_tasks:           Vec<Task<(Mesh, TerrainRegion)>>,
+  pub mesh_gen_tasks: Vec<Task<((Mesh, Option<Collider>), TerrainRegion)>>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
   #[reflect(ignore)]
   pub comp:                     Composition,
@@ -276,7 +277,12 @@ fn init_next_generation(
       .map(|region| {
         thread_pool.spawn({
           let current_comp = current_comp.0.clone();
-          async move { (mesh::generate(&current_comp, &region), region) }
+          async move {
+            (
+              mesh::generate_mesh_and_collider(&current_comp, &region),
+              region,
+            )
+          }
         })
       })
       .collect();
@@ -371,11 +377,12 @@ fn flush_assets_from_next_generation(
     .iter_mut()
     .enumerate()
     .for_each(|(index, task)| {
-      if let Some((mesh, region)) = block_on(poll_once(task)) {
+      if let Some(((mesh, collider), region)) = block_on(poll_once(task)) {
         finished_tasks.push((
           index,
           terrain_meshes.add(TerrainMesh {
             mesh: meshes.add(mesh),
+            collider,
             region,
             comp_hash,
           }),
@@ -417,11 +424,13 @@ fn transition_generations(
     .iter()
     .filter_map(|terrain_mesh_handle| {
       if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
-        let entity = commands
-          .spawn((
+        let entity = {
+          let mut entity = commands.spawn((
             SpatialBundle::from_transform(Transform::from_translation(
               terrain_mesh.region.position,
             )),
+            RigidBody::Static,
+            Position(terrain_mesh.region.position),
             terrain_mesh.mesh.clone(),
             terrain_mesh_handle.clone(),
             toon_materials.add(ToonMaterial {
@@ -430,8 +439,13 @@ fn transition_generations(
               ..default()
             }),
             Name::new(format!("terrain_mesh_{:?}", terrain_mesh_handle.id())),
-          ))
-          .id();
+          ));
+          if let Some(collider) = terrain_mesh.collider.clone() {
+            entity.insert(collider);
+          }
+          entity
+        }
+        .id();
 
         if config.debug_transform_cubes {
           commands.entity(entity).with_children(|parent| {
