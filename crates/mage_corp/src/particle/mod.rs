@@ -2,9 +2,12 @@ use nanorand::Rng;
 pub mod descriptor;
 
 use bevy::{pbr::NotShadowCaster, prelude::*};
-use descriptor::{ParticleDescriptor, ParticleLinearVelocity};
+use bevy_xpbd_3d::prelude::*;
 
-use self::descriptor::{ParticleAcceleration, ParticleSizeBehavior};
+use self::descriptor::{
+  ParticleAcceleration, ParticleDescriptor, ParticleLinearVelocity,
+  ParticleSizeBehavior,
+};
 use crate::{
   materials::toon::ToonMaterial, utils::timer_lifetime::TimerLifetime,
 };
@@ -79,6 +82,9 @@ pub struct ParticleBundle {
   pub material:   Handle<ToonMaterial>,
   pub mesh:       Handle<Mesh>,
   pub transform:  Transform,
+  pub position:   Position,
+  pub velocity:   LinearVelocity,
+  pub mass:       Mass,
   pub lifetime:   TimerLifetime,
   pub computed:   ComputedVisibility,
   pub visibility: Visibility,
@@ -127,46 +133,46 @@ fn spawn_particles(
       .with_scale(Vec3::ONE * emitter.descriptor.size);
 
       // calculate the velocity of the new particle
-      // let velocity: Velocity =
-      //   match &emitter.descriptor.behavior.initial_linear_velocity {
-      //     ParticleLinearVelocity::SingleDirection {
-      //       direction,
-      //       magnitude,
-      //     } => Velocity::linear(*direction * *magnitude),
-      //     ParticleLinearVelocity::Spherical { magnitude } =>
-      // Velocity::linear(       Vec3::new(
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //       )
-      //       .normalize()
-      //         * *magnitude,
-      //     ),
-      //     ParticleLinearVelocity::Conic {
-      //       cone_angle,
-      //       direction: cone_direction,
-      //       magnitude: strength,
-      //     } => {
-      //       let cone_angle = *cone_angle;
-      //       let cone_direction = (*cone_direction).normalize();
-      //       let strength = *strength;
+      let velocity: LinearVelocity =
+        match &emitter.descriptor.behavior.initial_linear_velocity {
+          ParticleLinearVelocity::SingleDirection {
+            direction,
+            magnitude,
+          } => LinearVelocity(*direction * *magnitude),
+          ParticleLinearVelocity::Spherical { magnitude } => LinearVelocity(
+            Vec3::new(
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+            )
+            .normalize()
+              * *magnitude,
+          ),
+          ParticleLinearVelocity::Conic {
+            cone_angle,
+            direction: cone_direction,
+            magnitude: strength,
+          } => {
+            let cone_angle = *cone_angle;
+            let cone_direction = (*cone_direction).normalize();
+            let strength = *strength;
 
-      //       let angle =
-      //         f32::to_radians((rng.generate::<f32>() * 2.0 - 1.0) *
-      // cone_angle);       let axis = Vec3::new(
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //         rng.generate::<f32>() * 2.0 - 1.0,
-      //       )
-      //       .normalize();
+            let angle =
+              f32::to_radians((rng.generate::<f32>() * 2.0 - 1.0) * cone_angle);
+            let axis = Vec3::new(
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+              rng.generate::<f32>() * 2.0 - 1.0,
+            )
+            .normalize();
 
-      //       let rotation = Quat::from_axis_angle(axis, angle);
-      //       let direction = Mat3::from_quat(rotation) * cone_direction;
+            let rotation = Quat::from_axis_angle(axis, angle);
+            let direction = Mat3::from_quat(rotation) * cone_direction;
 
-      //       Velocity::linear(direction * strength)
-      //     }
-      //     ParticleLinearVelocity::None => Velocity::zero(),
-      //   };
+            LinearVelocity(direction * strength)
+          }
+          ParticleLinearVelocity::None => LinearVelocity::ZERO,
+        };
 
       let mut particle_entity = commands.spawn((
         ParticleBundle {
@@ -179,16 +185,17 @@ fn spawn_particles(
           },
           material: emitter.descriptor.material.clone(),
           mesh: emitter.descriptor.shape.clone(),
-          // velocity,
+          velocity,
           transform,
+          position: Position(transform.translation),
+          mass: Mass(0.1),
           lifetime: TimerLifetime::new(emitter.descriptor.behavior.lifetime),
           ..default()
         },
-        // AdditionalMassProperties::Mass(0.1),
-        // match emitter.descriptor.behavior.acceleration {
-        //   ParticleAcceleration::None => RigidBody::KinematicVelocityBased,
-        //   ParticleAcceleration::Ballistic => RigidBody::Dynamic,
-        // },
+        match emitter.descriptor.behavior.acceleration {
+          ParticleAcceleration::None => RigidBody::Kinematic,
+          ParticleAcceleration::Ballistic => RigidBody::Dynamic,
+        },
       ));
       let id = particle_entity.id();
       particle_entity.insert(Name::new(format!("particle_{:?}", id)));
