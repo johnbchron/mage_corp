@@ -14,6 +14,7 @@ use bevy::{
   prelude::*,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_xpbd_3d::prelude::*;
 
 fn main() {
   App::new()
@@ -40,6 +41,8 @@ fn main() {
     // graphics
     .add_plugins(materials::MaterialsPlugin)
     .add_plugins(low_res::LowResPlugin)
+    // physics
+    .add_plugins(PhysicsPlugins::default())
     // player
     .add_plugins(player::PlayerPlugin)
     // QoL
