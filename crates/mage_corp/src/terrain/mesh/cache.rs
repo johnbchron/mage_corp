@@ -20,7 +20,7 @@ pub fn read_mesh_from_file(meta_hash: u64) -> Option<FullMesh> {
   // we'll read the mesh from a file under mesh_cache/[meta_hash].fm
   // if we succeed, return the mesh
   let path = format!("mesh_cache/{:x?}.fm", meta_hash);
-  let file = File::open(&path).ok()?;
+  let file = File::open(path).ok()?;
   let mut reader = BufReader::new(file);
   let mesh: FullMesh = rmp_serde::decode::from_read(&mut reader).ok()?;
   Some(mesh)

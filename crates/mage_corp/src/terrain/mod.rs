@@ -3,7 +3,8 @@ mod region;
 use std::{
   collections::hash_map::DefaultHasher,
   hash::{Hash, Hasher},
-  ops::Rem, time::Duration,
+  ops::Rem,
+  time::Duration,
 };
 
 use bevy::{
