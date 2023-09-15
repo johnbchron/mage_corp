@@ -1,13 +1,15 @@
 use bevy::prelude::*;
 
 use crate::{
-  materials::toon::ConvertToToonMaterial, terrain::TerrainDetailTarget,
+  camera::states::CameraStateTarget, materials::toon::ConvertToToonMaterial,
+  terrain::TerrainDetailTarget,
 };
 
 pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
   commands
     .spawn((
       SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
+      CameraStateTarget,
       TerrainDetailTarget,
       Name::new("player"),
     ))

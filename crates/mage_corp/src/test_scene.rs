@@ -13,7 +13,10 @@ use bevy::{
 use bevy_panorbit_camera::PanOrbitCamera;
 
 use crate::{
-  camera::low_res::LowResCamera,
+  camera::{
+    low_res::LowResCamera,
+    states::{CameraPureState, CameraState},
+  },
   markers::MainCamera,
   materials::{
     force::ForceMaterial,
@@ -51,9 +54,9 @@ fn setup_camera_and_lights(mut commands: Commands) {
         ..default()
       },
       transform: Transform::from_xyz(
-        8.0,
-        (PI / 6.0).tan() * 8.0 * 2.0_f32.sqrt(),
-        8.0,
+        64.0,
+        (PI / 6.0).tan() * 64.0 * 2.0_f32.sqrt(),
+        64.0,
       )
       .looking_at(Vec3::default(), Vec3::Y),
       projection: PerspectiveProjection {
@@ -66,7 +69,8 @@ fn setup_camera_and_lights(mut commands: Commands) {
     DepthPrepass,
     NormalPrepass,
     MainCamera,
-    LowResCamera { pixel_size: 1 },
+    LowResCamera { pixel_size: 4.0 },
+    CameraState::InState(CameraPureState::TestState),
     PanOrbitCamera { ..default() },
     Name::new("lowres_camera"),
   ));

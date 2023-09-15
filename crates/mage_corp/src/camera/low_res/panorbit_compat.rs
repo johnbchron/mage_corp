@@ -14,15 +14,20 @@ impl Plugin for LowResPanOrbitCompatPlugin {
 fn maintain_active_data(
   camera_q: Query<(Entity, &LowResCamera), With<PanOrbitCamera>>,
   window_q: Query<&Window, With<PrimaryWindow>>,
-  mut active_camera_data: ResMut<ActiveCameraData>,
+  mut active_camera_data: Option<ResMut<ActiveCameraData>>,
 ) {
+  if active_camera_data.is_none() {
+    return;
+  }
+  let mut active_camera_data = active_camera_data.unwrap();
+
   if let Some((entity, lowres_camera)) = camera_q.iter().next() {
     let window = window_q.single();
 
     let texture_size = calculate_texture_resolution(
       window.width(),
       window.height(),
-      lowres_camera.pixel_size,
+      lowres_camera.pixel_size(),
     );
 
     active_camera_data.set_if_neq(ActiveCameraData {

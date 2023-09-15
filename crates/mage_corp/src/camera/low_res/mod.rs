@@ -17,12 +17,18 @@ use bevy::{
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct LowResCamera {
-  pub pixel_size: u8,
+  pub pixel_size: f32,
+}
+
+impl LowResCamera {
+  pub fn pixel_size(&self) -> u8 {
+    (self.pixel_size.round() % u8::MAX as f32) as u8
+  }
 }
 
 impl Default for LowResCamera {
   fn default() -> Self {
-    Self { pixel_size: 8 }
+    Self { pixel_size: 8.0 }
   }
 }
 
@@ -56,7 +62,7 @@ fn rebuild_texture_setup(
   let desired_texture_size = calculate_texture_resolution(
     window.width(),
     window.height(),
-    lowres_camera.pixel_size,
+    lowres_camera.pixel_size(),
   );
 
   // if the camera already has a texture and it's the right size, use that
@@ -90,7 +96,7 @@ fn trigger_projection_rescaling(
     let desired_texture_size = calculate_texture_resolution(
       window.width(),
       window.height(),
-      lowres_camera.pixel_size,
+      lowres_camera.pixel_size(),
     );
     projection.update(desired_texture_size.x, desired_texture_size.y);
   }
