@@ -14,7 +14,7 @@ impl Plugin for LowResPanOrbitCompatPlugin {
 fn maintain_active_data(
   camera_q: Query<(Entity, &LowResCamera), With<PanOrbitCamera>>,
   window_q: Query<&Window, With<PrimaryWindow>>,
-  mut active_camera_data: Option<ResMut<ActiveCameraData>>,
+  active_camera_data: Option<ResMut<ActiveCameraData>>,
 ) {
   if active_camera_data.is_none() {
     return;

@@ -541,7 +541,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d940ec0558d8ac2a4a755783a4704f71d2d98cbffc9449d191e1bf7aad2ce8a4"
 dependencies = [
  "bevy",
- "interpolation",
+ "interpolation 0.2.0",
 ]
 
 [[package]]
@@ -2326,6 +2326,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3b7357d2bbc5ee92f8e899ab645233e43d21407573cceb37fed8bc3dede2c02"
 
 [[package]]
+name = "interpolation"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9c13ae9d91148fcb4aab6654c4c2a7d02a15395ea9e23f65170f175f8b269ce"
+
+[[package]]
 name = "io-kit-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2563,13 +2569,13 @@ dependencies = [
  "bevy_shader_utils",
  "bevy_xpbd_3d",
  "futures-lite",
+ "interpolation 0.3.0",
  "nanorand",
  "parry3d",
  "planiscope",
  "rmp-serde",
  "serde",
  "spatialtree",
- "splines",
 ]
 
 [[package]]
@@ -3831,15 +3837,6 @@ checksum = "246bfa38fe3db3f1dfc8ca5a2cdeb7348c78be2112740cc0ec8ef18b6d94f830"
 dependencies = [
  "bitflags 1.3.2",
  "num-traits",
-]
-
-[[package]]
-name = "splines"
-version = "4.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "345f11dca845086e60f1076569dedb4c2026e8dfe420d2900de8683142480bcf"
-dependencies = [
- "glam 0.20.5",
 ]
 
 [[package]]

@@ -1,10 +1,11 @@
 use bevy::{ecs::query::QuerySingleError, prelude::*};
+use interpolation::Ease;
 
 use super::low_res::LowResCamera;
 use crate::utils::f32_lerp;
 
 #[derive(Debug)]
-struct ControlledCameraParams {
+pub struct ControlledCameraParams {
   translation:        Vec3,
   looking_at:         (Vec3, Vec3),
   fov:                f32,
@@ -67,7 +68,7 @@ impl ControlledCameraParams {
   }
 }
 
-#[derive(Default, Reflect)]
+#[derive(Clone, PartialEq, Eq, Default, Reflect)]
 pub enum CameraPureState {
   #[default]
   Disabled,
@@ -84,7 +85,13 @@ impl CameraPureState {
     match self {
       CameraPureState::Disabled => None,
       CameraPureState::OverShoulder => todo!(),
-      CameraPureState::Isometric => todo!(),
+      CameraPureState::Isometric => Some(ControlledCameraParams {
+        translation:        Vec3::new(0.0, 12.0, 16.0)
+          + target_transform.translation,
+        looking_at:         (target_transform.translation, Vec3::Y),
+        fov:                0.3,
+        low_res_pixel_size: 2.0,
+      }),
       CameraPureState::TestState => Some(ControlledCameraParams {
         translation:        Vec3::new(-32.0, 32.0, 32.0)
           + target_transform.translation,
@@ -96,19 +103,55 @@ impl CameraPureState {
   }
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub enum CameraState {
   InState(CameraPureState),
   Transition {
-    from: CameraPureState,
-    to:   CameraPureState,
+    from:     CameraPureState,
+    to:       CameraPureState,
+    progress: f32,
   },
 }
 
 impl Default for CameraState {
   fn default() -> Self {
     Self::InState(CameraPureState::default())
+  }
+}
+
+impl CameraState {
+  pub fn transition(&mut self, new_state: &CameraPureState) {
+    match self.clone() {
+      Self::InState(from) => {
+        *self = Self::Transition {
+          from,
+          to: new_state.clone(),
+          progress: 0.0,
+        }
+      }
+      Self::Transition { from, progress, .. } => {
+        *self = Self::Transition {
+          from,
+          to: new_state.clone(),
+          progress,
+        }
+      }
+    }
+  }
+
+  pub fn reverse(&mut self) -> Option<()> {
+    match self.clone() {
+      Self::InState(_) => None,
+      Self::Transition { from, to, progress } => {
+        *self = Self::Transition {
+          from:     to,
+          to:       from,
+          progress: 1.0 - progress,
+        };
+        Some(())
+      }
+    }
   }
 }
 
@@ -124,7 +167,7 @@ pub struct CameraStateConfig {
 
 impl Default for CameraStateConfig {
   fn default() -> Self {
-    Self { lerp_seconds: 0.4 }
+    Self { lerp_seconds: 1.0 }
   }
 }
 
@@ -141,11 +184,11 @@ impl Plugin for CameraStatePlugin {
   }
 }
 
-fn maintain_state(
+pub fn maintain_state(
   config: Res<CameraStateConfig>,
   mut camera_q: Query<
     (
-      &CameraState,
+      &mut CameraState,
       &mut Transform,
       &mut Projection,
       &mut LowResCamera,
@@ -177,8 +220,42 @@ fn maintain_state(
     mut camera_lowres,
   ) in camera_q.iter_mut()
   {
-    match camera_state {
-      CameraState::Transition { .. } => todo!(),
+    match camera_state.clone() {
+      CameraState::Transition { from, to, progress } => {
+        // if `from` and `to` are the same, just set the state to that.
+        // also if either `from` or `to` are `Disabled`, it doesn't make sense
+        // to run a transition so just end it.
+        if from == to
+          || from == CameraPureState::Disabled
+          || to == CameraPureState::Disabled
+        {
+          *camera_state.into_inner() = CameraState::InState(to.clone());
+          break;
+        }
+
+        // we're assuming that it's fine to unwrap these because the only reason
+        // that they could be `None` is if they were `Disabled`.
+        let from_params = from.correct_params(target_transform).unwrap();
+        let to_params = to.correct_params(target_transform).unwrap();
+
+        let actual_params = ControlledCameraParams::lerp(
+          &from_params,
+          &to_params,
+          progress.cubic_in_out(), /* interpolation::cub_bez(
+                                    *   &0.0_f32,
+                                    *   &config.k_value,
+                                    *   &(1.0 - config.k_value),
+                                    *   &1.0_f32,
+                                    *   &progress,
+                                    * ), */
+        );
+
+        actual_params.apply(
+          &mut camera_transform,
+          &mut camera_projection,
+          &mut camera_lowres,
+        );
+      }
       CameraState::InState(camera_state) => {
         let correct_params = camera_state.correct_params(target_transform);
         let actual_params = ControlledCameraParams::from_components(
@@ -193,28 +270,41 @@ fn maintain_state(
         }
         // means the camera state can't be coerced with just a &mut
         if actual_params.is_none() {
+          error!(
+            "failed to maintain camera state due to an invalid `Projection`"
+          );
           break;
         }
 
         let correct_params = correct_params.unwrap();
         let actual_params = actual_params.unwrap();
 
-        // when the params actually match
-        if actual_params == correct_params {
-          break;
+        // apply the difference if needed
+        if actual_params != correct_params {
+          correct_params.apply(
+            &mut camera_transform,
+            &mut camera_projection,
+            &mut camera_lowres,
+          );
         }
-
-        let new_params = ControlledCameraParams::lerp(
-          &actual_params,
-          &correct_params,
-          time.delta_seconds() / config.lerp_seconds,
-        );
-        new_params.apply(
-          &mut camera_transform,
-          &mut camera_projection,
-          &mut camera_lowres,
-        );
       }
+    }
+
+    // finish the transition if it's ready
+    if let CameraState::Transition { to, progress, .. } = camera_state.clone() {
+      if progress >= 1.0 {
+        *camera_state.into_inner() = CameraState::InState(to);
+        break;
+      }
+    }
+
+    // tick forward the transition progress
+    if let CameraState::Transition {
+      ref mut progress, ..
+    } = camera_state.into_inner()
+    {
+      *progress = (*progress + time.delta_seconds() / config.lerp_seconds)
+        .clamp(0.0, 1.0);
     }
   }
 }
