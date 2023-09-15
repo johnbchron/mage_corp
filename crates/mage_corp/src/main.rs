@@ -1,5 +1,5 @@
+mod camera;
 mod debug;
-mod low_res;
 mod markers;
 mod materials;
 mod particle;
@@ -40,7 +40,7 @@ fn main() {
     .add_plugins(markers::MarkerPlugin)
     // graphics
     .add_plugins(materials::MaterialsPlugin)
-    .add_plugins(low_res::LowResPlugin)
+    .add_plugins(camera::low_res::LowResPlugin)
     // physics
     .add_plugins(PhysicsPlugins::default())
     // player

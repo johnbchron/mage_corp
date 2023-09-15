@@ -13,7 +13,7 @@ use bevy::{
 use bevy_panorbit_camera::PanOrbitCamera;
 
 use crate::{
-  low_res::LowResCamera,
+  camera::low_res::LowResCamera,
   markers::MainCamera,
   materials::{
     force::ForceMaterial,
