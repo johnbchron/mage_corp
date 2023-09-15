@@ -39,7 +39,7 @@ pub fn mesh_meta_hash(comp: &Composition, region: &TerrainRegion) -> u64 {
   hasher.finish()
 }
 
-pub fn read_pack_from_file(meta_hash: u64) -> Option<CachePack> {
+pub async fn read_pack_from_file(meta_hash: u64) -> Option<CachePack> {
   // we'll read the mesh from a file under mesh_cache/[meta_hash].cp
   // if we succeed, return the mesh
   let path = format!("mesh_cache/{:x?}.cp", meta_hash);
@@ -49,7 +49,10 @@ pub fn read_pack_from_file(meta_hash: u64) -> Option<CachePack> {
   Some(pack)
 }
 
-pub fn write_pack_to_file(meta_hash: u64, pack: &CachePack) -> Option<String> {
+pub async fn write_pack_to_file(
+  meta_hash: u64,
+  pack: &CachePack,
+) -> Option<String> {
   // we'll write the mesh to a file under mesh_cache/[meta_hash].cp
   // if we succeed, return the path
   let _ = std::fs::create_dir_all("mesh_cache");

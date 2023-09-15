@@ -36,7 +36,7 @@ impl Plugin for TestScenePlugin {
       .add_systems(Startup, setup_camera_and_lights)
       // .add_plugins(bevy_obj::ObjPlugin)
       // .add_systems(Startup, setup_barn_scene)
-      // .add_systems(Startup, setup_particle_emitter)
+      .add_systems(Startup, setup_particle_emitter)
       // .add_systems(Startup, setup_translucent_ball)
       // .add_systems(Startup, setup_npc_scene)
       .add_systems(Startup, setup_tree_scene);

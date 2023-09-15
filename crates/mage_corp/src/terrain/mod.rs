@@ -279,7 +279,7 @@ fn init_next_generation(
           let current_comp = current_comp.0.clone();
           async move {
             (
-              mesh::build_mesh_and_collider(&current_comp, &region),
+              mesh::build_mesh_and_collider(&current_comp, &region).await,
               region,
             )
           }

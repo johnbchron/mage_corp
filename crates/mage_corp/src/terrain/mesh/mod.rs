@@ -27,11 +27,11 @@ pub struct TerrainMesh {
   pub comp_hash: u64,
 }
 
-pub fn build_mesh_and_collider(
+pub async fn build_mesh_and_collider(
   comp: &Composition,
   region: &TerrainRegion,
 ) -> (Mesh, Option<Collider>) {
-  let (full_mesh, collider) = generate_or_fetch_pack(comp, region);
+  let (full_mesh, collider) = generate_or_fetch_pack(comp, region).await;
 
   (bevy_mesh_from_pls_mesh(full_mesh), collider)
 }
@@ -64,14 +64,16 @@ pub fn generate_full_mesh(
   FastSurfaceNetsMesher::build_mesh(comp, mesher_inputs).unwrap()
 }
 
-pub fn generate_or_fetch_pack(
+pub async fn generate_or_fetch_pack(
   comp: &Composition,
   region: &TerrainRegion,
 ) -> (FullMesh, Option<Collider>) {
   let meta_hash = cache::mesh_meta_hash(comp, region);
 
   let optional_pack: Option<(FullMesh, Option<Collider>)> =
-    cache::read_pack_from_file(meta_hash).map(|o| o.into());
+    cache::read_pack_from_file(meta_hash)
+      .await
+      .map(|o| o.into());
   match optional_pack {
     Some(pack) => {
       debug!("read pack from file");
@@ -92,7 +94,7 @@ pub fn generate_or_fetch_pack(
         );
       }
       if let Some(path) =
-        cache::write_pack_to_file(meta_hash, &pack.clone().into())
+        cache::write_pack_to_file(meta_hash, &pack.clone().into()).await
       {
         debug!("wrote pack to {}", path);
       }
