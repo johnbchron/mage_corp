@@ -16,6 +16,7 @@
         
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         
+        rust_deps = [ toolchain pkgs.lldb ];
         bevy_build_deps = with pkgs; [
           pkg-config
           mold clang
@@ -53,7 +54,7 @@
 
         # For `nix develop`:
         devShells.default = pkgs.mkShell rec {
-          nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps ++ [toolchain];
+          nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps ++ rust_deps;
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
         };
       }
