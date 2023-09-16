@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-  camera::states::{
-    maintain_state, CameraPureState, CameraState, CameraStateTarget,
+  camera::posing::{
+    maintain_pose, CameraPose, CameraPoseState, CameraStateTarget,
   },
   materials::toon::ConvertToToonMaterial,
   terrain::TerrainDetailTarget,
@@ -67,7 +67,7 @@ pub fn simple_player_input(
 
 fn debug_change_camera_states(
   kb_input: Res<Input<KeyCode>>,
-  mut state_q: Query<&mut CameraState>,
+  mut state_q: Query<&mut CameraPoseState>,
 ) {
   if !kb_input.just_pressed(KeyCode::P) {
     return;
@@ -75,17 +75,13 @@ fn debug_change_camera_states(
 
   if let Ok(mut state) = state_q.get_single_mut() {
     match state.clone() {
-      CameraState::InState(from) => match from {
-        CameraPureState::Disabled => {}
-        CameraPureState::OverShoulder => {}
-        CameraPureState::Isometric => {
-          state.transition(&CameraPureState::TestState)
-        }
-        CameraPureState::TestState => {
-          state.transition(&CameraPureState::Isometric)
-        }
+      CameraPoseState::InState(from) => match from {
+        CameraPose::Disabled => {}
+        CameraPose::OverShoulder => {}
+        CameraPose::Isometric => state.transition(&CameraPose::TestState),
+        CameraPose::TestState => state.transition(&CameraPose::Isometric),
       },
-      CameraState::Transition { .. } => {
+      CameraPoseState::Transition { .. } => {
         state.reverse();
       }
     }
@@ -98,7 +94,7 @@ impl Plugin for PlayerPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, spawn_player)
-      .add_systems(Update, simple_player_input.before(maintain_state))
-      .add_systems(Update, debug_change_camera_states.before(maintain_state));
+      .add_systems(Update, simple_player_input.before(maintain_pose))
+      .add_systems(Update, debug_change_camera_states.before(maintain_pose));
   }
 }

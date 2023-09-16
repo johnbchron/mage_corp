@@ -69,7 +69,7 @@ impl ControlledCameraParams {
 }
 
 #[derive(Clone, PartialEq, Eq, Default, Reflect)]
-pub enum CameraPureState {
+pub enum CameraPose {
   #[default]
   Disabled,
   OverShoulder,
@@ -77,22 +77,22 @@ pub enum CameraPureState {
   TestState,
 }
 
-impl CameraPureState {
+impl CameraPose {
   fn correct_params(
     &self,
     target_transform: &Transform,
   ) -> Option<ControlledCameraParams> {
     match self {
-      CameraPureState::Disabled => None,
-      CameraPureState::OverShoulder => todo!(),
-      CameraPureState::Isometric => Some(ControlledCameraParams {
+      CameraPose::Disabled => None,
+      CameraPose::OverShoulder => todo!(),
+      CameraPose::Isometric => Some(ControlledCameraParams {
         translation:        Vec3::new(0.0, 12.0, 16.0)
           + target_transform.translation,
         looking_at:         (target_transform.translation, Vec3::Y),
         fov:                0.3,
         low_res_pixel_size: 2.0,
       }),
-      CameraPureState::TestState => Some(ControlledCameraParams {
+      CameraPose::TestState => Some(ControlledCameraParams {
         translation:        Vec3::new(-32.0, 32.0, 32.0)
           + target_transform.translation,
         looking_at:         (target_transform.translation, Vec3::Y),
@@ -105,23 +105,23 @@ impl CameraPureState {
 
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
-pub enum CameraState {
-  InState(CameraPureState),
+pub enum CameraPoseState {
+  InState(CameraPose),
   Transition {
-    from:     CameraPureState,
-    to:       CameraPureState,
+    from:     CameraPose,
+    to:       CameraPose,
     progress: f32,
   },
 }
 
-impl Default for CameraState {
+impl Default for CameraPoseState {
   fn default() -> Self {
-    Self::InState(CameraPureState::default())
+    Self::InState(CameraPose::default())
   }
 }
 
-impl CameraState {
-  pub fn transition(&mut self, new_state: &CameraPureState) {
+impl CameraPoseState {
+  pub fn transition(&mut self, new_state: &CameraPose) {
     match self.clone() {
       Self::InState(from) => {
         *self = Self::Transition {
@@ -161,34 +161,34 @@ pub struct CameraStateTarget;
 
 #[derive(Resource, Reflect)]
 #[reflect(Resource)]
-pub struct CameraStateConfig {
+pub struct CameraPoseConfig {
   lerp_seconds: f32,
 }
 
-impl Default for CameraStateConfig {
+impl Default for CameraPoseConfig {
   fn default() -> Self {
     Self { lerp_seconds: 1.0 }
   }
 }
 
-pub struct CameraStatePlugin;
+pub struct CameraPosePlugin;
 
-impl Plugin for CameraStatePlugin {
+impl Plugin for CameraPosePlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(Update, maintain_state)
-      .init_resource::<CameraStateConfig>()
-      .register_type::<CameraStateConfig>()
-      .register_type::<CameraState>()
+      .add_systems(Update, maintain_pose)
+      .init_resource::<CameraPoseConfig>()
+      .register_type::<CameraPoseConfig>()
+      .register_type::<CameraPoseState>()
       .register_type::<CameraStateTarget>();
   }
 }
 
-pub fn maintain_state(
-  config: Res<CameraStateConfig>,
+pub fn maintain_pose(
+  config: Res<CameraPoseConfig>,
   mut camera_q: Query<
     (
-      &mut CameraState,
+      &mut CameraPoseState,
       &mut Transform,
       &mut Projection,
       &mut LowResCamera,
@@ -221,15 +221,15 @@ pub fn maintain_state(
   ) in camera_q.iter_mut()
   {
     match camera_state.clone() {
-      CameraState::Transition { from, to, progress } => {
+      CameraPoseState::Transition { from, to, progress } => {
         // if `from` and `to` are the same, just set the state to that.
         // also if either `from` or `to` are `Disabled`, it doesn't make sense
         // to run a transition so just end it.
         if from == to
-          || from == CameraPureState::Disabled
-          || to == CameraPureState::Disabled
+          || from == CameraPose::Disabled
+          || to == CameraPose::Disabled
         {
-          *camera_state.into_inner() = CameraState::InState(to.clone());
+          *camera_state.into_inner() = CameraPoseState::InState(to.clone());
           break;
         }
 
@@ -256,7 +256,7 @@ pub fn maintain_state(
           &mut camera_lowres,
         );
       }
-      CameraState::InState(camera_state) => {
+      CameraPoseState::InState(camera_state) => {
         let correct_params = camera_state.correct_params(target_transform);
         let actual_params = ControlledCameraParams::from_components(
           &camera_transform,
@@ -291,15 +291,17 @@ pub fn maintain_state(
     }
 
     // finish the transition if it's ready
-    if let CameraState::Transition { to, progress, .. } = camera_state.clone() {
+    if let CameraPoseState::Transition { to, progress, .. } =
+      camera_state.clone()
+    {
       if progress >= 1.0 {
-        *camera_state.into_inner() = CameraState::InState(to);
+        *camera_state.into_inner() = CameraPoseState::InState(to);
         break;
       }
     }
 
     // tick forward the transition progress
-    if let CameraState::Transition {
+    if let CameraPoseState::Transition {
       ref mut progress, ..
     } = camera_state.into_inner()
     {

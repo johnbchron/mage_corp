@@ -15,7 +15,7 @@ use bevy_panorbit_camera::PanOrbitCamera;
 use crate::{
   camera::{
     low_res::LowResCamera,
-    states::{CameraPureState, CameraState},
+    posing::{CameraPose, CameraPoseState},
   },
   markers::MainCamera,
   materials::{
@@ -70,7 +70,7 @@ fn setup_camera_and_lights(mut commands: Commands) {
     NormalPrepass,
     MainCamera,
     LowResCamera { pixel_size: 4.0 },
-    CameraState::InState(CameraPureState::TestState),
+    CameraPoseState::InState(CameraPose::TestState),
     PanOrbitCamera { ..default() },
     Name::new("lowres_camera"),
   ));
