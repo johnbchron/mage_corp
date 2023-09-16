@@ -37,7 +37,7 @@ pub async fn build_mesh_and_collider(
 }
 
 pub fn generate_collider(full_mesh: FullMesh) -> Option<Collider> {
-  if full_mesh.triangles.len() == 0 {
+  if full_mesh.triangles.is_empty() {
     return None;
   }
   Some(Collider::convex_decomposition(
@@ -84,7 +84,7 @@ pub async fn generate_or_fetch_pack(
       let collider = generate_collider(full_mesh.clone());
       let pack = (full_mesh, collider);
 
-      if pack.0.vertices.len() != 0 {
+      if !pack.0.vertices.is_empty() {
         debug!(
           "generated terrain mesh for position {:?} and scale {:?} with {:?} \
            vertices",
