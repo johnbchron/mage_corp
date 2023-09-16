@@ -46,9 +46,10 @@ impl CameraPose {
 pub enum CameraPoseState {
   InState(CameraPose),
   Transition {
-    from:     CameraPose,
-    to:       CameraPose,
-    progress: f32,
+    from:        CameraPose,
+    to:          CameraPose,
+    progress:    f32,
+    ease_in_out: bool,
   },
 }
 
@@ -59,6 +60,34 @@ impl Default for CameraPoseState {
 }
 
 impl CameraPoseState {
+  fn correct_params(
+    &self,
+    target_transform: &Transform,
+  ) -> Option<ControlledCameraParams> {
+    match self {
+      CameraPoseState::InState(pose) => pose.correct_params(target_transform),
+      CameraPoseState::Transition {
+        from,
+        to,
+        progress,
+        ease_in_out,
+      } => {
+        let from_params = from.correct_params(target_transform)?;
+        let to_params = to.correct_params(target_transform)?;
+        let actual_progress = if *ease_in_out {
+          progress.cubic_in_out()
+        } else {
+          *progress
+        };
+        Some(ControlledCameraParams::lerp(
+          &from_params,
+          &to_params,
+          actual_progress,
+        ))
+      }
+    }
+  }
+
   pub fn transition(&mut self, new_state: &CameraPose) {
     match self.clone() {
       Self::InState(from) => {
@@ -66,13 +95,20 @@ impl CameraPoseState {
           from,
           to: new_state.clone(),
           progress: 0.0,
+          ease_in_out: true,
         }
       }
-      Self::Transition { from, progress, .. } => {
+      Self::Transition {
+        from,
+        progress,
+        ease_in_out,
+        ..
+      } => {
         *self = Self::Transition {
           from,
           to: new_state.clone(),
           progress,
+          ease_in_out,
         }
       }
     }
@@ -81,11 +117,17 @@ impl CameraPoseState {
   pub fn reverse(&mut self) -> Option<()> {
     match self.clone() {
       Self::InState(_) => None,
-      Self::Transition { from, to, progress } => {
+      Self::Transition {
+        from,
+        to,
+        progress,
+        ease_in_out,
+      } => {
         *self = Self::Transition {
-          from:     to,
-          to:       from,
+          from: to,
+          to: from,
           progress: 1.0 - progress,
+          ease_in_out,
         };
         Some(())
       }
@@ -159,40 +201,27 @@ pub fn maintain_pose(
   ) in camera_q.iter_mut()
   {
     match camera_state.clone() {
-      CameraPoseState::Transition { from, to, progress } => {
+      CameraPoseState::Transition { from, to, .. } => {
+        let correct_params = camera_state.correct_params(target_transform);
+
         // if `from` and `to` are the same, just set the state to that.
-        // also if either `from` or `to` are `Disabled`, it doesn't make sense
-        // to run a transition so just end it.
-        if from == to
-          || from == CameraPose::Disabled
-          || to == CameraPose::Disabled
-        {
+        if from == to {
           *camera_state.into_inner() = CameraPoseState::InState(to.clone());
           break;
         }
 
-        // we're assuming that it's fine to unwrap these because the only reason
-        // that they could be `None` is if they were `Disabled`.
-        let from_params = from.correct_params(target_transform).unwrap();
-        let to_params = to.correct_params(target_transform).unwrap();
-
-        let actual_params = ControlledCameraParams::lerp(
-          &from_params,
-          &to_params,
-          progress.cubic_in_out(), /* interpolation::cub_bez(
-                                    *   &0.0_f32,
-                                    *   &config.k_value,
-                                    *   &(1.0 - config.k_value),
-                                    *   &1.0_f32,
-                                    *   &progress,
-                                    * ), */
-        );
-
-        actual_params.apply(
-          &mut camera_transform,
-          &mut camera_projection,
-          &mut camera_lowres,
-        );
+        // if we know what the params should be, march the transition forward
+        if let Some(params) = correct_params {
+          params.apply(
+            &mut camera_transform,
+            &mut camera_projection,
+            &mut camera_lowres,
+          );
+        // otherwise just finish it
+        } else {
+          *camera_state.into_inner() = CameraPoseState::InState(to);
+          break;
+        }
       }
       CameraPoseState::InState(camera_state) => {
         let correct_params = camera_state.correct_params(target_transform);
