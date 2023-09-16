@@ -98,7 +98,7 @@ impl Plugin for PlayerPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(Startup, spawn_player)
-      .add_systems(Update, simple_player_input.after(maintain_state))
-      .add_systems(Update, debug_change_camera_states.after(maintain_state));
+      .add_systems(Update, simple_player_input.before(maintain_state))
+      .add_systems(Update, debug_change_camera_states.before(maintain_state));
   }
 }
