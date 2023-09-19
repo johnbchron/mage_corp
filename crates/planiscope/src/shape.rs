@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Hash, Serialize, Deserialize, Reflect)]
 pub enum Shape {
   Expression { expr: String },
+  XNode,
+  YNode,
+  ZNode,
 }
 
 impl Shape {
@@ -28,6 +31,9 @@ impl IntoNode for &Shape {
         *ctx = context;
         Ok(node)
       }
+      Shape::XNode => Ok(ctx.x()),
+      Shape::YNode => Ok(ctx.y()),
+      Shape::ZNode => Ok(ctx.z()),
     }
   }
 }
