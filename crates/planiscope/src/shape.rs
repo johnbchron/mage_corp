@@ -20,6 +20,8 @@ pub enum Shape {
   Sub(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
   Mul(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
   Div(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Min(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Max(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
 }
 
 impl Default for Shape {
@@ -53,6 +55,8 @@ impl IntoNode for &Shape {
       Shape::Sub(lhs, rhs) => ctx.sub(lhs.as_ref(), rhs.as_ref()),
       Shape::Mul(lhs, rhs) => ctx.mul(lhs.as_ref(), rhs.as_ref()),
       Shape::Div(lhs, rhs) => ctx.div(lhs.as_ref(), rhs.as_ref()),
+      Shape::Min(lhs, rhs) => ctx.min(lhs.as_ref(), rhs.as_ref()),
+      Shape::Max(lhs, rhs) => ctx.max(lhs.as_ref(), rhs.as_ref()),
     }
   }
 }
