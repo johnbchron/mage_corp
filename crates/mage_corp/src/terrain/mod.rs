@@ -94,7 +94,7 @@ impl TerrainCurrentComposition {
 
 impl Default for TerrainCurrentComposition {
   fn default() -> Self {
-    let comp = Composition::new(vec![Shape::new_rhai(
+    let comp = Composition::new(vec![Shape::new_expr(
       "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
        20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
     )]);

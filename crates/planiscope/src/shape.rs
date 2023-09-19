@@ -12,7 +12,7 @@ pub enum Shape {
 }
 
 impl Shape {
-  pub fn new_rhai(expr: &str) -> Self {
+  pub fn new_expr(expr: &str) -> Self {
     Self::Expression {
       expr: expr.to_string(),
     }
@@ -40,7 +40,7 @@ mod tests {
   fn rhai_shape_converts_to_node() {
     let mut ctx = Context::new();
 
-    let x_plus_one = (&Shape::new_rhai("x + 1")).into_node(&mut ctx);
+    let x_plus_one = (&Shape::new_expr("x + 1")).into_node(&mut ctx);
     assert!(x_plus_one.is_ok());
     let x_plus_one = x_plus_one.unwrap();
 
@@ -65,7 +65,7 @@ mod tests {
     let eval_result = ctx.eval_xyz(x_plus_one_times_y, 2.0, 3.0, 0.0).unwrap();
     assert_eq!(eval_result, 9.0);
 
-    let _shape_node = (&Shape::new_rhai("x + 1")).into_node(&mut ctx).unwrap();
+    let _shape_node = (&Shape::new_expr("x + 1")).into_node(&mut ctx).unwrap();
     println!("{}", ctx.dot());
 
     let eval_result = ctx.eval_xyz(x_plus_one_times_y, 2.0, 3.0, 0.0).unwrap();

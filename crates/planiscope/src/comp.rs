@@ -20,7 +20,7 @@ impl Composition {
 
 impl Default for Composition {
   fn default() -> Self {
-    Self::new(vec![Shape::new_rhai("y - 1")])
+    Self::new(vec![Shape::new_expr("y - 1")])
   }
 }
 
@@ -67,8 +67,8 @@ mod tests {
   #[test]
   fn composition_evals_to_min_shape() {
     let comp = Composition::new(vec![
-      Shape::new_rhai("x + 1"),
-      Shape::new_rhai("x + 2"),
+      Shape::new_expr("x + 1"),
+      Shape::new_expr("x + 2"),
     ]);
 
     let mut ctx = Context::new();
