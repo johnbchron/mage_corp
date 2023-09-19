@@ -16,6 +16,16 @@ pub enum Shape {
   YNode,
   ZNode,
   Constant(#[educe(Hash(trait = "FloatHash"))] f64),
+  Add(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Sub(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Mul(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Div(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+}
+
+impl Default for Shape {
+  fn default() -> Self {
+    Self::Constant(1.0_f64)
+  }
 }
 
 impl Shape {
@@ -39,6 +49,10 @@ impl IntoNode for &Shape {
       Shape::YNode => Ok(ctx.y()),
       Shape::ZNode => Ok(ctx.z()),
       Shape::Constant(c) => Ok(ctx.constant(*c)),
+      Shape::Add(lhs, rhs) => ctx.add(lhs.as_ref(), rhs.as_ref()),
+      Shape::Sub(lhs, rhs) => ctx.sub(lhs.as_ref(), rhs.as_ref()),
+      Shape::Mul(lhs, rhs) => ctx.mul(lhs.as_ref(), rhs.as_ref()),
+      Shape::Div(lhs, rhs) => ctx.div(lhs.as_ref(), rhs.as_ref()),
     }
   }
 }
