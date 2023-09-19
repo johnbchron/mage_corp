@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Educe, Clone, Debug, Serialize, Deserialize, Reflect)]
 #[educe(Hash)]
 pub enum Shape {
-  Expression { expr: String },
+  Expression {
+    expr: String,
+  },
   XNode,
   YNode,
   ZNode,
@@ -22,6 +24,24 @@ pub enum Shape {
   Div(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
   Min(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
   Max(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  Neg(#[reflect(ignore)] Box<Shape>),
+  Exp(#[reflect(ignore)] Box<Shape>),
+  Sin(#[reflect(ignore)] Box<Shape>),
+  Cos(#[reflect(ignore)] Box<Shape>),
+  Recip(#[reflect(ignore)] Box<Shape>),
+  Abs(#[reflect(ignore)] Box<Shape>),
+  Sqrt(#[reflect(ignore)] Box<Shape>),
+  Square(#[reflect(ignore)] Box<Shape>),
+  Remap {
+    #[reflect(ignore)]
+    root:  Box<Shape>,
+    #[reflect(ignore)]
+    new_x: Box<Shape>,
+    #[reflect(ignore)]
+    new_y: Box<Shape>,
+    #[reflect(ignore)]
+    new_z: Box<Shape>,
+  },
 }
 
 impl Default for Shape {
@@ -57,6 +77,26 @@ impl IntoNode for &Shape {
       Shape::Div(lhs, rhs) => ctx.div(lhs.as_ref(), rhs.as_ref()),
       Shape::Min(lhs, rhs) => ctx.min(lhs.as_ref(), rhs.as_ref()),
       Shape::Max(lhs, rhs) => ctx.max(lhs.as_ref(), rhs.as_ref()),
+      Shape::Neg(lhs) => ctx.neg(lhs.as_ref()),
+      Shape::Exp(lhs) => ctx.exp(lhs.as_ref()),
+      Shape::Sin(lhs) => ctx.sin(lhs.as_ref()),
+      Shape::Cos(lhs) => ctx.cos(lhs.as_ref()),
+      Shape::Recip(lhs) => ctx.recip(lhs.as_ref()),
+      Shape::Abs(lhs) => ctx.abs(lhs.as_ref()),
+      Shape::Sqrt(lhs) => ctx.sqrt(lhs.as_ref()),
+      Shape::Square(lhs) => ctx.square(lhs.as_ref()),
+      Shape::Remap {
+        root,
+        new_x,
+        new_y,
+        new_z,
+      } => {
+        let root_node = root.as_ref().into_node(ctx)?;
+        let new_x_node = new_x.as_ref().into_node(ctx)?;
+        let new_y_node = new_y.as_ref().into_node(ctx)?;
+        let new_z_node = new_z.as_ref().into_node(ctx)?;
+        ctx.remap_xyz(root_node, [new_x_node, new_y_node, new_z_node])
+      }
     }
   }
 }
