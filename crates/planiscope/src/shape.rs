@@ -1,4 +1,6 @@
 use bevy_reflect::Reflect;
+use decorum::hash::FloatHash;
+use educe::Educe;
 use fidget::{
   context::{IntoNode, Node},
   rhai::Engine,
@@ -6,12 +8,14 @@ use fidget::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Hash, Serialize, Deserialize, Reflect)]
+#[derive(Educe, Clone, Debug, Serialize, Deserialize, Reflect)]
+#[educe(Hash)]
 pub enum Shape {
   Expression { expr: String },
   XNode,
   YNode,
   ZNode,
+  Constant(#[educe(Hash(trait = "FloatHash"))] f64),
 }
 
 impl Shape {
@@ -34,6 +38,7 @@ impl IntoNode for &Shape {
       Shape::XNode => Ok(ctx.x()),
       Shape::YNode => Ok(ctx.y()),
       Shape::ZNode => Ok(ctx.z()),
+      Shape::Constant(c) => Ok(ctx.constant(*c)),
     }
   }
 }
