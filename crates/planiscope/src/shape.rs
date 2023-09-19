@@ -8,12 +8,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Hash, Serialize, Deserialize, Reflect)]
 pub enum Shape {
-  FidgetRhai { expr: String },
+  Expression { expr: String },
 }
 
 impl Shape {
   pub fn new_rhai(expr: &str) -> Self {
-    Self::FidgetRhai {
+    Self::Expression {
       expr: expr.to_string(),
     }
   }
@@ -22,7 +22,7 @@ impl Shape {
 impl IntoNode for &Shape {
   fn into_node(self, ctx: &mut Context) -> Result<Node, fidget::Error> {
     match self {
-      Shape::FidgetRhai { expr } => {
+      Shape::Expression { expr } => {
         let mut engine = Engine::new(Some(ctx.clone()));
         let (node, context) = engine.eval_no_clear(expr)?;
         *ctx = context;
