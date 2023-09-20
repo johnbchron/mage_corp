@@ -7,12 +7,13 @@ use fidget::{context::IntoNode, eval::Tape, Context};
 use crate::{
   mesher::{
     fidget_normals, FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs,
-    MeshingEvaluatorFamily,
   },
   nso,
 };
 
 impl Mesher for FastSurfaceNetsMesher {
+  type EvalFamily = fidget::vm::Eval;
+
   fn build_mesh(inputs: MesherInputs) -> Result<FullMesh, fidget::Error> {
     // get a node for the composition
     let mut ctx = Context::new();
@@ -26,7 +27,7 @@ impl Mesher for FastSurfaceNetsMesher {
       &mut ctx,
     );
 
-    let tape = ctx.get_tape::<MeshingEvaluatorFamily>(normalized_node)?;
+    let tape = ctx.get_tape::<Self::EvalFamily>(normalized_node)?;
     let tape = simplify_tape(tape, [[-1.0, 1.0]; 3])?;
 
     // how many units the specified number of subdivisions will produce
@@ -98,10 +99,10 @@ impl Mesher for FastSurfaceNetsMesher {
   }
 }
 
-fn simplify_tape(
-  tape: Tape<MeshingEvaluatorFamily>,
+fn simplify_tape<F: fidget::eval::Family>(
+  tape: Tape<F>,
   region: [[f32; 2]; 3],
-) -> Result<Tape<MeshingEvaluatorFamily>, fidget::Error> {
+) -> Result<Tape<F>, fidget::Error> {
   let interval_eval = tape.new_interval_evaluator();
   let (_, simplify) =
     interval_eval.eval(region[0], region[1], region[2], &[])?;

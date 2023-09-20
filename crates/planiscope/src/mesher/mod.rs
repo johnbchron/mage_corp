@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::shape::Shape;
 
-type MeshingEvaluatorFamily = fidget::vm::Eval;
-
 /// A generated mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FullMesh {
@@ -70,6 +68,8 @@ pub struct MesherInputs {
 pub struct FastSurfaceNetsMesher;
 
 pub trait Mesher {
+  type EvalFamily: fidget::eval::Family;
+
   fn build_mesh(inputs: MesherInputs) -> Result<FullMesh, fidget::Error>;
 }
 
@@ -108,9 +108,9 @@ impl FullMesh {
   }
 }
 
-pub fn fidget_normals(
+pub fn fidget_normals<F: fidget::eval::Family>(
   vertices: &[glam::Vec3A],
-  tape: &Tape<MeshingEvaluatorFamily>,
+  tape: &Tape<F>,
 ) -> Result<Vec<glam::Vec3A>, fidget::Error> {
   Ok(
     tape
