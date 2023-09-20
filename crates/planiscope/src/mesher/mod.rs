@@ -3,9 +3,11 @@ pub mod fsn_mesher;
 use fidget::eval::Tape;
 use serde::{Deserialize, Serialize};
 
+use crate::shape::Shape;
 
 type MeshingEvaluatorFamily = fidget::vm::Eval;
 
+/// A generated mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FullMesh {
   pub vertices:  Vec<glam::Vec3A>,
@@ -13,22 +15,62 @@ pub struct FullMesh {
   pub normals:   Vec<glam::Vec3A>,
 }
 
+/// The region over which a mesh is generated.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MesherInputs {
+pub struct MesherRegion {
+  /// The position in node-space around which the mesh is generated.
   pub position: glam::Vec3A,
+  /// The half-extents of the mesh.
   pub scale:    glam::Vec3A,
-  pub subdivs:  u8,
+  /// The detail of the mesh.
+  pub detail:   MesherDetail,
+  /// Whether to prune the mesh's vertices according to the AABB defined by
+  /// `position` and `scale`.
   pub prune:    bool,
 }
 
-pub struct FidgetMesher;
+impl MesherRegion {
+  pub fn voxel_side_length(&self) -> u32 {
+    self.detail.voxel_side_length(self.scale.max_element())
+  }
+}
+
+/// A descriptor to determine how many voxel cells to mesh with.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum MesherDetail {
+  /// Subdivides the side length `x` times to determine the voxel count; i.e. a
+  /// value of 4 will mesh with 16x16x16 voxels.
+  Subdivs(u8),
+  /// Allocates `x` voxels per unit in mesh space; i.e. if the mesh's AABB is 4
+  /// units on a side, a value of 8.0 will mesh with 32x32x32 voxels. Rounds
+  /// up.
+  Resolution(f32),
+  /// Controls the exact number of voxels to use; i.e. a value of 32 will mesh
+  /// with 32x32x32 voxels.
+  Exact(u32),
+}
+
+impl MesherDetail {
+  pub fn voxel_side_length(&self, scale: f32) -> u32 {
+    match self {
+      MesherDetail::Subdivs(x) => 2_u32.pow(*x as u32),
+      MesherDetail::Resolution(x) => (scale * *x).ceil() as u32,
+      MesherDetail::Exact(x) => *x,
+    }
+  }
+}
+
+/// All of the inputs required to build a mesh.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MesherInputs {
+  shape:  Shape,
+  region: MesherRegion,
+}
+
 pub struct FastSurfaceNetsMesher;
 
 pub trait Mesher {
-  fn build_mesh(
-    comp: &Composition,
-    inputs: MesherInputs,
-  ) -> Result<FullMesh, fidget::Error>;
+  fn build_mesh(inputs: MesherInputs) -> Result<FullMesh, fidget::Error>;
 }
 
 impl FullMesh {
