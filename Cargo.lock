@@ -3336,6 +3336,7 @@ dependencies = [
  "fast-surface-nets",
  "fidget",
  "glam 0.24.1",
+ "parry3d",
  "serde",
 ]
 
