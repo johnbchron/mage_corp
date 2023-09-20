@@ -1,5 +1,6 @@
 mod camera;
 mod debug;
+mod foliage;
 mod markers;
 mod materials;
 mod particle;
@@ -51,6 +52,7 @@ fn main() {
     // background logic
     .add_plugins(terrain::TerrainPlugin)
     .add_plugins(camera::posing::CameraPosePlugin)
+    .add_plugins(foliage::FoliagePlugin)
     .add_plugins(particle::ParticlePlugin)
     .add_plugins(utils::timer_lifetime::TimerLifetimePlugin)
     .add_plugins(utils::despawn::DespawnPlugin)
