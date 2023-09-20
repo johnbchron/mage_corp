@@ -11,4 +11,7 @@ fast-surface-nets = "0.2.0"
 fidget = { git = "https://github.com/johnbchron/fidget", tag = "0.3", default-features = false, features = ["mesh", "rhai"] }
 # fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh", "rhai"] }
 glam = { version = "0.24.0", features = ["serde"] }
+log = "0.4.20"
+parry3d = { version = "0.13.5", features = ["serde-serialize"] }
+rmp-serde = "1.1.2"
 serde = { version = "1.0.188", features = ["derive"] }

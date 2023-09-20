@@ -1,11 +1,6 @@
 mod mesh;
 mod region;
-use std::{
-  collections::hash_map::DefaultHasher,
-  hash::{Hash, Hasher},
-  ops::Rem,
-  time::Duration,
-};
+use std::{hash::Hash, ops::Rem, time::Duration};
 
 use bevy::{
   prelude::*,
@@ -13,12 +8,16 @@ use bevy::{
 };
 use bevy_xpbd_3d::prelude::*;
 use futures_lite::future::{block_on, poll_once};
-use planiscope::{comp::Composition, shape::Shape};
+use planiscope::{
+  cache::{CacheProvider, DiskCacheProvider},
+  mesher::FastSurfaceNetsMesher,
+  shape::Shape,
+};
 
 use crate::{
   materials::toon::ToonMaterial,
   terrain::{mesh::TerrainMesh, region::TerrainRegion},
-  utils::despawn::DespawnTag,
+  utils::{despawn::DespawnTag, hash_single},
 };
 
 #[derive(Component, Reflect, Default)]
@@ -82,23 +81,14 @@ impl Default for TerrainConfig {
 
 #[derive(Resource, Reflect)]
 #[reflect(Resource)]
-pub struct TerrainCurrentComposition(pub Composition);
+pub struct TerrainCurrentShape(pub Shape);
 
-impl TerrainCurrentComposition {
-  fn comp_hash(&self) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    self.0.hash(&mut hasher);
-    hasher.finish()
-  }
-}
-
-impl Default for TerrainCurrentComposition {
+impl Default for TerrainCurrentShape {
   fn default() -> Self {
-    let comp = Composition::new(vec![Shape::new_expr(
+    TerrainCurrentShape(Shape::new_expr(
       "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
        20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
-    )]);
-    Self(comp)
+    ))
   }
 }
 
@@ -108,16 +98,10 @@ pub struct TerrainCurrentGeneration {
   pub target_location:  Vec3,
   pub terrain_entities: Vec<Entity>,
   #[reflect(ignore)]
-  pub comp:             Composition,
+  pub shape:            Shape,
 }
 
-impl TerrainCurrentGeneration {
-  fn comp_hash(&self) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    self.comp.hash(&mut hasher);
-    hasher.finish()
-  }
-}
+type MeshGenTask = Task<((Mesh, Option<Collider>), TerrainRegion)>;
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
@@ -125,11 +109,9 @@ pub struct TerrainNextGeneration {
   pub target_location:          Vec3,
   pub regions:                  Vec<region::TerrainRegion>,
   #[reflect(ignore)]
-  pub mesh_gen_tasks: Vec<Task<((Mesh, Option<Collider>), TerrainRegion)>>,
+  pub mesh_gen_tasks:           Vec<MeshGenTask>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
-  #[reflect(ignore)]
-  pub comp:                     Composition,
-  pub comp_hash:                u64,
+  pub shape:                    Shape,
   pub start_time:               Duration,
 }
 
@@ -165,7 +147,7 @@ impl Plugin for TerrainPlugin {
       .register_type::<TerrainDetailTarget>()
       .register_type::<TerrainCurrentGeneration>()
       .register_type::<TerrainNextGeneration>()
-      .register_type::<TerrainCurrentComposition>()
+      .register_type::<TerrainCurrentShape>()
       // configure events
       .add_event::<TerrainTriggerRegeneration>()
       // configure set
@@ -203,7 +185,7 @@ impl Plugin for TerrainPlugin {
 
 fn setup_terrain(mut commands: Commands) {
   commands.insert_resource(TerrainConfig::default());
-  commands.insert_resource(TerrainCurrentComposition::default());
+  commands.insert_resource(TerrainCurrentShape::default());
   info!("setup terrain resources");
 }
 
@@ -226,7 +208,7 @@ fn cleanup_terrain(world: &mut World) {
 
   // remove the rest of the resources
   world.remove_resource::<TerrainConfig>();
-  world.remove_resource::<TerrainCurrentComposition>();
+  world.remove_resource::<TerrainCurrentShape>();
 }
 
 /// Builds `TerrainNextGeneration` when a `TerrainTriggerRegeneration` event is
@@ -235,13 +217,13 @@ fn init_next_generation(
   mut commands: Commands,
   mut events: EventReader<TerrainTriggerRegeneration>,
   config: Res<TerrainConfig>,
-  current_comp: Res<TerrainCurrentComposition>,
+  current_shape: Res<TerrainCurrentShape>,
   terrain_meshes: Res<Assets<TerrainMesh>>,
   time: Res<Time>,
 ) {
   if let Some(event) = events.iter().next() {
     // hash the current composition
-    let comp_hash = current_comp.comp_hash();
+    let comp_hash = hash_single(&current_shape.0);
 
     // start a vector for `TerrainMesh`'s which have already been built
     let mut existing_terrain_meshes: Vec<Handle<TerrainMesh>> = vec![];
@@ -276,10 +258,19 @@ fn init_next_generation(
       .into_iter()
       .map(|region| {
         thread_pool.spawn({
-          let current_comp = current_comp.0.clone();
+          let shape = current_shape.0.clone();
           async move {
+            let (mesh, collider) =
+              DiskCacheProvider::<FastSurfaceNetsMesher>::default()
+                .get_mesh_and_collider(&planiscope::mesher::MesherInputs {
+                  shape,
+                  region: region.into(),
+                });
             (
-              mesh::build_mesh_and_collider(&current_comp, &region).await,
+              (
+                mesh::bevy_mesh_from_pls_mesh(mesh.unwrap()),
+                collider.map(Collider::from),
+              ),
               region,
             )
           }
@@ -300,15 +291,14 @@ fn init_next_generation(
       regions,
       mesh_gen_tasks,
       resulting_terrain_meshes: existing_terrain_meshes,
-      comp: current_comp.0.clone(),
-      comp_hash,
+      shape: current_shape.0.clone(),
       start_time: time.elapsed(),
     });
   }
 }
 
 fn eligible_for_new_gen(
-  current_comp: Res<TerrainCurrentComposition>,
+  current_shape: Res<TerrainCurrentShape>,
   current_gen: Option<Res<TerrainCurrentGeneration>>,
   next_gen: Option<Res<TerrainNextGeneration>>,
   target_query: Query<&Transform, With<TerrainDetailTarget>>,
@@ -327,7 +317,7 @@ fn eligible_for_new_gen(
   let current_gen = current_gen.unwrap();
 
   // check if the current composition's hash matches the current gen's comp hash
-  if current_comp.comp_hash() != current_gen.comp_hash() {
+  if hash_single(&current_shape.0) != hash_single(&current_gen.shape) {
     return true;
   }
 
@@ -371,7 +361,7 @@ fn flush_assets_from_next_generation(
   mut terrain_meshes: ResMut<Assets<TerrainMesh>>,
 ) {
   let mut finished_tasks = vec![];
-  let comp_hash = next_gen.comp_hash;
+  let comp_hash = hash_single(&next_gen.shape);
   next_gen
     .mesh_gen_tasks
     .iter_mut()
@@ -409,6 +399,7 @@ fn next_gen_is_ready(next_gen: Option<Res<TerrainNextGeneration>>) -> bool {
 
 /// If `TerrainNextGeneration` is fully built, spawns entities from it and
 /// creates `TerrainCurrentGeneration`.
+#[allow(clippy::too_many_arguments)]
 fn transition_generations(
   mut commands: Commands,
   current_gen: Option<Res<TerrainCurrentGeneration>>,
@@ -488,7 +479,7 @@ fn transition_generations(
   commands.insert_resource(TerrainCurrentGeneration {
     target_location:  next_gen.target_location,
     terrain_entities: entites,
-    comp:             next_gen.comp.clone(),
+    shape:            next_gen.shape.clone(),
   });
 
   commands.remove_resource::<TerrainNextGeneration>();
