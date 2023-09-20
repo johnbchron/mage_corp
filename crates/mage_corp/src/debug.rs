@@ -1,7 +1,8 @@
 use bevy::{
   diagnostic::{
-    EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin,
-    LogDiagnosticsPlugin,
+    EntityCountDiagnosticsPlugin,
+    FrameTimeDiagnosticsPlugin,
+    // LogDiagnosticsPlugin,
   },
   prelude::*,
 };
@@ -14,12 +15,10 @@ pub struct DebugPlugin;
 impl Plugin for DebugPlugin {
   fn build(&self, app: &mut App) {
     app
-	    .add_plugins(LogDiagnosticsPlugin::default())
-	    .add_plugins(FrameTimeDiagnosticsPlugin)
-	    .add_plugins(EntityCountDiagnosticsPlugin)
-	    .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
-	    .add_plugins(VertexCountDiagnosticsPlugin)
-	    // .add_plugins(RapierDebugRenderPlugin::default())
-	    ;
+      // .add_plugins(LogDiagnosticsPlugin::default())
+      .add_plugins(FrameTimeDiagnosticsPlugin)
+      .add_plugins(EntityCountDiagnosticsPlugin)
+      .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
+      .add_plugins(VertexCountDiagnosticsPlugin);
   }
 }
