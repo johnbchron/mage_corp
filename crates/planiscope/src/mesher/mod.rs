@@ -1,10 +1,8 @@
-pub mod fidget_mesher;
 pub mod fsn_mesher;
 
 use fidget::eval::Tape;
 use serde::{Deserialize, Serialize};
 
-use crate::comp::Composition;
 
 type MeshingEvaluatorFamily = fidget::vm::Eval;
 
