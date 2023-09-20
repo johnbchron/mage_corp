@@ -27,6 +27,7 @@ impl Mesher for FastSurfaceNetsMesher {
     );
 
     let tape = ctx.get_tape::<MeshingEvaluatorFamily>(normalized_node)?;
+    let tape = simplify_tape(tape, [[-1.0, 1.0]; 3])?;
 
     // how many units the specified number of subdivisions will produce
     let shape_length = inputs.region.voxel_side_length();
@@ -94,5 +95,18 @@ impl Mesher for FastSurfaceNetsMesher {
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
 
     Ok(mesh)
+  }
+}
+
+fn simplify_tape(
+  tape: Tape<MeshingEvaluatorFamily>,
+  region: [[f32; 2]; 3],
+) -> Result<Tape<MeshingEvaluatorFamily>, fidget::Error> {
+  let interval_eval = tape.new_interval_evaluator();
+  let (_, simplify) =
+    interval_eval.eval(region[0], region[1], region[2], &[])?;
+  match simplify {
+    Some(simplify) => simplify.simplify(),
+    None => Ok(tape),
   }
 }
