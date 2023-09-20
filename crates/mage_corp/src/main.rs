@@ -1,3 +1,5 @@
+#![feature(trivial_bounds)]
+
 mod camera;
 mod debug;
 mod foliage;
