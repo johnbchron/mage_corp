@@ -1,5 +1,8 @@
 pub mod fsn_mesher;
 
+use std::hash::{Hash, Hasher};
+
+use educe::Educe;
 use fidget::eval::Tape;
 use serde::{Deserialize, Serialize};
 
@@ -14,11 +17,14 @@ pub struct FullMesh {
 }
 
 /// The region over which a mesh is generated.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Educe, Serialize, Deserialize)]
+#[educe(Hash)]
 pub struct MesherRegion {
   /// The position in node-space around which the mesh is generated.
+  #[educe(Hash(method = "hash_vec3a"))]
   pub position: glam::Vec3A,
   /// The half-extents of the mesh.
+  #[educe(Hash(method = "hash_vec3a"))]
   pub scale:    glam::Vec3A,
   /// The detail of the mesh.
   pub detail:   MesherDetail,
@@ -34,7 +40,8 @@ impl MesherRegion {
 }
 
 /// A descriptor to determine how many voxel cells to mesh with.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Educe, Serialize, Deserialize)]
+#[educe(Hash)]
 pub enum MesherDetail {
   /// Subdivides the side length `x` times to determine the voxel count; i.e. a
   /// value of 4 will mesh with 16x16x16 voxels.
@@ -42,7 +49,7 @@ pub enum MesherDetail {
   /// Allocates `x` voxels per unit in mesh space; i.e. if the mesh's AABB is 4
   /// units on a side, a value of 8.0 will mesh with 32x32x32 voxels. Rounds
   /// up.
-  Resolution(f32),
+  Resolution(#[educe(Hash(trait = "decorum::hash::FloatHash"))] f32),
   /// Controls the exact number of voxels to use; i.e. a value of 32 will mesh
   /// with 32x32x32 voxels.
   Exact(u32),
@@ -59,7 +66,7 @@ impl MesherDetail {
 }
 
 /// All of the inputs required to build a mesh.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct MesherInputs {
   shape:  Shape,
   region: MesherRegion,
@@ -125,4 +132,14 @@ pub fn fidget_normals<F: fidget::eval::Family>(
       .map(|g| glam::Vec3A::new(g.dx, g.dy, g.dz))
       .collect(),
   )
+}
+
+pub fn hash_vec3a<H: Hasher>(s: &glam::Vec3A, state: &mut H) {
+  s.to_array()
+    .iter()
+    .for_each(|v| decorum::hash::FloatHash::float_hash(v, state));
+}
+
+pub fn hash_uvec3<H: Hasher>(s: &glam::UVec3, state: &mut H) {
+  s.to_array().iter().for_each(|v| Hash::hash(v, state));
 }
