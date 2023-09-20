@@ -12,4 +12,5 @@ fidget = { git = "https://github.com/johnbchron/fidget", tag = "0.3", default-fe
 # fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh", "rhai"] }
 glam = { version = "0.24.0", features = ["serde"] }
 parry3d = { version = "0.13.5", features = ["serde-serialize"] }
+rmp-serde = "1.1.2"
 serde = { version = "1.0.188", features = ["derive"] }

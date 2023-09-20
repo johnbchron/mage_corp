@@ -3337,6 +3337,7 @@ dependencies = [
  "fidget",
  "glam 0.24.1",
  "parry3d",
+ "rmp-serde",
  "serde",
 ]
 

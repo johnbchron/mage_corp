@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::mesher::FullMesh;
 
-#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Hash, Serialize, Deserialize)]
 pub enum ColliderSettings {
+  #[default]
   ConvexDecomposition,
   TriMesh,
 }
