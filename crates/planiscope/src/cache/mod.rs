@@ -2,7 +2,7 @@ pub mod disk;
 
 use parry3d::shape::SharedShape;
 
-use crate::mesher::{FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs};
+use crate::mesher::{FullMesh, Mesher, MesherInputs};
 
 pub struct DiskCacheProvider<M: Mesher> {
   /// The mesher to use.
@@ -17,8 +17,8 @@ impl<M: Mesher + Default> Default for DiskCacheProvider<M> {
   fn default() -> Self {
     Self {
       mesher:        M::default(),
-      mesh_path:     "cache/mesh/{:x}".to_string(),
-      collider_path: "cache/collider/{:x}".to_string(),
+      mesh_path:     "mesh_cache/mesh/".to_string(),
+      collider_path: "mesh_cache/collider/".to_string(),
     }
   }
 }

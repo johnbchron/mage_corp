@@ -1,6 +1,7 @@
 use std::ops::Rem;
 
 use bevy::prelude::*;
+use planiscope::mesher::MesherRegion;
 use spatialtree::{tree::OctTree, OctVec};
 
 use super::*;
@@ -10,6 +11,17 @@ pub struct TerrainRegion {
   pub position: Vec3,
   pub scale:    Vec3,
   pub subdivs:  u8,
+}
+
+impl From<TerrainRegion> for MesherRegion {
+  fn from(value: TerrainRegion) -> Self {
+    Self {
+      position: value.position.into(),
+      scale:    value.scale.into(),
+      detail:   planiscope::mesher::MesherDetail::Subdivs(value.subdivs),
+      prune:    false,
+    }
+  }
 }
 
 // TODO: this is terrible

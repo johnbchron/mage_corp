@@ -68,10 +68,11 @@ impl MesherDetail {
 /// All of the inputs required to build a mesh.
 #[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct MesherInputs {
-  shape:  Shape,
-  region: MesherRegion,
+  pub shape:  Shape,
+  pub region: MesherRegion,
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct FastSurfaceNetsMesher;
 
 pub trait Mesher {

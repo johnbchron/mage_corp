@@ -6,12 +6,13 @@ use std::{
   path::PathBuf,
 };
 
+use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
 
 use super::{CacheProvider, DiskCacheProvider};
 use crate::{
   collider::{generate_collider, ColliderSettings},
-  mesher::{FullMesh, Mesher, MesherInputs},
+  mesher::{Mesher, MesherInputs},
 };
 
 fn hash_single<H: Hash>(value: &H) -> u64 {
@@ -21,7 +22,7 @@ fn hash_single<H: Hash>(value: &H) -> u64 {
 }
 
 fn serialize_to_file<V: Serialize>(path: &str, value: &V) -> Option<String> {
-  std::fs::create_dir_all(path).ok()?;
+  std::fs::create_dir_all(PathBuf::from(path).parent()?).ok()?;
   let file = File::create(path).ok()?;
   let mut writer = BufWriter::new(file);
   rmp_serde::encode::write(&mut writer, value).ok()?;
@@ -33,7 +34,7 @@ fn deserialize_from_file<V: for<'de> Deserialize<'de>>(
 ) -> Option<V> {
   let file = File::open(path).ok()?;
   let mut reader = BufReader::new(file);
-  Some(rmp_serde::decode::from_read(&mut reader).ok()?)
+  rmp_serde::decode::from_read(&mut reader).ok()
 }
 
 impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
@@ -80,8 +81,7 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     self
       .get_mesh(inputs)
       .ok()
-      .map(|mesh| generate_collider(mesh, &ColliderSettings::default()))
-      .flatten()
+      .and_then(|mesh| generate_collider(mesh, &ColliderSettings::default()))
       .inspect(|c| {
         serialize_to_file(&path, c);
       })
@@ -95,11 +95,23 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     Option<parry3d::shape::SharedShape>,
   ) {
     let mesh = self.get_mesh(inputs);
-    let collider = mesh
-      .as_ref()
-      .ok()
-      .map(|m| generate_collider(m.clone(), &ColliderSettings::default()))
-      .flatten();
+
+    let inputs_hash = hash_single(inputs);
+    let path = format!("{}{}", self.collider_path, inputs_hash);
+
+    let collider = match deserialize_from_file::<SharedShape>(&path) {
+      Some(s) => Some(s),
+      None => mesh
+        .as_ref()
+        .ok()
+        .and_then(|m| {
+          generate_collider(m.clone(), &ColliderSettings::default())
+        })
+        .inspect(|s| {
+          serialize_to_file(&path, s);
+        }),
+    };
+
     (mesh, collider)
   }
 }
