@@ -77,7 +77,10 @@ pub struct FastSurfaceNetsMesher;
 pub trait Mesher {
   type EvalFamily: fidget::eval::Family;
 
-  fn build_mesh(inputs: MesherInputs) -> Result<FullMesh, fidget::Error>;
+  fn build_mesh(
+    &self,
+    inputs: &MesherInputs,
+  ) -> Result<FullMesh, fidget::Error>;
 }
 
 impl FullMesh {

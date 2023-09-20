@@ -14,7 +14,10 @@ use crate::{
 impl Mesher for FastSurfaceNetsMesher {
   type EvalFamily = fidget::vm::Eval;
 
-  fn build_mesh(inputs: MesherInputs) -> Result<FullMesh, fidget::Error> {
+  fn build_mesh(
+    &self,
+    inputs: &MesherInputs,
+  ) -> Result<FullMesh, fidget::Error> {
     // get a node for the composition
     let mut ctx = Context::new();
     let node = inputs.shape.into_node(&mut ctx)?;
