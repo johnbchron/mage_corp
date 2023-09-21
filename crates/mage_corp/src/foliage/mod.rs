@@ -1,9 +1,5 @@
-use bevy::{
-  prelude::*,
-  render::primitives::Aabb,
-  tasks::{AsyncComputeTaskPool, Task},
-};
-use bevy_xpbd_3d::prelude::Collider;
+use bevy::{prelude::*, render::primitives::Aabb, tasks::AsyncComputeTaskPool};
+use bevy_xpbd_3d::prelude::*;
 use planiscope::{
   cache::{CacheProvider, DiskCacheProvider},
   mesher::{FastSurfaceNetsMesher, MesherDetail, MesherInputs, MesherRegion},
@@ -15,7 +11,8 @@ use crate::{
   utils::{
     bevy_mesh_from_pls_mesh,
     in_progress::{
-      in_progress_asset_flusher, InProgressAsset, InProgressComponent,
+      in_progress_asset_flusher, in_progress_component_flusher,
+      InProgressAsset, InProgressComponent,
     },
   },
 };
@@ -55,7 +52,8 @@ impl Plugin for FoliagePlugin {
       .init_resource::<FoliageMeshConfig>()
       .add_systems(Startup, spawn_test_foliage)
       .add_systems(Update, start_foliage_tasks)
-      .add_systems(Update, in_progress_asset_flusher::<Mesh>);
+      .add_systems(Update, in_progress_asset_flusher::<Mesh>)
+      .add_systems(Update, in_progress_component_flusher::<Collider>);
   }
 }
 
@@ -77,41 +75,65 @@ fn spawn_test_foliage(
       },
     },
     Name::new("foliage_test"),
+    RigidBody::Static,
   ));
 }
 
+#[allow(clippy::type_complexity)]
 fn start_foliage_tasks(
   mut commands: Commands,
   foliage_q: Query<
     (Entity, &Foliage),
-    (Without<InProgressAsset<Mesh>>, Without<Handle<Mesh>>),
+    (
+      Without<InProgressAsset<Mesh>>,
+      Without<Handle<Mesh>>,
+      Without<InProgressComponent<Collider>>,
+      Without<Collider>,
+    ),
   >,
   foliage_mesh_config: Res<FoliageMeshConfig>,
 ) {
   let thread_pool = AsyncComputeTaskPool::get();
 
   for (entity, foliage) in foliage_q.iter() {
-    let region = MesherRegion {
-      position: foliage.aabb.center,
-      scale:    foliage.aabb.half_extents,
-      detail:   MesherDetail::Resolution(
-        foliage_mesh_config.voxels_per_unit as f32,
-      ),
-      prune:    false,
+    let inputs = MesherInputs {
+      shape:  foliage.shape.clone(),
+      region: MesherRegion {
+        position: foliage.aabb.center,
+        scale:    foliage.aabb.half_extents,
+        detail:   MesherDetail::Resolution(
+          foliage_mesh_config.voxels_per_unit as f32,
+        ),
+        prune:    false,
+      },
     };
-    let shape = foliage.shape.clone();
 
-    let mesh_task = thread_pool.spawn(async move {
-      bevy_mesh_from_pls_mesh(
-        DiskCacheProvider::<FastSurfaceNetsMesher>::default()
-          .get_mesh(&MesherInputs { shape, region })
-          .unwrap(),
-      )
+    let mesh_task = thread_pool.spawn({
+      let inputs = inputs.clone();
+      async move {
+        bevy_mesh_from_pls_mesh(
+          DiskCacheProvider::<FastSurfaceNetsMesher>::default()
+            .get_mesh(&inputs)
+            .unwrap(),
+        )
+      }
+    });
+
+    let collider_task = thread_pool.spawn({
+      let inputs = inputs.clone();
+      async move {
+        Collider::from(
+          DiskCacheProvider::<FastSurfaceNetsMesher>::default()
+            .get_collider(&inputs)
+            .unwrap(),
+        )
+      }
     });
 
     commands
       .entity(entity)
       .insert(InProgressAsset(mesh_task))
+      .insert(InProgressComponent(collider_task))
       .insert(foliage.material.clone());
   }
 }
