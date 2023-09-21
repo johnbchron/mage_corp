@@ -1,3 +1,5 @@
+pub mod extra;
+
 use bevy_reflect::Reflect;
 use decorum::hash::FloatHash;
 use educe::Educe;
@@ -42,6 +44,7 @@ pub enum Shape {
     #[reflect(ignore)]
     new_z: Box<Shape>,
   },
+  Extra(extra::Extra),
 }
 
 impl Default for Shape {
@@ -97,6 +100,7 @@ impl IntoNode for &Shape {
         let new_z_node = new_z.as_ref().into_node(ctx)?;
         ctx.remap_xyz(root_node, [new_x_node, new_y_node, new_z_node])
       }
+      Shape::Extra(extra) => extra.into_node(ctx),
     }
   }
 }
