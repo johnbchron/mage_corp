@@ -17,7 +17,7 @@ use planiscope::{
 use crate::{
   materials::toon::ToonMaterial,
   terrain::{mesh::TerrainMesh, region::TerrainRegion},
-  utils::{despawn::DespawnTag, hash_single},
+  utils::{bevy_mesh_from_pls_mesh, despawn::DespawnTag, hash_single},
 };
 
 #[derive(Component, Reflect, Default)]
@@ -268,7 +268,7 @@ fn init_next_generation(
                 });
             (
               (
-                mesh::bevy_mesh_from_pls_mesh(mesh.unwrap()),
+                bevy_mesh_from_pls_mesh(mesh.unwrap()),
                 collider.map(Collider::from),
               ),
               region,

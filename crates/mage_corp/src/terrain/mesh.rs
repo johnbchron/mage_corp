@@ -1,10 +1,5 @@
-use bevy::{
-  prelude::*,
-  reflect::TypeUuid,
-  render::{mesh::Indices, render_resource::PrimitiveTopology},
-};
+use bevy::{prelude::*, reflect::TypeUuid};
 use bevy_xpbd_3d::prelude::*;
-use planiscope::mesher::FullMesh;
 
 use super::region::TerrainRegion;
 
@@ -20,34 +15,4 @@ pub struct TerrainMesh {
   pub collider:  Option<Collider>,
   /// The hash of the composition.
   pub comp_hash: u64,
-}
-
-pub fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
-  let mut bevy_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-
-  bevy_mesh.insert_attribute(
-    Mesh::ATTRIBUTE_POSITION,
-    mesh
-      .vertices
-      .into_iter()
-      .map(|v| v.to_array())
-      .collect::<Vec<_>>(),
-  );
-  bevy_mesh.insert_attribute(
-    Mesh::ATTRIBUTE_NORMAL,
-    mesh
-      .normals
-      .into_iter()
-      .map(|v| v.to_array())
-      .collect::<Vec<_>>(),
-  );
-
-  bevy_mesh.set_indices(Some(Indices::U32(
-    mesh
-      .triangles
-      .into_iter()
-      .flat_map(|v| v.to_array())
-      .collect(),
-  )));
-  bevy_mesh
 }
