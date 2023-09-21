@@ -23,7 +23,7 @@ impl Mesher for FastSurfaceNetsMesher {
     let node = inputs.shape.into_node(&mut ctx)?;
 
     // we need to normalize the target region into -1..1
-    let normalized_node = nso::nso_normalize_region(
+    let normalized_node = nso::regions::nso_normalize_region(
       node,
       inputs.region.position.to_array(),
       inputs.region.scale.to_array(),
