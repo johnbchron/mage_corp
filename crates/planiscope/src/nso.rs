@@ -199,3 +199,31 @@ pub mod other {
     ctx.mul(shape, color_val).unwrap()
   }
 }
+
+pub mod smooth {
+  use fidget::{context::Node, Context};
+
+  pub fn nso_smooth_min_cubic(
+    lhs: Node,
+    rhs: Node,
+    k: Node,
+    ctx: &mut Context,
+  ) -> Result<Node, fidget::Error> {
+    let zero = ctx.constant(0.0);
+    let one_over_six = ctx.constant(1.0 / 6.0);
+
+    let v = ctx.sub(lhs, rhs)?;
+    let v = ctx.abs(v)?;
+    let v = ctx.sub(k, v)?;
+    let v = ctx.max(v, zero)?;
+    let h = ctx.div(v, k)?;
+
+    let v = ctx.square(h)?;
+    let v = ctx.mul(v, h)?;
+    let v = ctx.mul(v, k)?;
+    let v = ctx.mul(v, one_over_six)?;
+    let v2 = ctx.min(lhs, rhs)?;
+
+    ctx.sub(v2, v)
+  }
+}

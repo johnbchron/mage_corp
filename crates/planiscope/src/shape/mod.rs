@@ -1,3 +1,4 @@
+pub mod builder;
 pub mod extra;
 
 use bevy_reflect::Reflect;

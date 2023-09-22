@@ -9,18 +9,21 @@ use super::Shape;
 
 #[derive(Hash, Clone, Debug, Serialize, Deserialize, Reflect)]
 pub enum Extra {
-  Smooth(#[reflect(ignore)] Box<Shape>, #[reflect(ignore)] Box<Shape>),
+  SmoothMinCubic(
+    #[reflect(ignore)] Box<Shape>,
+    #[reflect(ignore)] Box<Shape>,
+    #[reflect(ignore)] Box<Shape>,
+  ),
 }
 
 impl IntoNode for &Extra {
   fn into_node(self, ctx: &mut Context) -> Result<Node, fidget::Error> {
     match self {
-      Extra::Smooth(lhs, k) => {
-        let zero = ctx.constant(0.0);
-        let point_five = ctx.constant(0.5);
-        let one = ctx.constant(1.0);
-
-        todo!()
+      Extra::SmoothMinCubic(lhs, rhs, k) => {
+        let lhs = lhs.into_node(ctx)?;
+        let rhs = rhs.into_node(ctx)?;
+        let k = k.into_node(ctx)?;
+        crate::nso::smooth::nso_smooth_min_cubic(lhs, rhs, k, ctx)
       }
     }
   }
