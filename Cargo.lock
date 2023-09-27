@@ -778,7 +778,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "267f2ec44aa948051768b1320c2dbff0871799e0a3b746f5fe5b6ee7258fbaf5"
 dependencies = [
- "glam 0.24.1",
+ "glam 0.24.2",
  "serde",
 ]
 
@@ -788,7 +788,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d98eaa7f40b97bb9b2d681ecf9fd439830a7eb88ad2846680d4f4acd285cf84"
 dependencies = [
- "glam 0.24.1",
+ "glam 0.24.2",
 ]
 
 [[package]]
@@ -861,7 +861,7 @@ dependencies = [
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
- "glam 0.24.1",
+ "glam 0.24.2",
  "once_cell",
  "parking_lot",
  "serde",
@@ -1766,7 +1766,7 @@ checksum = "8fce2eeef77fd4a293a54b62aa00ac9daebfbcda4bf8998c5a815635b004aa1c"
 dependencies = [
  "const_panic",
  "encase_derive",
- "glam 0.24.1",
+ "glam 0.24.2",
  "thiserror",
 ]
 
@@ -2070,9 +2070,9 @@ checksum = "f43e957e744be03f5801a55472f593d43fabdebf25a4585db250f04d86b1675f"
 
 [[package]]
 name = "glam"
-version = "0.24.1"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42218cb640844e3872cc3c153dc975229e080a6c4733b34709ef445610550226"
+checksum = "b5418c17512bdf42730f9032c74e1ae39afc408745ebb2acf72fbc4691c17945"
 dependencies = [
  "bytemuck",
  "serde",
@@ -2258,7 +2258,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cb3df16a7bcb1b5bc092abd55e14f77ca70aea14445026e264586fc62889a10"
 dependencies = [
  "constgebra",
- "glam 0.24.1",
+ "glam 0.24.2",
 ]
 
 [[package]]
@@ -2789,7 +2789,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "307ed9b18cc2423f29e83f84fd23a8e73628727990181f18641a8b5dc2ab1caa"
 dependencies = [
  "approx 0.5.1",
- "glam 0.24.1",
+ "glam 0.24.2",
  "matrixmultiply",
  "nalgebra-macros 0.2.1",
  "num-complex",
@@ -3333,7 +3333,7 @@ dependencies = [
  "educe",
  "fast-surface-nets",
  "fidget",
- "glam 0.24.1",
+ "glam 0.24.2",
  "log",
  "parry3d",
  "rmp-serde",
