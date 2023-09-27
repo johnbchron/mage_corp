@@ -31,11 +31,11 @@ impl CameraPose {
         low_res_pixel_size: 2.0,
       }),
       CameraPose::TestState => Some(ControlledCameraParams {
-        translation:        Vec3::new(-32.0, 32.0, 32.0)
+        translation:        Vec3::new(-24.0, 24.0, 24.0)
           + target_transform.translation,
         looking_at:         (target_transform.translation, Vec3::Y),
         fov:                0.2,
-        low_res_pixel_size: 4.0,
+        low_res_pixel_size: 3.0,
       }),
     }
   }

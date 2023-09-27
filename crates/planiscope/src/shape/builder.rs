@@ -1,7 +1,7 @@
 use super::*;
 
-pub fn expr(expr: String) -> Shape {
-  Shape::Expression { expr }
+pub fn expr(expr: impl Into<String>) -> Shape {
+  Shape::Expression { expr: expr.into() }
 }
 
 pub fn x() -> Shape {
@@ -75,16 +75,53 @@ pub fn remap(
     new_z: Box::new(z.into()),
   }
 }
+pub fn translate(root: impl Into<Shape>, x: f64, y: f64, z: f64) -> Shape {
+  Shape::Remap {
+    root:  Box::new(root.into()),
+    new_x: Box::new(if x == 0.0 {
+      self::x()
+    } else {
+      sub(self::x(), x)
+    }),
+    new_y: Box::new(if y == 0.0 {
+      self::y()
+    } else {
+      sub(self::y(), y)
+    }),
+    new_z: Box::new(if z == 0.0 {
+      self::z()
+    } else {
+      sub(self::z(), z)
+    }),
+  }
+}
 
 // extra
+pub fn sphere(r: impl Into<Shape>) -> Shape {
+  Shape::Extra(extra::Extra::Sphere {
+    radius: Box::new(r.into()),
+  })
+}
+pub fn cylinder(r: impl Into<Shape>, h: impl Into<Shape>) -> Shape {
+  Shape::Extra(extra::Extra::Cylinder {
+    height: Box::new(h.into()),
+    radius: Box::new(r.into()),
+  })
+}
 pub fn smooth_min_cubic(
   lhs: impl Into<Shape>,
   rhs: impl Into<Shape>,
   k: impl Into<Shape>,
 ) -> Shape {
-  Shape::Extra(extra::Extra::SmoothMinCubic(
-    Box::new(lhs.into()),
-    Box::new(rhs.into()),
-    Box::new(k.into()),
-  ))
+  Shape::Extra(extra::Extra::SmoothMinCubic {
+    lhs: Box::new(lhs.into()),
+    rhs: Box::new(rhs.into()),
+    k:   Box::new(k.into()),
+  })
+}
+pub fn transform(root: impl Into<Shape>, mat: impl Into<glam::Mat4>) -> Shape {
+  Shape::Extra(extra::Extra::MatTransform {
+    root: Box::new(root.into()),
+    mat:  mat.into(),
+  })
 }

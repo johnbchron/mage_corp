@@ -172,6 +172,7 @@ fn fragment(
     let outline_stencil = mix(vec4(1.0), edge_color, length(edge));
     color = color * outline_stencil;
     // return vec4(edge, 0.0, 1.0);
+    //return vec4(get_normal(mesh.position.xy), 1.0);
     
     // return vec4(vec3(pow(dot(get_normal(mesh.position.xy), camera_forward), 2.0)), 1.0);
   }

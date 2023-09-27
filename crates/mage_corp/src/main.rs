@@ -50,7 +50,7 @@ fn main() {
     .add_plugins(player::PlayerPlugin)
     // QoL
     .add_plugins(WorldInspectorPlugin::new())
-    //.add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
+    .add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
     // background logic
     .add_plugins(terrain::TerrainPlugin)
     .add_plugins(camera::posing::CameraPosePlugin)

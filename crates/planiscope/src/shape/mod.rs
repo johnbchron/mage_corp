@@ -1,6 +1,8 @@
 pub mod builder;
 pub mod extra;
 
+use std::ops::{Add, Div, Mul, Neg, Sub};
+
 use bevy_reflect::Reflect;
 use decorum::hash::FloatHash;
 use educe::Educe;
@@ -51,6 +53,48 @@ pub enum Shape {
 impl Default for Shape {
   fn default() -> Self {
     Self::Constant(1.0_f64)
+  }
+}
+
+impl From<f64> for Shape {
+  fn from(value: f64) -> Self {
+    Shape::Constant(value)
+  }
+}
+
+impl Add<Shape> for Shape {
+  type Output = Shape;
+
+  fn add(self, rhs: Shape) -> Self::Output {
+    Shape::Add(Box::new(self), Box::new(rhs))
+  }
+}
+impl Sub<Shape> for Shape {
+  type Output = Shape;
+
+  fn sub(self, rhs: Shape) -> Self::Output {
+    Shape::Sub(Box::new(self), Box::new(rhs))
+  }
+}
+impl Mul<Shape> for Shape {
+  type Output = Shape;
+
+  fn mul(self, rhs: Shape) -> Self::Output {
+    Shape::Mul(Box::new(self), Box::new(rhs))
+  }
+}
+impl Div<Shape> for Shape {
+  type Output = Shape;
+
+  fn div(self, rhs: Shape) -> Self::Output {
+    Shape::Div(Box::new(self), Box::new(rhs))
+  }
+}
+impl Neg for Shape {
+  type Output = Shape;
+
+  fn neg(self) -> Self::Output {
+    Shape::Neg(Box::new(self))
   }
 }
 

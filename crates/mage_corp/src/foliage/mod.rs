@@ -1,9 +1,11 @@
+pub mod shapes;
+
 use bevy::{prelude::*, render::primitives::Aabb, tasks::AsyncComputeTaskPool};
 use bevy_xpbd_3d::prelude::*;
 use planiscope::{
   cache::{CacheProvider, DiskCacheProvider},
   mesher::{FastSurfaceNetsMesher, MesherDetail, MesherInputs, MesherRegion},
-  shape::Shape,
+  shape::{builder::*, Shape},
 };
 
 use crate::{
@@ -39,7 +41,9 @@ struct FoliageMeshConfig {
 
 impl Default for FoliageMeshConfig {
   fn default() -> Self {
-    Self { voxels_per_unit: 8 }
+    Self {
+      voxels_per_unit: 24,
+    }
   }
 }
 
@@ -50,6 +54,7 @@ impl Plugin for FoliagePlugin {
     app
       .register_type::<Foliage>()
       .init_resource::<FoliageMeshConfig>()
+      .register_type::<FoliageMeshConfig>()
       .add_systems(Startup, spawn_test_foliage)
       .add_systems(Update, start_foliage_tasks)
       .add_systems(Update, in_progress_asset_flusher::<Mesh>)
@@ -61,17 +66,19 @@ fn spawn_test_foliage(
   mut commands: Commands,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
+  let shape = translate(cylinder(0.5, 4.0), 0.0, 2.0, 0.0);
+
   commands.spawn((
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 5.0)),
     Foliage {
-      shape:    Shape::new_expr("sqrt(square(x) + square(y) + square(z)) - 1"),
+      shape,
       material: toon_materials.add(ToonMaterial {
         color: Color::rgb(1.0, 1.0, 0.0),
         ..default()
       }),
-      aabb:     Aabb {
+      aabb: Aabb {
         center:       Vec3::ZERO.into(),
-        half_extents: Vec3::new(2.0, 2.0, 2.0).into(),
+        half_extents: Vec3::new(2.0, 4.0, 2.0).into(),
       },
     },
     Name::new("foliage_test"),
@@ -84,12 +91,15 @@ fn start_foliage_tasks(
   mut commands: Commands,
   foliage_q: Query<
     (Entity, &Foliage),
-    (
-      Without<InProgressAsset<Mesh>>,
-      Without<Handle<Mesh>>,
-      Without<InProgressComponent<Collider>>,
-      Without<Collider>,
-    ),
+    Or<(
+      (
+        Without<InProgressAsset<Mesh>>,
+        Without<Handle<Mesh>>,
+        Without<InProgressComponent<Collider>>,
+        Without<Collider>,
+      ),
+      Or<(Added<Foliage>, Changed<Foliage>)>,
+    )>,
   >,
   foliage_mesh_config: Res<FoliageMeshConfig>,
 ) {
@@ -100,7 +110,7 @@ fn start_foliage_tasks(
       shape:  foliage.shape.clone(),
       region: MesherRegion {
         position: foliage.aabb.center,
-        scale:    foliage.aabb.half_extents,
+        scale:    foliage.aabb.half_extents * 2.0,
         detail:   MesherDetail::Resolution(
           foliage_mesh_config.voxels_per_unit as f32,
         ),
