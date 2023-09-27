@@ -46,7 +46,7 @@ fn tick_timer_lifetimes(
     .par_iter_mut()
     .for_each_mut(|mut timer_lifetime| {
       timer_lifetime.tick(time.delta());
-    })
+    });
 }
 
 fn remove_expired_lifetimes(

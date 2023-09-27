@@ -43,7 +43,7 @@ pub fn simple_player_input(
   kb_input: Res<Input<KeyCode>>,
   time: Res<Time>,
 ) {
-  for (mut transform, user_input_receiver) in player_q.iter_mut() {
+  for (mut transform, user_input_receiver) in &mut player_q {
     let mut direction = Vec3::ZERO;
     if kb_input.pressed(KeyCode::W) {
       direction -= Vec3::Z;
@@ -76,10 +76,9 @@ fn debug_change_camera_states(
   if let Ok(mut state) = state_q.get_single_mut() {
     match state.clone() {
       CameraPoseState::InState(from) => match from {
-        CameraPose::Disabled => {}
-        CameraPose::OverShoulder => {}
         CameraPose::Isometric => state.transition(&CameraPose::TestState),
         CameraPose::TestState => state.transition(&CameraPose::Isometric),
+        _ => {}
       },
       CameraPoseState::Transition { .. } => {
         state.reverse();

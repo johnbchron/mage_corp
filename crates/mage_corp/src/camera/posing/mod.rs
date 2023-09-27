@@ -182,10 +182,10 @@ pub fn maintain_pose(
   if let Err(single_error) = target_transform {
     match single_error {
       QuerySingleError::NoEntities(_) => {
-        warn!("no entities have a `CameraStateTarget`, aborting")
+        warn!("no entities have a `CameraStateTarget`, aborting");
       }
       QuerySingleError::MultipleEntities(_) => {
-        warn!("multiple entities have a `CameraStateTarget`, aborting")
+        warn!("multiple entities have a `CameraStateTarget`, aborting");
       }
     };
     return;
@@ -198,7 +198,7 @@ pub fn maintain_pose(
     mut camera_transform,
     mut camera_projection,
     mut camera_lowres,
-  ) in camera_q.iter_mut()
+  ) in &mut camera_q
   {
     match camera_state.clone() {
       CameraPoseState::Transition { from, to, .. } => {

@@ -1,3 +1,9 @@
+#![warn(clippy::all, clippy::pedantic)]
+#![allow(
+  clippy::wildcard_imports,
+  clippy::needless_pass_by_value,
+  clippy::module_name_repetitions
+)]
 #![feature(trivial_bounds)]
 
 mod camera;

@@ -27,7 +27,7 @@ pub fn in_progress_component_flusher<T: Bundle>(
   mut commands: Commands,
   mut query: Query<(Entity, &mut InProgressComponent<T>)>,
 ) {
-  for (entity, mut in_progress) in query.iter_mut() {
+  for (entity, mut in_progress) in &mut query {
     if let Some(component) = block_on(poll_once(&mut in_progress.0)) {
       commands.entity(entity).insert(component);
       commands.entity(entity).remove::<InProgressComponent<T>>();
@@ -41,7 +41,7 @@ pub fn in_progress_asset_flusher<T: Asset>(
   mut query: Query<(Entity, &mut InProgressAsset<T>)>,
   mut asset_collection: ResMut<Assets<T>>,
 ) {
-  for (entity, mut in_progress) in query.iter_mut() {
+  for (entity, mut in_progress) in &mut query {
     if let Some(asset) = block_on(poll_once(&mut in_progress.0)) {
       commands.entity(entity).insert(asset_collection.add(asset));
       commands.entity(entity).remove::<InProgressAsset<T>>();

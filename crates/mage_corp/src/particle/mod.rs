@@ -108,19 +108,20 @@ impl Default for ParticleEmitter {
   }
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn spawn_particles(
   mut commands: Commands,
   mut emitter_query: Query<(&mut ParticleEmitter, &Transform)>,
   time: Res<Time>,
 ) {
-  for (mut emitter, transform) in emitter_query.iter_mut() {
+  for (mut emitter, transform) in &mut emitter_query {
     if !emitter.enabled {
       continue;
     }
 
     emitter.accumulator += emitter.rate * time.delta_seconds();
-    let new_particle_count = emitter.accumulator.floor() as u32;
-    emitter.accumulator -= new_particle_count as f32;
+    let new_particle_count = emitter.accumulator as u16;
+    emitter.accumulator -= f32::from(new_particle_count);
 
     let mut rng = nanorand::tls_rng();
 
@@ -203,7 +204,7 @@ fn spawn_particles(
         },
       ));
       let id = particle_entity.id();
-      particle_entity.insert(Name::new(format!("particle_{:?}", id)));
+      particle_entity.insert(Name::new(format!("particle_{id:?}")));
     }
   }
 }

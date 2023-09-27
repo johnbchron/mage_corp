@@ -36,7 +36,7 @@ struct Foliage {
 #[reflect(Resource)]
 struct FoliageMeshConfig {
   /// How many meshing voxels to place within one world unit.
-  voxels_per_unit: u32,
+  voxels_per_unit: u16,
 }
 
 impl Default for FoliageMeshConfig {
@@ -111,9 +111,9 @@ fn start_foliage_tasks(
       region: MesherRegion {
         position: foliage.aabb.center,
         scale:    foliage.aabb.half_extents * 2.0,
-        detail:   MesherDetail::Resolution(
-          foliage_mesh_config.voxels_per_unit as f32,
-        ),
+        detail:   MesherDetail::Resolution(f32::from(
+          foliage_mesh_config.voxels_per_unit,
+        )),
         prune:    false,
       },
     };
