@@ -305,66 +305,124 @@ pub mod vectors {
 pub mod other {
   use fidget::{context::Node, Context};
 
-  /// Clamps a node to the range [-1, 1], and drastically steepens the slope of
-  /// the transition between the two extents.
-  pub fn nso_clamp_and_steep(
+  /// Clamps a node to the range [-1, 1], such that any number > 0 is 1, and any
+  /// number < 0 is -1. This should not be used with exact 0.
+  pub fn nso_normalized_hardstep(
     shape: Node,
     ctx: &mut Context,
   ) -> Result<Node, fidget::Error> {
-    let steep_slope = ctx.constant(1000.0);
-    let steep_shape = ctx.mul(shape, steep_slope)?;
-    let one = ctx.constant(1.0);
-    let neg_one = ctx.constant(-1.0);
-    let outside_bounded = ctx.min(steep_shape, one)?;
-    ctx.max(outside_bounded, neg_one)
+    let min_self = ctx.min(shape, 0.0)?;
+    let max_self = ctx.min(shape, 0.0)?;
+    let min_normal = ctx.div(min_self, shape)?;
+    let max_normal = ctx.div(max_self, shape)?;
+    ctx.sub(max_normal, min_normal)
   }
 
-  /// Clamps and scales a node by the given factor.
-  pub fn nso_bleed(
+  pub fn nso_hardstep_choice(
     shape: Node,
-    factor: f32,
+    out_neg: Node,
+    out_pos: Node,
     ctx: &mut Context,
   ) -> Result<Node, fidget::Error> {
-    let shape = nso_clamp_and_steep(shape, ctx)?;
-    let factor = ctx.constant(factor.into());
-    let x = ctx.x();
-    let new_x = ctx.div(x, factor)?;
-    let y = ctx.y();
-    let new_y = ctx.div(y, factor)?;
-    let z = ctx.z();
-    let new_z = ctx.div(z, factor)?;
-    ctx.remap_xyz(shape, [new_x, new_y, new_z])
+    let min_self = ctx.min(shape, 0.0)?;
+    let max_self = ctx.min(shape, 0.0)?;
+    let min_normal = ctx.div(min_self, shape)?;
+    let max_normal = ctx.div(max_self, shape)?;
+    let min = ctx.mul(min_normal, out_neg)?;
+    let max = ctx.mul(max_normal, out_pos)?;
+    ctx.add(max, min)
   }
 
-  /// Color a node with the given rgb value. It is recommended to use this on a
-  /// node that has had a "bleed" applied to it to reduce the chances of
-  /// vertices being clipped.
-  pub fn nso_color(
-    shape: Node,
-    rgb: [u8; 3],
+  /// This is functionally equivalent to `(lhs < 0.0 && rhs < 0.0) ? -1.0 : 1.0`
+  pub fn nso_normalized_hardstep_negative_and(
+    lhs: Node,
+    rhs: Node,
     ctx: &mut Context,
   ) -> Result<Node, fidget::Error> {
-    let bitshifted_color =
-      rgb[0] as u32 * 256 * 256 + rgb[1] as u32 * 256 + rgb[2] as u32;
-    let float_cast_color = bitshifted_color as f32 / (256_u32).pow(3) as f32;
-    let color_val = float_cast_color * 0.9 + 0.1;
-    let color_val = ctx.constant(color_val.into());
-
-    // convert from -1 inside and 1 outside to 1 inside and 0 outside
-    let neg_point_five = ctx.constant(-0.5);
-    let one = ctx.constant(1.0);
-    let shape = ctx.sub(shape, one)?;
-    let shape = ctx.mul(shape, neg_point_five)?;
-
-    // clamp to 0-1
-    let zero = ctx.constant(0.0);
-    let shape = ctx.max(shape, zero)?;
-    let one = ctx.constant(1.0);
-    let shape = ctx.min(shape, one)?;
-
-    // multiply by rgb
-    ctx.mul(shape, color_val)
+    let lhs = nso_normalized_hardstep(lhs, ctx)?;
+    let rhs = nso_normalized_hardstep(rhs, ctx)?;
+    let sum = ctx.add(lhs, rhs)?;
+    let sum_plus_one = ctx.add(sum, 1.0)?;
+    ctx.min(sum_plus_one, 1.0)
   }
+
+  pub fn nso_clamp(
+    shape: Node,
+    min: Node,
+    max: Node,
+    ctx: &mut Context,
+  ) -> Result<Node, fidget::Error> {
+    let a = ctx.min(shape, max)?;
+    ctx.max(a, min)
+  }
+
+  pub fn nso_map(
+    shape: Node,
+    in_min: Node,
+    in_max: Node,
+    out_min: Node,
+    out_max: Node,
+    ctx: &mut Context,
+  ) -> Result<Node, fidget::Error> {
+    let a = ctx.sub(shape, in_min)?;
+    let b = ctx.sub(in_max, in_min)?;
+    let c = ctx.div(a, b)?;
+    let d = ctx.sub(out_max, out_min)?;
+    let e = ctx.mul(c, d)?;
+    ctx.add(e, out_min)
+  }
+
+  // /// Clamps a node to the range [-1, 1], and drastically steepens the slope
+  // of /// the transition between the two extents.
+  // pub fn nso_clamp_and_steep(
+  //   shape: Node,
+  //   ctx: &mut Context,
+  // ) -> Result<Node, fidget::Error> { let steep_slope = ctx.constant(1000.0);
+  //   let steep_shape = ctx.mul(shape, steep_slope)?; let one =
+  //   ctx.constant(1.0); let neg_one = ctx.constant(-1.0); let outside_bounded
+  //   = ctx.min(steep_shape, one)?; ctx.max(outside_bounded, neg_one)
+  // }
+
+  // /// Clamps and scales a node by the given factor.
+  // pub fn nso_bleed(
+  //   shape: Node,
+  //   factor: f32,
+  //   ctx: &mut Context,
+  // ) -> Result<Node, fidget::Error> { let shape = nso_clamp_and_steep(shape,
+  //   ctx)?; let factor = ctx.constant(factor.into()); let x = ctx.x(); let
+  //   new_x = ctx.div(x, factor)?; let y = ctx.y(); let new_y = ctx.div(y,
+  //   factor)?; let z = ctx.z(); let new_z = ctx.div(z, factor)?;
+  //   ctx.remap_xyz(shape, [new_x, new_y, new_z])
+  // }
+
+  // /// Color a node with the given rgb value. It is recommended to use this on
+  // a /// node that has had a "bleed" applied to it to reduce the chances of
+  // /// vertices being clipped.
+  // pub fn nso_color(
+  //   shape: Node,
+  //   rgb: [u8; 3],
+  //   ctx: &mut Context,
+  // ) -> Result<Node, fidget::Error> { let bitshifted_color = rgb[0] as u32 *
+  //   256 * 256 + rgb[1] as u32 * 256 + rgb[2] as u32; let float_cast_color =
+  //   bitshifted_color as f32 / (256_u32).pow(3) as f32; let color_val =
+  //   float_cast_color * 0.9 + 0.1; let color_val =
+  //   ctx.constant(color_val.into());
+
+  //   // convert from -1 inside and 1 outside to 1 inside and 0 outside
+  //   let neg_point_five = ctx.constant(-0.5);
+  //   let one = ctx.constant(1.0);
+  //   let shape = ctx.sub(shape, one)?;
+  //   let shape = ctx.mul(shape, neg_point_five)?;
+
+  //   // clamp to 0-1
+  //   let zero = ctx.constant(0.0);
+  //   let shape = ctx.max(shape, zero)?;
+  //   let one = ctx.constant(1.0);
+  //   let shape = ctx.min(shape, one)?;
+
+  //   // multiply by rgb
+  //   ctx.mul(shape, color_val)
+  // }
 }
 
 pub mod smooth {

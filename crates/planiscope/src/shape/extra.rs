@@ -37,6 +37,26 @@ pub enum Extra {
     #[educe(Hash(method = "hash_mat4"))]
     mat:  glam::Mat4,
   },
+  Clamp {
+    #[reflect(ignore)]
+    root: Box<Shape>,
+    #[reflect(ignore)]
+    min:  Box<Shape>,
+    #[reflect(ignore)]
+    max:  Box<Shape>,
+  },
+  Map {
+    #[reflect(ignore)]
+    root:    Box<Shape>,
+    #[reflect(ignore)]
+    in_min:  Box<Shape>,
+    #[reflect(ignore)]
+    in_max:  Box<Shape>,
+    #[reflect(ignore)]
+    out_min: Box<Shape>,
+    #[reflect(ignore)]
+    out_max: Box<Shape>,
+  },
 }
 
 impl IntoNode for &Extra {
@@ -49,7 +69,7 @@ impl IntoNode for &Extra {
       Extra::Cylinder { height, radius } => {
         let height = height.into_node(ctx)?;
         let radius = radius.into_node(ctx)?;
-        crate::nso::volumes::nso_cylinder_precise(height, radius, ctx)
+        crate::nso::volumes::nso_cylinder(height, radius, ctx)
       }
       Extra::SmoothMinCubic { lhs, rhs, k } => {
         let lhs = lhs.into_node(ctx)?;
@@ -60,6 +80,26 @@ impl IntoNode for &Extra {
       Extra::MatTransform { root, mat } => {
         let root = root.into_node(ctx)?;
         crate::nso::regions::nso_matrix_transform(root, mat, ctx)
+      }
+      Extra::Clamp { root, min, max } => {
+        let root = root.into_node(ctx)?;
+        let min = min.into_node(ctx)?;
+        let max = max.into_node(ctx)?;
+        crate::nso::other::nso_clamp(root, min, max, ctx)
+      }
+      Extra::Map {
+        root,
+        in_min,
+        in_max,
+        out_min,
+        out_max,
+      } => {
+        let root = root.into_node(ctx)?;
+        let in_min = in_min.into_node(ctx)?;
+        let in_max = in_max.into_node(ctx)?;
+        let out_min = out_min.into_node(ctx)?;
+        let out_max = out_max.into_node(ctx)?;
+        crate::nso::other::nso_map(root, in_min, in_max, out_min, out_max, ctx)
       }
     }
   }

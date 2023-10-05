@@ -125,3 +125,29 @@ pub fn transform(root: impl Into<Shape>, mat: impl Into<glam::Mat4>) -> Shape {
     mat:  mat.into(),
   })
 }
+pub fn clamp(
+  root: impl Into<Shape>,
+  min: impl Into<Shape>,
+  max: impl Into<Shape>,
+) -> Shape {
+  Shape::Extra(extra::Extra::Clamp {
+    root: Box::new(root.into()),
+    min:  Box::new(min.into()),
+    max:  Box::new(max.into()),
+  })
+}
+pub fn map(
+  root: impl Into<Shape>,
+  in_min: impl Into<Shape>,
+  in_max: impl Into<Shape>,
+  out_min: impl Into<Shape>,
+  out_max: impl Into<Shape>,
+) -> Shape {
+  Shape::Extra(extra::Extra::Map {
+    root:    Box::new(root.into()),
+    in_min:  Box::new(in_min.into()),
+    in_max:  Box::new(in_max.into()),
+    out_min: Box::new(out_min.into()),
+    out_max: Box::new(out_max.into()),
+  })
+}
