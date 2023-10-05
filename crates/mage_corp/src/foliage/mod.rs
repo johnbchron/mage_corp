@@ -66,7 +66,33 @@ fn spawn_test_foliage(
   mut commands: Commands,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
-  let shape = translate(cylinder(0.5, 4.0), 0.0, 2.0, 0.0);
+  let branch_0 = translate(
+    transform(
+      translate(cylinder(0.4, 2.0), 0.0, 1.0, 0.0),
+      Transform::from_rotation(Quat::from_rotation_z(-30.0_f32.to_radians()))
+        .compute_matrix(),
+    ),
+    0.0,
+    4.0,
+    0.0,
+  );
+  let branch_1 = transform(
+    branch_0.clone(),
+    Transform::from_rotation(Quat::from_rotation_y(120.0_f32.to_radians()))
+      .compute_matrix(),
+  );
+  let branch_2 = transform(
+    branch_0.clone(),
+    Transform::from_rotation(Quat::from_rotation_y(240.0_f32.to_radians()))
+      .compute_matrix(),
+  );
+  let branch_union = min(branch_0, min(branch_1, branch_2));
+  let shape = smooth_min_cubic(
+    translate(cylinder(0.5, 4.0), 0.0, 2.0, 0.0),
+    branch_union,
+    0.25,
+  );
+  info!("This thing is an abomination: {shape:#?}");
 
   commands.spawn((
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 5.0)),
