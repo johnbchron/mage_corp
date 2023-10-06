@@ -98,12 +98,12 @@ pub fn translate(root: impl Into<Shape>, x: f64, y: f64, z: f64) -> Shape {
 
 // extra
 pub fn sphere(r: impl Into<Shape>) -> Shape {
-  Shape::Extra(extra::Extra::Sphere {
+  Shape::Extra(compound::Compound::Sphere {
     radius: Box::new(r.into()),
   })
 }
 pub fn cylinder(r: impl Into<Shape>, h: impl Into<Shape>) -> Shape {
-  Shape::Extra(extra::Extra::Cylinder {
+  Shape::Extra(compound::Compound::Cylinder {
     height: Box::new(h.into()),
     radius: Box::new(r.into()),
   })
@@ -113,14 +113,14 @@ pub fn smooth_min_cubic(
   rhs: impl Into<Shape>,
   k: impl Into<Shape>,
 ) -> Shape {
-  Shape::Extra(extra::Extra::SmoothMinCubic {
+  Shape::Extra(compound::Compound::SmoothMinCubic {
     lhs: Box::new(lhs.into()),
     rhs: Box::new(rhs.into()),
     k:   Box::new(k.into()),
   })
 }
 pub fn transform(root: impl Into<Shape>, mat: impl Into<glam::Mat4>) -> Shape {
-  Shape::Extra(extra::Extra::MatTransform {
+  Shape::Extra(compound::Compound::MatTransform {
     root: Box::new(root.into()),
     mat:  mat.into(),
   })
@@ -130,7 +130,7 @@ pub fn clamp(
   min: impl Into<Shape>,
   max: impl Into<Shape>,
 ) -> Shape {
-  Shape::Extra(extra::Extra::Clamp {
+  Shape::Extra(compound::Compound::Clamp {
     root: Box::new(root.into()),
     min:  Box::new(min.into()),
     max:  Box::new(max.into()),
@@ -143,7 +143,7 @@ pub fn map(
   out_min: impl Into<Shape>,
   out_max: impl Into<Shape>,
 ) -> Shape {
-  Shape::Extra(extra::Extra::Map {
+  Shape::Extra(compound::Compound::Map {
     root:    Box::new(root.into()),
     in_min:  Box::new(in_min.into()),
     in_max:  Box::new(in_max.into()),

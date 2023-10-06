@@ -1,5 +1,5 @@
 pub mod builder;
-pub mod extra;
+pub mod compound;
 
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -47,7 +47,7 @@ pub enum Shape {
     #[reflect(ignore)]
     new_z: Box<Shape>,
   },
-  Extra(extra::Extra),
+  Extra(compound::Compound),
 }
 
 impl Default for Shape {

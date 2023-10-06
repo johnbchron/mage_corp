@@ -12,7 +12,7 @@ use super::Shape;
 
 #[derive(Educe, Clone, Debug, Serialize, Deserialize, Reflect)]
 #[educe(Hash)]
-pub enum Extra {
+pub enum Compound {
   Sphere {
     #[reflect(ignore)]
     radius: Box<Shape>,
@@ -59,35 +59,35 @@ pub enum Extra {
   },
 }
 
-impl IntoNode for &Extra {
+impl IntoNode for &Compound {
   fn into_node(self, ctx: &mut Context) -> Result<Node, fidget::Error> {
     match self {
-      Extra::Sphere { radius } => {
+      Compound::Sphere { radius } => {
         let r = radius.into_node(ctx)?;
         crate::nso::volumes::nso_sphere(r, ctx)
       }
-      Extra::Cylinder { height, radius } => {
+      Compound::Cylinder { height, radius } => {
         let height = height.into_node(ctx)?;
         let radius = radius.into_node(ctx)?;
         crate::nso::volumes::nso_cylinder(height, radius, ctx)
       }
-      Extra::SmoothMinCubic { lhs, rhs, k } => {
+      Compound::SmoothMinCubic { lhs, rhs, k } => {
         let lhs = lhs.into_node(ctx)?;
         let rhs = rhs.into_node(ctx)?;
         let k = k.into_node(ctx)?;
         crate::nso::smooth::nso_smooth_min_cubic(lhs, rhs, k, ctx)
       }
-      Extra::MatTransform { root, mat } => {
+      Compound::MatTransform { root, mat } => {
         let root = root.into_node(ctx)?;
         crate::nso::regions::nso_matrix_transform(root, mat, ctx)
       }
-      Extra::Clamp { root, min, max } => {
+      Compound::Clamp { root, min, max } => {
         let root = root.into_node(ctx)?;
         let min = min.into_node(ctx)?;
         let max = max.into_node(ctx)?;
         crate::nso::other::nso_clamp(root, min, max, ctx)
       }
-      Extra::Map {
+      Compound::Map {
         root,
         in_min,
         in_max,
