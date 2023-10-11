@@ -1935,6 +1935,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "float-cmp"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98de4bbd547a563b716d8dfa9aad1cb19bfab00f4fa09a6a4ed21dbcf44ce9c4"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3333,6 +3342,7 @@ dependencies = [
  "educe",
  "fast-surface-nets",
  "fidget",
+ "float-cmp",
  "glam 0.24.1",
  "log",
  "parry3d",

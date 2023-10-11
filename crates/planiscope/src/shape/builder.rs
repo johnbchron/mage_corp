@@ -151,3 +151,14 @@ pub fn map(
     out_max: Box::new(out_max.into()),
   })
 }
+pub fn catmull_rom_spline(
+  root: impl Into<Shape>,
+  points: Vec<[f32; 3]>,
+  tension: f32,
+) -> Shape {
+  Shape::Extra(compound::Compound::CatmullRomSpline {
+    root: Box::new(root.into()),
+    points,
+    tension,
+  })
+}

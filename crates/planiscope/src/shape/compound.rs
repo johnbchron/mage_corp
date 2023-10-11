@@ -1,6 +1,7 @@
 use std::hash::Hasher;
 
 use bevy_reflect::Reflect;
+use decorum::hash::FloatHash;
 use educe::Educe;
 use fidget::{
   context::{IntoNode, Node},
@@ -57,6 +58,14 @@ pub enum Compound {
     #[reflect(ignore)]
     out_max: Box<Shape>,
   },
+  CatmullRomSpline {
+    #[reflect(ignore)]
+    root:    Box<Shape>,
+    #[educe(Hash(method = "hash_vec_triplet_f32"))]
+    points:  Vec<[f32; 3]>,
+    #[educe(Hash(trait = "FloatHash"))]
+    tension: f32,
+  },
 }
 
 impl IntoNode for &Compound {
@@ -101,6 +110,14 @@ impl IntoNode for &Compound {
         let out_max = out_max.into_node(ctx)?;
         crate::nso::other::nso_map(root, in_min, in_max, out_min, out_max, ctx)
       }
+      Compound::CatmullRomSpline {
+        root,
+        points,
+        tension,
+      } => {
+        let root = root.into_node(ctx)?;
+        crate::nso::spline::nso_catmull_rom_spline(root, points, *tension, ctx)
+      }
     }
   }
 }
@@ -109,4 +126,10 @@ fn hash_mat4<H: Hasher>(s: &glam::Mat4, state: &mut H) {
   s.to_cols_array()
     .iter()
     .for_each(|v| decorum::hash::FloatHash::float_hash(v, state));
+}
+fn hash_vec_triplet_f32<H: Hasher>(s: &Vec<[f32; 3]>, state: &mut H) {
+  s.iter().for_each(|a| {
+    a.iter()
+      .for_each(|v| decorum::hash::FloatHash::float_hash(v, state))
+  })
 }
