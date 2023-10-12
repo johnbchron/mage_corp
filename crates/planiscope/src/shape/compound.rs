@@ -111,12 +111,14 @@ impl IntoNode for &Compound {
         crate::nso::other::nso_map(root, in_min, in_max, out_min, out_max, ctx)
       }
       Compound::CatmullRomSpline {
-        root,
-        points,
-        tension,
+        root: _,
+        points: _,
+        tension: _,
       } => {
-        let root = root.into_node(ctx)?;
-        crate::nso::spline::nso_catmull_rom_spline(root, points, *tension, ctx)
+        // let root = root.into_node(ctx)?;
+        // crate::nso::spline::nso_catmull_rom_spline(root, points, *tension,
+        // ctx)
+        todo!()
       }
     }
   }

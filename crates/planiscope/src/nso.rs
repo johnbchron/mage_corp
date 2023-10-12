@@ -529,180 +529,177 @@ pub mod smooth {
   }
 }
 
-pub mod spline {
-  use fidget::{context::Node, Context};
+// pub mod spline {
+//   use fidget::{context::Node, Context};
 
-  use crate::nso::other::nso_hardstep_region;
+//   use crate::nso::other::nso_hardstep_region;
 
-  fn to_t(
-    root: Node,
-    n_segments: usize,
-    ctx: &mut Context,
-  ) -> Result<Node, fidget::Error> {
-    let zero = ctx.constant(0.0);
-    let one = ctx.constant(1.0);
-    let n_segments_node = ctx.constant(n_segments as f64);
-    let root = super::other::nso_clamp(root, zero, one, ctx)?;
-    ctx.mul(root, n_segments_node)
-  }
+//   fn to_t(
+//     root: Node,
+//     n_segments: usize,
+//     ctx: &mut Context,
+//   ) -> Result<Node, fidget::Error> { let zero = ctx.constant(0.0); let one =
+//     ctx.constant(1.0); let n_segments_node = ctx.constant(n_segments as f64);
+//     let root = super::other::nso_clamp(root, zero, one, ctx)?; ctx.mul(root,
+//     n_segments_node)
+//   }
 
-  /// Remaps the path between [0.0, 0.0, 0.0] and [0.0, 0.0, 1.0] to the path of
-  /// a Catmull-Rom spline built from the points specified.
-  pub fn nso_catmull_rom_spline(
-    root: Node,
-    points: &Vec<[f32; 3]>,
-    tension: f32,
-    ctx: &mut Context,
-  ) -> Result<Node, fidget::Error> {
-    // set out some constants
-    let n_segments = points.len() - 1;
+//   /// Remaps the path between [0.0, 0.0, 0.0] and [0.0, 0.0, 1.0] to the path
+// of   /// a Catmull-Rom spline built from the points specified.
+//   pub fn nso_catmull_rom_spline(
+//     root: Node,
+//     points: &Vec<[f32; 3]>,
+//     tension: f32,
+//     ctx: &mut Context,
+//   ) -> Result<Node, fidget::Error> { // set out some constants let n_segments
+//     = points.len() - 1;
 
-    let zero = ctx.constant(0.0);
-    let one = ctx.constant(1.0);
-    let x = ctx.x();
-    let y = ctx.y();
-    let z = ctx.z();
-    let t_x = to_t(x, n_segments, ctx)?;
-    let t_y = to_t(y, n_segments, ctx)?;
-    let t_z = to_t(z, n_segments, ctx)?;
+//     let zero = ctx.constant(0.0);
+//     let one = ctx.constant(1.0);
+//     let x = ctx.x();
+//     let y = ctx.y();
+//     let z = ctx.z();
+//     let t_x = to_t(x, n_segments, ctx)?;
+//     let t_y = to_t(y, n_segments, ctx)?;
+//     let t_z = to_t(z, n_segments, ctx)?;
 
-    // get original point set as vectors
-    let mut points = points
-      .iter()
-      .map(|p| glam::Vec3A::from_array(*p))
-      .collect::<Vec<_>>();
+//     // get original point set as vectors
+//     let mut points = points
+//       .iter()
+//       .map(|p| glam::Vec3A::from_array(*p))
+//       .collect::<Vec<_>>();
 
-    // add first and last ghost points
-    let first_point = points[0] - (points[1] - points[0]);
-    let last_point = points[points.len() - 1]
-      + (points[points.len() - 1] - points[points.len() - 2]);
-    points.insert(0, first_point);
-    points.push(last_point);
-    // reassign to remove mutability
-    let points = points;
+//     // add first and last ghost points
+//     let first_point = points[0] - (points[1] - points[0]);
+//     let last_point = points[points.len() - 1]
+//       + (points[points.len() - 1] - points[points.len() - 2]);
+//     points.insert(0, first_point);
+//     points.push(last_point);
+//     // reassign to remove mutability
+//     let points = points;
 
-    let mut running_x_axis = ctx.constant(0.0);
-    let mut running_y_axis = ctx.constant(0.0);
-    let mut running_z_axis = ctx.constant(0.0);
+//     let mut running_x_axis = ctx.constant(0.0);
+//     let mut running_y_axis = ctx.constant(0.0);
+//     let mut running_z_axis = ctx.constant(0.0);
 
-    for i in 0..n_segments {
-      let p0 = points[i];
-      let p1 = points[i + 1];
-      let p2 = points[i + 2];
-      let p3 = points[i + 3];
-      // println!(
-      //   "for round {i}:\n\tgot p0: {p0:?}\n\tgot p1: {p1:?}\n\tgot p2: \
-      //    {p2:?}\n\tgot p3: {p3:?}"
-      // );
+//     for i in 0..n_segments {
+//       let p0 = points[i];
+//       let p1 = points[i + 1];
+//       let p2 = points[i + 2];
+//       let p3 = points[i + 3];
+//       // println!(
+//       //   "for round {i}:\n\tgot p0: {p0:?}\n\tgot p1: {p1:?}\n\tgot p2: \
+//       //    {p2:?}\n\tgot p3: {p3:?}"
+//       // );
 
-      let matrix = glam::Mat4::from_cols(
-        glam::Vec4::new(0.0, -1.0, 2.0, -1.0),
-        glam::Vec4::new(2.0, 0.0, -5.0, 3.0),
-        glam::Vec4::new(0.0, 1.0, 4.0, -3.0),
-        glam::Vec4::new(0.0, 0.0, -1.0, 1.0),
-      )
-      // .inverse()
-        * 0.5;
+//       let matrix = glam::Mat4::from_cols(
+//         glam::Vec4::new(0.0, -1.0, 2.0, -1.0),
+//         glam::Vec4::new(2.0, 0.0, -5.0, 3.0),
+//         glam::Vec4::new(0.0, 1.0, 4.0, -3.0),
+//         glam::Vec4::new(0.0, 0.0, -1.0, 1.0),
+//       )
+//       // .inverse()
+//         * 0.5;
 
-      let l0 = p0 * matrix.x_axis.x
-        + p1 * matrix.y_axis.x
-        + p2 * matrix.z_axis.x
-        + p3 * matrix.w_axis.x;
-      let l1 = p0 * matrix.x_axis.y
-        + p1 * matrix.y_axis.y
-        + p2 * matrix.z_axis.y
-        + p3 * matrix.w_axis.y;
-      let l2 = p0 * matrix.x_axis.z
-        + p1 * matrix.y_axis.z
-        + p2 * matrix.z_axis.z
-        + p3 * matrix.w_axis.z;
-      let l3 = p0 * matrix.x_axis.w
-        + p1 * matrix.y_axis.w
-        + p2 * matrix.z_axis.w
-        + p3 * matrix.w_axis.w;
+//       let l0 = p0 * matrix.x_axis.x
+//         + p1 * matrix.y_axis.x
+//         + p2 * matrix.z_axis.x
+//         + p3 * matrix.w_axis.x;
+//       let l1 = p0 * matrix.x_axis.y
+//         + p1 * matrix.y_axis.y
+//         + p2 * matrix.z_axis.y
+//         + p3 * matrix.w_axis.y;
+//       let l2 = p0 * matrix.x_axis.z
+//         + p1 * matrix.y_axis.z
+//         + p2 * matrix.z_axis.z
+//         + p3 * matrix.w_axis.z;
+//       let l3 = p0 * matrix.x_axis.w
+//         + p1 * matrix.y_axis.w
+//         + p2 * matrix.z_axis.w
+//         + p3 * matrix.w_axis.w;
 
-      // move t back to [0, 1]
-      let i_node = ctx.constant(i as f64);
-      let t_x = ctx.sub(t_x, i_node)?;
-      let t_y = ctx.sub(t_y, i_node)?;
-      let t_z = ctx.sub(t_z, i_node)?;
+//       // move t back to [0, 1]
+//       let i_node = ctx.constant(i as f64);
+//       let t_x = ctx.sub(t_x, i_node)?;
+//       let t_y = ctx.sub(t_y, i_node)?;
+//       let t_z = ctx.sub(t_z, i_node)?;
 
-      // let t0 = ctx.constant(1.0);
-      let t1_x = t_x;
-      let t2_x = ctx.mul(t1_x, t_x)?;
-      let t3_x = ctx.mul(t2_x, t_x)?;
-      let t1_y = t_y;
-      let t2_y = ctx.mul(t1_y, t_y)?;
-      let t3_y = ctx.mul(t2_y, t_y)?;
-      let t1_z = t_z;
-      let t2_z = ctx.mul(t1_z, t_z)?;
-      let t3_z = ctx.mul(t2_z, t_z)?;
+//       // let t0 = ctx.constant(1.0);
+//       let t1_x = t_x;
+//       let t2_x = ctx.mul(t1_x, t_x)?;
+//       let t3_x = ctx.mul(t2_x, t_x)?;
+//       let t1_y = t_y;
+//       let t2_y = ctx.mul(t1_y, t_y)?;
+//       let t3_y = ctx.mul(t2_y, t_y)?;
+//       let t1_z = t_z;
+//       let t2_z = ctx.mul(t1_z, t_z)?;
+//       let t3_z = ctx.mul(t2_z, t_z)?;
 
-      let x_axis_l0 = ctx.constant(l0.x.into());
-      let x_axis_l1 = ctx.constant(l1.x.into());
-      let x_axis_l2 = ctx.constant(l2.x.into());
-      let x_axis_l3 = ctx.constant(l3.x.into());
+//       let x_axis_l0 = ctx.constant(l0.x.into());
+//       let x_axis_l1 = ctx.constant(l1.x.into());
+//       let x_axis_l2 = ctx.constant(l2.x.into());
+//       let x_axis_l3 = ctx.constant(l3.x.into());
 
-      let x_axis_a = ctx.mul(x_axis_l1, t1_x)?;
-      let x_axis_b = ctx.mul(x_axis_l2, t2_x)?;
-      let x_axis_c = ctx.mul(x_axis_l3, t3_x)?;
-      let x_axis_sum = ctx.add(x_axis_l0, x_axis_a)?;
-      let x_axis_sum = ctx.add(x_axis_sum, x_axis_b)?;
-      let x_axis_sum = ctx.add(x_axis_sum, x_axis_c)?;
+//       let x_axis_a = ctx.mul(x_axis_l1, t1_x)?;
+//       let x_axis_b = ctx.mul(x_axis_l2, t2_x)?;
+//       let x_axis_c = ctx.mul(x_axis_l3, t3_x)?;
+//       let x_axis_sum = ctx.add(x_axis_l0, x_axis_a)?;
+//       let x_axis_sum = ctx.add(x_axis_sum, x_axis_b)?;
+//       let x_axis_sum = ctx.add(x_axis_sum, x_axis_c)?;
 
-      let y_axis_l0 = ctx.constant(l0.y.into());
-      let y_axis_l1 = ctx.constant(l1.y.into());
-      let y_axis_l2 = ctx.constant(l2.y.into());
-      let y_axis_l3 = ctx.constant(l3.y.into());
+//       let y_axis_l0 = ctx.constant(l0.y.into());
+//       let y_axis_l1 = ctx.constant(l1.y.into());
+//       let y_axis_l2 = ctx.constant(l2.y.into());
+//       let y_axis_l3 = ctx.constant(l3.y.into());
 
-      let y_axis_a = ctx.mul(y_axis_l1, t1_y)?;
-      let y_axis_b = ctx.mul(y_axis_l2, t2_y)?;
-      let y_axis_c = ctx.mul(y_axis_l3, t3_y)?;
-      let y_axis_sum = ctx.add(y_axis_l0, y_axis_a)?;
-      let y_axis_sum = ctx.add(y_axis_sum, y_axis_b)?;
-      let y_axis_sum = ctx.add(y_axis_sum, y_axis_c)?;
+//       let y_axis_a = ctx.mul(y_axis_l1, t1_y)?;
+//       let y_axis_b = ctx.mul(y_axis_l2, t2_y)?;
+//       let y_axis_c = ctx.mul(y_axis_l3, t3_y)?;
+//       let y_axis_sum = ctx.add(y_axis_l0, y_axis_a)?;
+//       let y_axis_sum = ctx.add(y_axis_sum, y_axis_b)?;
+//       let y_axis_sum = ctx.add(y_axis_sum, y_axis_c)?;
 
-      let z_axis_l0 = ctx.constant(l0.z.into());
-      let z_axis_l1 = ctx.constant(l1.z.into());
-      let z_axis_l2 = ctx.constant(l2.z.into());
-      let z_axis_l3 = ctx.constant(l3.z.into());
+//       let z_axis_l0 = ctx.constant(l0.z.into());
+//       let z_axis_l1 = ctx.constant(l1.z.into());
+//       let z_axis_l2 = ctx.constant(l2.z.into());
+//       let z_axis_l3 = ctx.constant(l3.z.into());
 
-      let z_axis_a = ctx.mul(z_axis_l1, t1_z)?;
-      let z_axis_b = ctx.mul(z_axis_l2, t2_z)?;
-      let z_axis_c = ctx.mul(z_axis_l3, t3_z)?;
-      let z_axis_sum = ctx.add(z_axis_l0, z_axis_a)?;
-      let z_axis_sum = ctx.add(z_axis_sum, z_axis_b)?;
-      let z_axis_sum = ctx.add(z_axis_sum, z_axis_c)?;
+//       let z_axis_a = ctx.mul(z_axis_l1, t1_z)?;
+//       let z_axis_b = ctx.mul(z_axis_l2, t2_z)?;
+//       let z_axis_c = ctx.mul(z_axis_l3, t3_z)?;
+//       let z_axis_sum = ctx.add(z_axis_l0, z_axis_a)?;
+//       let z_axis_sum = ctx.add(z_axis_sum, z_axis_b)?;
+//       let z_axis_sum = ctx.add(z_axis_sum, z_axis_c)?;
 
-      let x_axis = nso_hardstep_region(t_x, zero, one, x_axis_sum, ctx)?;
-      let y_axis = nso_hardstep_region(t_y, zero, one, y_axis_sum, ctx)?;
-      let z_axis = nso_hardstep_region(t_z, zero, one, z_axis_sum, ctx)?;
+//       let x_axis = nso_hardstep_region(t_x, zero, one, x_axis_sum, ctx)?;
+//       let y_axis = nso_hardstep_region(t_y, zero, one, y_axis_sum, ctx)?;
+//       let z_axis = nso_hardstep_region(t_z, zero, one, z_axis_sum, ctx)?;
 
-      *(&mut running_x_axis) = ctx.add(running_x_axis, x_axis)?;
-      *(&mut running_y_axis) = ctx.add(running_y_axis, y_axis)?;
-      *(&mut running_z_axis) = ctx.add(running_z_axis, z_axis)?;
-    }
+//       *(&mut running_x_axis) = ctx.add(running_x_axis, x_axis)?;
+//       *(&mut running_y_axis) = ctx.add(running_y_axis, y_axis)?;
+//       *(&mut running_z_axis) = ctx.add(running_z_axis, z_axis)?;
+//     }
 
-    let x = ctx.x();
-    let y = ctx.y();
-    let z = ctx.z();
-    let new_x = ctx.sub(x, running_x_axis)?;
-    // let y = ctx.div(y, 2.0)?;
-    let new_y = ctx.sub(y, running_y_axis)?;
-    // let new_y = running_y_axis;
-    let new_z = ctx.sub(z, running_z_axis)?;
+//     let x = ctx.x();
+//     let y = ctx.y();
+//     let z = ctx.z();
+//     let new_x = ctx.sub(x, running_x_axis)?;
+//     // let y = ctx.div(y, 2.0)?;
+//     let new_y = ctx.sub(y, running_y_axis)?;
+//     // let new_y = running_y_axis;
+//     let new_z = ctx.sub(z, running_z_axis)?;
 
-    // for t in 0..21 {
-    //   let t = t as f64 / 20.0;
-    //   println!(
-    //     "x: {:?}, y: {:?}, z: {:?}",
-    //     ctx.eval_xyz(new_x, 0.0, t, 0.0)?,
-    //     ctx.eval_xyz(new_y, 0.0, t, 0.0)?,
-    //     ctx.eval_xyz(new_z, 0.0, t, 0.0)?
-    //   );
-    // }
+//     // for t in 0..21 {
+//     //   let t = t as f64 / 20.0;
+//     //   println!(
+//     //     "x: {:?}, y: {:?}, z: {:?}",
+//     //     ctx.eval_xyz(new_x, 0.0, t, 0.0)?,
+//     //     ctx.eval_xyz(new_y, 0.0, t, 0.0)?,
+//     //     ctx.eval_xyz(new_z, 0.0, t, 0.0)?
+//     //   );
+//     // }
 
-    // ctx.remap_xyz(root, [new_x, new_y, new_z])
-    ctx.remap_xyz(root, [running_x_axis, running_y_axis, running_z_axis])
-  }
-}
+//     // ctx.remap_xyz(root, [new_x, new_y, new_z])
+//     ctx.remap_xyz(root, [running_x_axis, running_y_axis, running_z_axis])
+//   }
+// }
