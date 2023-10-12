@@ -122,8 +122,8 @@ pub struct TerrainTriggerRegeneration {
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
 pub enum TerrainEnabledState {
-  Enabled,
   #[default]
+  Enabled,
   Disabled,
 }
 
