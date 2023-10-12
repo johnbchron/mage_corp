@@ -1,3 +1,8 @@
+pub mod builder;
+pub mod compound;
+
+use std::ops::{Add, Div, Mul, Neg, Sub};
+
 use bevy_reflect::Reflect;
 use decorum::hash::FloatHash;
 use educe::Educe;
@@ -42,11 +47,54 @@ pub enum Shape {
     #[reflect(ignore)]
     new_z: Box<Shape>,
   },
+  Extra(compound::Compound),
 }
 
 impl Default for Shape {
   fn default() -> Self {
     Self::Constant(1.0_f64)
+  }
+}
+
+impl From<f64> for Shape {
+  fn from(value: f64) -> Self {
+    Shape::Constant(value)
+  }
+}
+
+impl Add<Shape> for Shape {
+  type Output = Shape;
+
+  fn add(self, rhs: Shape) -> Self::Output {
+    Shape::Add(Box::new(self), Box::new(rhs))
+  }
+}
+impl Sub<Shape> for Shape {
+  type Output = Shape;
+
+  fn sub(self, rhs: Shape) -> Self::Output {
+    Shape::Sub(Box::new(self), Box::new(rhs))
+  }
+}
+impl Mul<Shape> for Shape {
+  type Output = Shape;
+
+  fn mul(self, rhs: Shape) -> Self::Output {
+    Shape::Mul(Box::new(self), Box::new(rhs))
+  }
+}
+impl Div<Shape> for Shape {
+  type Output = Shape;
+
+  fn div(self, rhs: Shape) -> Self::Output {
+    Shape::Div(Box::new(self), Box::new(rhs))
+  }
+}
+impl Neg for Shape {
+  type Output = Shape;
+
+  fn neg(self) -> Self::Output {
+    Shape::Neg(Box::new(self))
   }
 }
 
@@ -97,6 +145,7 @@ impl IntoNode for &Shape {
         let new_z_node = new_z.as_ref().into_node(ctx)?;
         ctx.remap_xyz(root_node, [new_x_node, new_y_node, new_z_node])
       }
+      Shape::Extra(extra) => extra.into_node(ctx),
     }
   }
 }

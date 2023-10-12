@@ -2,6 +2,7 @@ use bevy::reflect::TypeUuid;
 pub mod force;
 pub mod toon;
 
+#[allow(clippy::unreadable_literal)]
 pub const PREPASS_SHADER_HANDLE: HandleUntyped =
   HandleUntyped::weak_from_u64(Shader::TYPE_UUID, 12104443487162275386);
 

@@ -9,6 +9,7 @@ decorum = "0.3.1"
 educe = { version = "0.4.23", default-features = false, features = ["Hash"] }
 fast-surface-nets = "0.2.0"
 fidget = { git = "https://github.com/johnbchron/fidget", tag = "0.3", default-features = false, features = ["mesh", "rhai"] }
+float-cmp = "0.9.0"
 # fidget = { path = "../../../fidget/fidget", default-features = false, features = ["mesh", "rhai"] }
 glam = { version = "0.24.2", features = ["serde"] }
 log = "0.4.20"

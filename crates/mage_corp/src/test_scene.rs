@@ -70,7 +70,7 @@ fn setup_camera_and_lights(mut commands: Commands) {
     NormalPrepass,
     MainCamera,
     LowResCamera { pixel_size: 4.0 },
-    CameraPoseState::InState(CameraPose::TestState),
+    CameraPoseState::InState(CameraPose::Disabled),
     PanOrbitCamera { ..default() },
     Name::new("lowres_camera"),
   ));
@@ -202,7 +202,7 @@ fn setup_tree_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
       ..default()
     },
     ConvertToToonMaterial {
-      outline_scale: Some(0.0),
+      outline_scale: Some(1.0),
       ..default()
     },
     Name::new("tree"),

@@ -17,7 +17,7 @@ use planiscope::{
 use crate::{
   materials::toon::ToonMaterial,
   terrain::{mesh::TerrainMesh, region::TerrainRegion},
-  utils::{despawn::DespawnTag, hash_single},
+  utils::{bevy_mesh_from_pls_mesh, despawn::DespawnTag, hash_single},
 };
 
 #[derive(Component, Reflect, Default)]
@@ -122,8 +122,8 @@ pub struct TerrainTriggerRegeneration {
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
 pub enum TerrainEnabledState {
-  #[default]
   Enabled,
+  #[default]
   Disabled,
 }
 
@@ -268,7 +268,7 @@ fn init_next_generation(
                 });
             (
               (
-                mesh::bevy_mesh_from_pls_mesh(mesh.unwrap()),
+                bevy_mesh_from_pls_mesh(mesh.unwrap()),
                 collider.map(Collider::from),
               ),
               region,
@@ -280,9 +280,8 @@ fn init_next_generation(
 
     info!(
       "starting terrain generation with {:?}% recycled regions",
-      (existing_terrain_meshes.len() as f32)
-        / ((existing_terrain_meshes.len() + regions.len()) as f32)
-        * 100.0
+      existing_terrain_meshes.len() * 100
+        / (existing_terrain_meshes.len() + regions.len())
     );
 
     // insert the `TerrainNextGeneration` resource
@@ -328,9 +327,8 @@ fn eligible_for_new_gen(
     return (current_gen.target_location
       - current_gen.target_location.rem(config.trigger_distance()))
       != (target_location - target_location.rem(config.trigger_distance()));
-  } else {
-    error!("no `TerrainDetailTarget` found");
   }
+  error!("no `TerrainDetailTarget` found");
   false
 }
 
@@ -465,7 +463,7 @@ fn transition_generations(
 
   // despawn the old entities if current_gen exists
   if let Some(current_gen) = current_gen {
-    for entity in current_gen.terrain_entities.iter() {
+    for entity in &current_gen.terrain_entities {
       commands.entity(*entity).insert(DespawnTag);
     }
   } // no else clause because the old current_gen is allowed to not exist

@@ -1,5 +1,14 @@
+#![warn(clippy::all, clippy::pedantic)]
+#![allow(
+  clippy::wildcard_imports,
+  clippy::needless_pass_by_value,
+  clippy::module_name_repetitions
+)]
+#![feature(trivial_bounds)]
+
 mod camera;
 mod debug;
+mod foliage;
 mod markers;
 mod materials;
 mod particle;
@@ -47,10 +56,11 @@ fn main() {
     .add_plugins(player::PlayerPlugin)
     // QoL
     .add_plugins(WorldInspectorPlugin::new())
-    //.add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
+    .add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
     // background logic
     .add_plugins(terrain::TerrainPlugin)
     .add_plugins(camera::posing::CameraPosePlugin)
+    //.add_plugins(foliage::FoliagePlugin)
     .add_plugins(particle::ParticlePlugin)
     .add_plugins(utils::timer_lifetime::TimerLifetimePlugin)
     .add_plugins(utils::despawn::DespawnPlugin)

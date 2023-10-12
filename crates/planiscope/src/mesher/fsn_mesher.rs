@@ -23,12 +23,12 @@ impl Mesher for FastSurfaceNetsMesher {
     let node = inputs.shape.into_node(&mut ctx)?;
 
     // we need to normalize the target region into -1..1
-    let normalized_node = nso::nso_normalize_region(
+    let normalized_node = nso::regions::nso_normalize_region(
       node,
       inputs.region.position.to_array(),
       inputs.region.scale.to_array(),
       &mut ctx,
-    );
+    )?;
 
     let tape = ctx.get_tape::<Self::EvalFamily>(normalized_node)?;
     let tape = simplify_tape(tape, [[-1.0, 1.0]; 3])?;
@@ -37,20 +37,18 @@ impl Mesher for FastSurfaceNetsMesher {
     let shape_length = inputs.region.voxel_side_length();
 
     // a shape for the purpose of delinearizing in iteration
-    let ndshape_descriptor = RuntimeShape::<u32, 3>::new([shape_length; 3]);
+    let ndshape_descriptor = RuntimeShape::<u32, 3>::new(shape_length);
     // closure for getting from voxel units to -1..1 f32 units, i.e. node coords
-    let voxel_to_node_coords =
-      move |x| (x as f32) / (shape_length as f32 / 2.0) - 1.0;
+    // let voxel_to_node_coords =
+    // move |x| (x as f32) / (shape_length as f32 / 2.0) - 1.0;
 
     // all of the delinearized points from the shape descriptor, in -1..1
     let points = (0u32..ndshape_descriptor.size())
       .map(|x| ndshape_descriptor.delinearize(x))
       .map(|p| {
-        glam::Vec3A::new(
-          voxel_to_node_coords(p[0]),
-          voxel_to_node_coords(p[1]),
-          voxel_to_node_coords(p[2]),
-        )
+        glam::UVec3::from_array(p).as_vec3a()
+          / (glam::UVec3::from_array(shape_length).as_vec3a() / 2.0)
+          - 1.0
       })
       .collect::<Vec<glam::Vec3A>>();
 
@@ -69,16 +67,22 @@ impl Mesher for FastSurfaceNetsMesher {
       &values,
       &ndshape_descriptor,
       [0; 3],
-      [shape_length - 1; 3],
+      (glam::UVec3::from_array(shape_length) - 1).to_array(),
       &mut buffer,
     );
 
     // convert vertices and triangles into something we can use (what full_mesh
-    // is expecting)
+    // is expecting), and scale them back up for the normal calc.
     let vertices = buffer
       .positions
       .iter()
-      .map(|a| glam::Vec3A::from_array(*a) / (shape_length as f32 / 2.0) - 1.0)
+      // this is to convert from linearized integer coords back to -1..1
+      .map(|a| {
+        glam::Vec3A::from_array(*a)
+          / (glam::UVec3::from_array(shape_length).as_vec3a() / 2.0)
+          - 1.0
+      })
+      // this is to go from -1..1 to the normal scale
       .collect::<Vec<glam::Vec3A>>();
     // this uses a chunk operation on the slice because the indices aren't in
     // triplets

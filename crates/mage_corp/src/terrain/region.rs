@@ -28,7 +28,7 @@ impl From<TerrainRegion> for MesherRegion {
 impl Hash for TerrainRegion {
   fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
     // use the debug format to hash
-    format!("{:?}", self).hash(state);
+    format!("{self:?}").hash(state);
   }
 }
 
@@ -50,7 +50,7 @@ pub fn calculate_regions(
     &[target_lod_coords],
     config.n_same_size_meshes.into(),
     |_| (),
-    |_, _| {},
+    |_, ()| {},
   );
 
   tree

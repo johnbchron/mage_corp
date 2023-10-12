@@ -34,8 +34,16 @@ pub struct MesherRegion {
 }
 
 impl MesherRegion {
-  pub fn voxel_side_length(&self) -> u32 {
-    self.detail.voxel_side_length(self.scale.max_element())
+  pub fn voxel_side_length(&self) -> [u32; 3] {
+    match self.detail {
+      MesherDetail::Subdivs(x) => [2_u32.pow(x as u32); 3],
+      MesherDetail::Resolution(x) => [
+        (self.scale.x * x).ceil() as u32,
+        (self.scale.y * x).ceil() as u32,
+        (self.scale.z * x).ceil() as u32,
+      ],
+      MesherDetail::Exact(x) => [x; 3],
+    }
   }
 }
 
@@ -53,16 +61,6 @@ pub enum MesherDetail {
   /// Controls the exact number of voxels to use; i.e. a value of 32 will mesh
   /// with 32x32x32 voxels.
   Exact(u32),
-}
-
-impl MesherDetail {
-  pub fn voxel_side_length(&self, scale: f32) -> u32 {
-    match self {
-      MesherDetail::Subdivs(x) => 2_u32.pow(*x as u32),
-      MesherDetail::Resolution(x) => (scale * *x).ceil() as u32,
-      MesherDetail::Exact(x) => *x,
-    }
-  }
 }
 
 /// All of the inputs required to build a mesh.

@@ -20,9 +20,11 @@ pub struct LowResCamera {
   pub pixel_size: f32,
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 impl LowResCamera {
+  /// Returns a u8 pixel size from the stored f32 pixel size.
   pub fn pixel_size(&self) -> u8 {
-    (self.pixel_size.round() % u8::MAX as f32) as u8
+    (self.pixel_size.round() % f32::from(u8::MAX)) as u8
   }
 }
 
@@ -43,8 +45,8 @@ pub fn calculate_texture_resolution(
   pixel_size: u8,
 ) -> Vec2 {
   Vec2::new(
-    (window_x / pixel_size as f32).ceil(),
-    (window_y / pixel_size as f32).ceil(),
+    (window_x / f32::from(pixel_size)).ceil(),
+    (window_y / f32::from(pixel_size)).ceil(),
   )
 }
 
@@ -68,8 +70,8 @@ fn rebuild_texture_setup(
   // if the camera already has a texture and it's the right size, use that
   if let RenderTarget::Image(image_handle) = &camera.target {
     let image = images.get(image_handle).unwrap();
-    if image.size().x == desired_texture_size.x as f32
-      && image.size().y == desired_texture_size.y as f32
+    if (image.size().x - desired_texture_size.x as f32).abs() < 0.01
+      && (image.size().y - desired_texture_size.y as f32).abs() < 0.01
     {
       commands.entity(lowres_target).insert(image_handle.clone());
       return;
@@ -108,6 +110,7 @@ fn window_size_changed(
   window_q.iter().next().is_some()
 }
 
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn build_texture_image(x: f32, y: f32) -> Image {
   let image_size = Extent3d {
     width:                 x as u32,

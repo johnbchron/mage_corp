@@ -31,11 +31,11 @@ impl CameraPose {
         low_res_pixel_size: 2.0,
       }),
       CameraPose::TestState => Some(ControlledCameraParams {
-        translation:        Vec3::new(-32.0, 32.0, 32.0)
+        translation:        Vec3::new(-24.0, 24.0, 24.0)
           + target_transform.translation,
         looking_at:         (target_transform.translation, Vec3::Y),
         fov:                0.2,
-        low_res_pixel_size: 4.0,
+        low_res_pixel_size: 3.0,
       }),
     }
   }
@@ -182,10 +182,10 @@ pub fn maintain_pose(
   if let Err(single_error) = target_transform {
     match single_error {
       QuerySingleError::NoEntities(_) => {
-        warn!("no entities have a `CameraStateTarget`, aborting")
+        warn!("no entities have a `CameraStateTarget`, aborting");
       }
       QuerySingleError::MultipleEntities(_) => {
-        warn!("multiple entities have a `CameraStateTarget`, aborting")
+        warn!("multiple entities have a `CameraStateTarget`, aborting");
       }
     };
     return;
@@ -198,7 +198,7 @@ pub fn maintain_pose(
     mut camera_transform,
     mut camera_projection,
     mut camera_lowres,
-  ) in camera_q.iter_mut()
+  ) in &mut camera_q
   {
     match camera_state.clone() {
       CameraPoseState::Transition { from, to, .. } => {
