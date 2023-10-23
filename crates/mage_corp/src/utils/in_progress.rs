@@ -23,6 +23,7 @@ pub struct InProgressComponent<T: Bundle>(pub Task<T>);
 pub struct InProgressAsset<T: Asset>(pub Task<T>);
 
 /// Flushes the results from `InProgressComponent`.
+#[allow(dead_code)]
 pub fn in_progress_component_flusher<T: Bundle>(
   mut commands: Commands,
   mut query: Query<(Entity, &mut InProgressComponent<T>)>,
@@ -36,6 +37,7 @@ pub fn in_progress_component_flusher<T: Bundle>(
 }
 
 /// Flushes the results from `InProgressAsset`.
+#[allow(dead_code)]
 pub fn in_progress_asset_flusher<T: Asset>(
   mut commands: Commands,
   mut query: Query<(Entity, &mut InProgressAsset<T>)>,

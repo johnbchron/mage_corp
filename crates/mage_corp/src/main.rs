@@ -8,6 +8,7 @@
 
 mod camera;
 mod debug;
+mod magic;
 mod markers;
 mod materials;
 mod particle;
@@ -57,6 +58,7 @@ fn main() {
     .add_plugins(WorldInspectorPlugin::new())
     .add_plugins(bevy_panorbit_camera::PanOrbitCameraPlugin)
     // background logic
+    .add_plugins(magic::MagicPlugin)
     .add_plugins(terrain::TerrainPlugin)
     .add_plugins(camera::posing::CameraPosePlugin)
     .add_plugins(particle::ParticlePlugin)
