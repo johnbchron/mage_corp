@@ -14,7 +14,9 @@
           inherit system overlays;
         };
         
-        toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        toolchain = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
+          extensions = [ "rust-analyzer" "rust-src" ];
+        };
         
         rust_deps = [ toolchain pkgs.lldb ];
         bevy_build_deps = with pkgs; [
