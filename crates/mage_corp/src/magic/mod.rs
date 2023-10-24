@@ -9,11 +9,8 @@ pub struct MagicPlugin;
 impl Plugin for MagicPlugin {
   fn build(&self, app: &mut App) {
     app
-      .init_resource::<blueprint::visuals::BlueprintVisualsPrefabs>()
-      .register_type::<source::Source>()
-      .register_type::<Blueprint>()
-      .add_systems(Startup, magic_test_scene)
-      .add_systems(Update, blueprint::visuals::maintain_blueprint_visuals);
+      .add_plugins(blueprint::BlueprintPlugin)
+      .add_systems(Startup, magic_test_scene);
   }
 }
 

@@ -29,3 +29,13 @@ pub enum BlueprintStage {
   Initialized,
   Built,
 }
+
+pub struct BlueprintPlugin;
+
+impl Plugin for BlueprintPlugin {
+  fn build(&self, app: &mut App) {
+    app
+      .register_type::<Blueprint>()
+      .add_plugins(visuals::BlueprintVisualsPlugin);
+  }
+}
