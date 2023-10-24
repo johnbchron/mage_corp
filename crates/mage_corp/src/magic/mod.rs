@@ -1,33 +1,19 @@
-mod visuals;
+pub mod blueprint;
+pub mod source;
 
 use bevy::prelude::*;
-
-#[derive(Component, Debug)]
-pub struct Blueprint {
-  _type:         BlueprintType,
-  stage:         BlueprintStage,
-  linked_source: Option<Entity>,
-}
-
-#[derive(Debug)]
-enum BlueprintType {
-  MassBarrier,
-}
-
-#[derive(Debug)]
-enum BlueprintStage {
-  Initialized,
-  Built,
-}
+use blueprint::Blueprint;
 
 pub struct MagicPlugin;
 
 impl Plugin for MagicPlugin {
   fn build(&self, app: &mut App) {
     app
-      .init_resource::<visuals::BlueprintVisualsPrefabs>()
+      .init_resource::<blueprint::visuals::BlueprintVisualsPrefabs>()
+      .register_type::<source::Source>()
+      .register_type::<Blueprint>()
       .add_systems(Startup, magic_test_scene)
-      .add_systems(Update, visuals::maintain_blueprint_visuals);
+      .add_systems(Update, blueprint::visuals::maintain_blueprint_visuals);
   }
 }
 
@@ -37,10 +23,7 @@ fn magic_test_scene(mut commands: Commands) {
       transform: Transform::from_xyz(0.0, 3.0, 3.0),
       ..default()
     },
-    Blueprint {
-      _type:         BlueprintType::MassBarrier,
-      stage:         BlueprintStage::Initialized,
-      linked_source: None,
-    },
+    Blueprint::new(blueprint::BlueprintType::MassBarrier),
+    Name::new("blueprint_test"),
   ));
 }

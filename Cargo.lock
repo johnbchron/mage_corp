@@ -324,6 +324,7 @@ version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "91c6d3ec4f89e85294dc97334c5b271ddc301fdf67ac9bb994fe44d9273e6ed7"
 dependencies = [
+ "bevy_dylib",
  "bevy_internal",
 ]
 
@@ -530,6 +531,15 @@ version = "0.3.0"
 source = "git+https://github.com/johnbchron/bevy_diagnostic_vertex_count?tag=v0.4#b5e8102de8fee8ce161f40351a2c8e7093074326"
 dependencies = [
  "bevy",
+]
+
+[[package]]
+name = "bevy_dylib"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22ea11f830028e1c9d37f8bc88c5873f1c4c0346661209c2ba015f899c51863c"
+dependencies = [
+ "bevy_internal",
 ]
 
 [[package]]
@@ -988,6 +998,18 @@ dependencies = [
  "fixedbitset",
  "guillotiere",
  "rectangle-pack",
+ "thiserror",
+]
+
+[[package]]
+name = "bevy_stl"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a48abf4210b2ec8c2abcca6c4257ec22c4d656c6fc3bb4e80c42b505e521be38"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "stl_io",
  "thiserror",
 ]
 
@@ -1931,6 +1953,15 @@ dependencies = [
 
 [[package]]
 name = "float-cmp"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1267f4ac4f343772758f7b1bdcbe767c218bbab93bb432acbf5162bbf85a6c4"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "float-cmp"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98de4bbd547a563b716d8dfa9aad1cb19bfab00f4fa09a6a4ed21dbcf44ce9c4"
@@ -2614,6 +2645,7 @@ dependencies = [
  "bevy_obj",
  "bevy_panorbit_camera",
  "bevy_shader_utils",
+ "bevy_stl",
  "bevy_xpbd_3d",
  "futures-lite",
  "interpolation 0.3.0",
@@ -3334,7 +3366,7 @@ dependencies = [
  "educe",
  "fast-surface-nets",
  "fidget",
- "float-cmp",
+ "float-cmp 0.9.0",
  "glam 0.24.2",
  "log",
  "parry3d",
@@ -3906,6 +3938,16 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "stl_io"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c68e41108b3ec269d885cc56af66cd15f1392f68d2ae461df86d7d3285f065d"
+dependencies = [
+ "byteorder",
+ "float-cmp 0.8.0",
+]
 
 [[package]]
 name = "str-buf"

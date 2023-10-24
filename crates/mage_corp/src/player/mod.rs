@@ -4,6 +4,7 @@ use crate::{
   camera::posing::{
     maintain_pose, CameraPose, CameraPoseState, CameraStateTarget,
   },
+  magic::source::Source,
   materials::toon::ConvertToToonMaterial,
   terrain::TerrainDetailTarget,
 };
@@ -15,6 +16,7 @@ fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
       CameraStateTarget,
       TerrainDetailTarget,
       UserInputReceiver { speed: 10.0 },
+      Source::default(),
       Name::new("player"),
     ))
     .with_children(|parent| {

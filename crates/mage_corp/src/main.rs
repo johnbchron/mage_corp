@@ -49,6 +49,7 @@ fn main() {
     .add_plugins(markers::MarkerPlugin)
     // graphics
     .add_plugins(materials::MaterialsPlugin)
+    .add_plugins(bevy_stl::StlPlugin)
     .add_plugins(camera::low_res::LowResPlugin)
     // physics
     .add_plugins(PhysicsPlugins::default())
