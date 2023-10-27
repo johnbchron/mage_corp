@@ -2,32 +2,46 @@ pub mod visuals;
 
 use bevy::prelude::*;
 
-#[derive(Component, Debug, Default, Reflect)]
-pub struct Blueprint {
-  _type: BlueprintType,
-  stage: BlueprintStage,
+#[derive(Component, Clone, Default, Reflect)]
+pub struct ActiveBlueprint {
+  descriptor: BlueprintDescriptor,
+  stage:      BlueprintStage,
 }
 
-impl Blueprint {
-  pub fn new(_type: BlueprintType) -> Self {
+impl ActiveBlueprint {
+  pub fn new(_type: BlueprintDescriptor) -> Self {
     Self {
-      _type,
-      stage: BlueprintStage::Initialized,
+      descriptor: _type,
+      stage:      BlueprintStage::Initialized { stored: 0.0 },
     }
   }
 }
 
-#[derive(Debug, Default, Reflect)]
-pub enum BlueprintType {
+#[derive(Clone, Default, Reflect)]
+pub enum BlueprintDescriptor {
   #[default]
   MassBarrier,
 }
 
-#[derive(Debug, Default, Reflect)]
+impl BlueprintDescriptor {
+  pub fn initial_cost(&self) -> f32 {
+    match self {
+      Self::MassBarrier => 10.0,
+    }
+  }
+}
+
+#[derive(Clone, Reflect)]
 pub enum BlueprintStage {
-  #[default]
-  Initialized,
-  Built,
+  Initialized { stored: f32 },
+  Built { stored: f32 },
+  Active { deficit: f32 },
+}
+
+impl Default for BlueprintStage {
+  fn default() -> Self {
+    Self::Initialized { stored: 0.0 }
+  }
 }
 
 pub struct BlueprintPlugin;
@@ -35,7 +49,7 @@ pub struct BlueprintPlugin;
 impl Plugin for BlueprintPlugin {
   fn build(&self, app: &mut App) {
     app
-      .register_type::<Blueprint>()
+      .register_type::<ActiveBlueprint>()
       .add_plugins(visuals::BlueprintVisualsPlugin);
   }
 }

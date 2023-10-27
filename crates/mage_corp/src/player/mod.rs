@@ -5,11 +5,12 @@ use crate::{
     maintain_pose, CameraPose, CameraPoseState, CameraStateTarget,
   },
   magic::source::Source,
+  markers::Player,
   materials::toon::ConvertToToonMaterial,
   terrain::TerrainDetailTarget,
 };
 
-fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
+pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
   commands
     .spawn((
       SpatialBundle::from_transform(Transform::from_xyz(-2.0, 0.0, 0.0)),
@@ -17,6 +18,7 @@ fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
       TerrainDetailTarget,
       UserInputReceiver { speed: 10.0 },
       Source::default(),
+      Player,
       Name::new("player"),
     ))
     .with_children(|parent| {

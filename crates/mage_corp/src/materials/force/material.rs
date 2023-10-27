@@ -25,6 +25,7 @@ pub struct ForceMaterial {
   pub influence:      f32,
   #[storage(1, read_only)]
   pub contact_points: Vec<[f32; 4]>,
+  pub alpha_mode:     AlphaMode,
 }
 
 impl Default for ForceMaterial {
@@ -35,6 +36,7 @@ impl Default for ForceMaterial {
       alpha_max:      0.5,
       influence:      5.0,
       contact_points: vec![],
+      alpha_mode:     AlphaMode::Blend,
     }
   }
 }
@@ -51,7 +53,7 @@ impl Material for ForceMaterial {
   }
 
   fn alpha_mode(&self) -> AlphaMode {
-    AlphaMode::Blend
+    self.alpha_mode
   }
 
   fn specialize(
