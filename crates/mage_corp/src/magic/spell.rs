@@ -1,9 +1,15 @@
 use std::time::Duration;
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+  prelude::*,
+  utils::{HashMap, Instant},
+};
 use nanorand::Rng;
 
-use super::{blueprint::BlueprintDescriptor, source::Source};
+use super::{
+  blueprint::{ActiveBlueprint, BlueprintDescriptor},
+  source::Source,
+};
 
 #[derive(Clone, Default, Reflect)]
 pub struct SpellBlock {
@@ -43,9 +49,76 @@ pub enum SpellTrigger {
   OnBlockCompleted(BlockRef),
   AfterTime {
     #[reflect(ignore)]
-    start:    Box<SpellTrigger>,
-    duration: Duration,
+    trigger:    Box<SpellTrigger>,
+    started_at: Option<Instant>,
+    duration:   Duration,
   },
+}
+
+impl SpellTrigger {
+  fn update_if_needed(
+    &mut self,
+    active_spell: &ActiveSpell,
+    self_block_id: u64,
+  ) {
+    match self {
+      Self::AfterTime {
+        trigger,
+        started_at,
+        duration,
+      } => {
+        // mark the start time if we haven't already
+        if started_at.is_none() {
+          *started_at = Some(Instant::now());
+        }
+        // recurse because this trigger contains another trigger
+        trigger.update_if_needed(active_spell, self_block_id);
+      }
+      _ => {}
+    }
+  }
+
+  fn evaluate(
+    &self,
+    active_spell: &ActiveSpell,
+    self_block_id: u64,
+  ) -> Option<bool> {
+    match self {
+      // AtStart is always true
+      Self::AtStart => Some(true),
+      Self::OnBlockCompleted(block_ref) => {
+        let id = match block_ref {
+          BlockRef::Id(id) => *id,
+          BlockRef::SelfBlock => self_block_id,
+        };
+        let block = active_spell.active_blocks.get(&id)?;
+        match block.block_state {
+          BlockState::End => Some(true),
+          _ => Some(false),
+        }
+      }
+      Self::AfterTime {
+        trigger,
+        started_at,
+        duration,
+      } => {
+        if let Some(started_at) = started_at {
+          // if the time has elapsed, evaluate the trigger
+          if started_at.elapsed() >= *duration {
+            Some(trigger.evaluate(active_spell, self_block_id)?)
+          } else {
+            Some(false)
+          }
+        } else {
+          warn!(
+            "tried to evaluate an AfterTime trigger before the start time was \
+             marked"
+          );
+          return None;
+        }
+      }
+    }
+  }
 }
 
 #[derive(Clone, Default, Reflect)]
@@ -88,11 +161,16 @@ impl SpellDescriptor {
     self.blocks.insert(id, block);
     id
   }
+  fn ids(&self) -> Vec<u64> {
+    let mut block_ids = self.blocks.keys().copied().collect::<Vec<_>>();
+    block_ids.sort();
+    block_ids
+  }
 }
 
 #[derive(Clone, Default, Reflect)]
 pub struct ActiveSpellBlock {
-  block:         SpellBlock,
+  descriptor:    SpellBlock,
   trigger_state: TriggerState,
   block_state:   BlockState,
 }
@@ -116,6 +194,7 @@ impl Plugin for SpellPlugin {
       .register_type::<ActiveSpell>()
       .register_type::<SourceLink>()
       .add_systems(Update, init_spell)
+      .add_systems(Update, (trigger_phase, state_phase).chain())
       .add_systems(Update, check_for_disconnected_spells);
   }
 }
@@ -128,7 +207,7 @@ fn init_spell(
     let mut active_blocks = HashMap::default();
     for (id, block) in descriptor.blocks.iter() {
       active_blocks.insert(*id, ActiveSpellBlock {
-        block:         block.clone(),
+        descriptor:    block.clone(),
         trigger_state: TriggerState::default(),
         block_state:   BlockState::Uninit,
       });
@@ -158,4 +237,95 @@ fn check_for_disconnected_spells(
   }
 }
 
-fn run_spell() {}
+fn trigger_phase(
+  mut spell_q: Query<&mut ActiveSpell>,
+  bluep_q: Query<&ActiveBlueprint>,
+) {
+  for mut spell in spell_q.iter_mut() {
+    // get the sorted block ids
+    let block_ids = spell.descriptor.ids();
+
+    // hold onto the last frame's state
+    let old_state = spell.clone();
+
+    block_ids.into_iter().for_each(|id| {
+      let block = spell.active_blocks.get_mut(&id).unwrap();
+
+      // calculate whether each blueprint is fully saturated
+      let all_bluep_saturated = match &block.block_state {
+        BlockState::Init(bluep) => bluep
+          .iter()
+          .all(|e| bluep_q.get(*e).is_ok_and(|b| b.saturated())),
+        _ => false,
+      };
+
+      // update the triggers (for things like `started_at` timers)
+      block
+        .descriptor
+        .init_trigger
+        .update_if_needed(&old_state, id);
+      block
+        .descriptor
+        .activate_trigger
+        .update_if_needed(&old_state, id);
+      block
+        .descriptor
+        .end_trigger
+        .update_if_needed(&old_state, id);
+
+      // calculate the trigger state for this block
+      block.trigger_state = TriggerState {
+        init:   block
+          .descriptor
+          .init_trigger
+          .evaluate(&old_state, id)
+          .unwrap_or(false),
+        active: block
+          .descriptor
+          .activate_trigger
+          .evaluate(&old_state, id)
+          .unwrap_or(false),
+        built:  all_bluep_saturated,
+        end:    block
+          .descriptor
+          .end_trigger
+          .evaluate(&old_state, id)
+          .unwrap_or(false),
+      };
+    });
+  }
+}
+
+fn state_phase(mut spell_q: Query<&mut ActiveSpell>) {
+  for mut spell in spell_q.iter_mut() {
+    let block_ids = spell.descriptor.ids();
+
+    // save the old state
+    let old_state = spell.clone();
+
+    block_ids.into_iter().for_each(|id| {
+      let block = spell.active_blocks.get_mut(&id).unwrap();
+
+      // handle the block state transitions
+      match block.block_state.clone() {
+        BlockState::Uninit => {
+          if block.trigger_state.init {
+            block.block_state = BlockState::Init(todo!("spawn blueprints"));
+          }
+        }
+        BlockState::Init(tracked_bluep) => {
+          if block.trigger_state.active && block.trigger_state.built {
+            block.block_state = BlockState::Active(tracked_bluep);
+          }
+        }
+        BlockState::Active(tracked_bluep) => {
+          if block.trigger_state.end {
+            block.block_state = BlockState::End;
+            todo!("despawn blueprints");
+          }
+        }
+        BlockState::End => {}
+      }
+    });
+  }
+}

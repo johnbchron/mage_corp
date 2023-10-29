@@ -15,6 +15,15 @@ impl ActiveBlueprint {
       stage:      BlueprintStage::Initialized { stored: 0.0 },
     }
   }
+  pub fn saturated(&self) -> bool {
+    match self.stage {
+      BlueprintStage::Active { deficit } => deficit <= 0.0,
+      BlueprintStage::Built { stored } => {
+        stored >= self.descriptor.initial_cost()
+      }
+      _ => false,
+    }
+  }
 }
 
 #[derive(Clone, Default, Reflect)]
