@@ -1,7 +1,7 @@
 
 # run the project
 run:
-	cargo run
+	MTL_HUD_ENABLED=1 cargo run
 	
 # run the pre-commit checklist
 pre-c:

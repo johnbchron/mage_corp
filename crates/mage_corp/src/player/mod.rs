@@ -13,7 +13,7 @@ use crate::{
 pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
   commands
     .spawn((
-      SpatialBundle::from_transform(Transform::from_xyz(-2.0, 0.0, 0.0)),
+      SpatialBundle::from_transform(Transform::from_xyz(-2.0, 1.0, 0.0)),
       CameraStateTarget,
       TerrainDetailTarget,
       UserInputReceiver { speed: 10.0 },
@@ -25,7 +25,7 @@ pub fn spawn_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
       parent.spawn((
         SceneBundle {
           scene: asset_server.load("scenes/fox.glb#Scene0"),
-          transform: Transform::from_xyz(0.0, 0.0, 0.0)
+          transform: Transform::from_xyz(0.0, -0.5, 0.0)
             .looking_to(Vec3::Z, Vec3::Y),
           ..default()
         },

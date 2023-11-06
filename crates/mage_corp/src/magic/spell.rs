@@ -46,7 +46,10 @@ pub enum BlockRef {
 pub enum SpellTrigger {
   #[default]
   AtStart,
-  OnBlockCompleted(BlockRef),
+  OnBlockInit(BlockRef),
+  OnBlockBuilt(BlockRef),
+  OnBlockActive(BlockRef),
+  OnBlockEnd(BlockRef),
   AfterTime {
     #[reflect(ignore)]
     trigger:    Box<SpellTrigger>,
@@ -65,7 +68,7 @@ impl SpellTrigger {
       Self::AfterTime {
         trigger,
         started_at,
-        duration,
+        ..
       } => {
         // mark the start time if we haven't already
         if started_at.is_none() {
@@ -86,7 +89,43 @@ impl SpellTrigger {
     match self {
       // AtStart is always true
       Self::AtStart => Some(true),
-      Self::OnBlockCompleted(block_ref) => {
+      Self::OnBlockInit(block_ref) => {
+        let id = match block_ref {
+          BlockRef::Id(id) => *id,
+          BlockRef::SelfBlock => self_block_id,
+        };
+        let block = active_spell.active_blocks.get(&id)?;
+        match block.block_state {
+          BlockState::Uninit => Some(false),
+          _ => Some(true),
+        }
+      }
+      Self::OnBlockBuilt(block_ref) => {
+        let id = match block_ref {
+          BlockRef::Id(id) => *id,
+          BlockRef::SelfBlock => self_block_id,
+        };
+        let block = active_spell.active_blocks.get(&id)?;
+
+        let built = block.trigger_state.built;
+        match block.block_state {
+          BlockState::Uninit => Some(false),
+          BlockState::Init(_) => Some(built),
+          _ => Some(false),
+        }
+      }
+      Self::OnBlockActive(block_ref) => {
+        let id = match block_ref {
+          BlockRef::Id(id) => *id,
+          BlockRef::SelfBlock => self_block_id,
+        };
+        let block = active_spell.active_blocks.get(&id)?;
+        match block.block_state {
+          BlockState::Uninit | BlockState::Init(_) => Some(false),
+          _ => Some(true),
+        }
+      }
+      Self::OnBlockEnd(block_ref) => {
         let id = match block_ref {
           BlockRef::Id(id) => *id,
           BlockRef::SelfBlock => self_block_id,
@@ -193,9 +232,18 @@ impl Plugin for SpellPlugin {
       .register_type::<SpellDescriptor>()
       .register_type::<ActiveSpell>()
       .register_type::<SourceLink>()
-      .add_systems(Update, init_spell)
-      .add_systems(Update, (trigger_phase, state_phase).chain())
-      .add_systems(Update, check_for_disconnected_spells);
+      .add_systems(
+        Update,
+        (
+          init_spell,
+          check_for_disconnected_spells,
+          trigger_phase,
+          state_phase,
+          expend_phase,
+          cleanup_phase,
+        )
+          .chain(),
+      );
   }
 }
 
@@ -230,7 +278,8 @@ fn check_for_disconnected_spells(
   for (spell_entity, active_spell) in active_spell_q.iter() {
     if source_q.get(active_spell.source).is_err() {
       error!(
-        "Spell source entity was deleted, removing spell and spell entity"
+        "Spell source entity was deleted or didn't exist, removing spell \
+         entity"
       );
       commands.entity(spell_entity).despawn_recursive();
     }
@@ -296,12 +345,12 @@ fn trigger_phase(
   }
 }
 
-fn state_phase(mut spell_q: Query<&mut ActiveSpell>) {
-  for mut spell in spell_q.iter_mut() {
+fn state_phase(
+  mut commands: Commands,
+  mut spell_q: Query<(&mut ActiveSpell, &SourceLink)>,
+) {
+  for (mut spell, source_link) in spell_q.iter_mut() {
     let block_ids = spell.descriptor.ids();
-
-    // save the old state
-    let old_state = spell.clone();
 
     block_ids.into_iter().for_each(|id| {
       let block = spell.active_blocks.get_mut(&id).unwrap();
@@ -310,7 +359,22 @@ fn state_phase(mut spell_q: Query<&mut ActiveSpell>) {
       match block.block_state.clone() {
         BlockState::Uninit => {
           if block.trigger_state.init {
-            block.block_state = BlockState::Init(todo!("spawn blueprints"));
+            // spawn blueprint entities
+            let entities = block
+              .descriptor
+              .descriptors
+              .iter()
+              .enumerate()
+              .map(|(idx, d)| {
+                ActiveBlueprint::new(d).spawn(
+                  &mut commands,
+                  source_link,
+                  &format!("blueprint_{:#x}_{}", id, idx),
+                )
+              })
+              .collect::<Vec<_>>();
+
+            block.block_state = BlockState::Init(entities);
           }
         }
         BlockState::Init(tracked_bluep) => {
@@ -320,12 +384,67 @@ fn state_phase(mut spell_q: Query<&mut ActiveSpell>) {
         }
         BlockState::Active(tracked_bluep) => {
           if block.trigger_state.end {
+            tracked_bluep.into_iter().for_each(|e| {
+              commands.entity(e).despawn_recursive();
+            });
+
             block.block_state = BlockState::End;
-            todo!("despawn blueprints");
           }
         }
         BlockState::End => {}
       }
     });
+  }
+}
+
+fn expend_phase(
+  time: Res<Time>,
+  mut source_q: Query<&mut Source>,
+  spell_q: Query<&ActiveSpell>,
+  mut bluep_q: Query<(&mut ActiveBlueprint, &SourceLink)>,
+) {
+  for spell in spell_q.iter() {
+    let block_ids = spell.descriptor.ids();
+
+    block_ids.into_iter().for_each(|id| {
+      let block = spell.active_blocks.get(&id).unwrap();
+
+      match block.block_state.clone() {
+        BlockState::Init(bluep) => {
+          bluep.into_iter().for_each(|e| {
+            // this entity will not exist the first frame after it's spawned
+            if let Ok((mut bluep, source_link)) = bluep_q.get_mut(e) {
+              let mut source = source_q.get_mut(source_link.0).unwrap();
+
+              let amount = (source.max_flow() * time.delta_seconds())
+                .min(bluep.remaining());
+
+              source.expend_to(amount, &mut bluep);
+            }
+          });
+        }
+        _ => {}
+      }
+    });
+  }
+}
+
+fn cleanup_phase(
+  mut commands: Commands,
+  spell_q: Query<(Entity, &ActiveSpell)>,
+) {
+  for (entity, spell) in spell_q.iter() {
+    let spell_is_active =
+      spell.active_blocks.values().any(|b| match b.block_state {
+        BlockState::Uninit => true,
+        BlockState::Init(_) => true,
+        BlockState::Active(_) => true,
+        _ => false,
+      });
+
+    if !spell_is_active {
+      warn!("Spell entity is no longer active, despawning");
+      commands.entity(entity).despawn_recursive();
+    }
   }
 }

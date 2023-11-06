@@ -47,7 +47,7 @@ fn fragment(
   var noise_intensity = noise * 0.4;
   
   let intensity = saturate(NdV_intensity + cp_intensity + noise_intensity);
-  let color = mix(material.color.xyz, sqrt(material.color.xyz), cp_intensity);
+  let color = mix(material.color.xyz, sqrt(material.color.xyz), cp_intensity) * 5.0;
   
   let alpha = mix(material.alpha_min, material.alpha_max, pow(intensity, material.influence));
   

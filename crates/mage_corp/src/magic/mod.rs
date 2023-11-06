@@ -1,6 +1,9 @@
 pub mod blueprint;
 pub mod source;
 pub mod spell;
+pub mod target;
+
+use std::time::Duration;
 
 use bevy::prelude::*;
 use blueprint::ActiveBlueprint;
@@ -12,22 +15,30 @@ pub struct MagicPlugin;
 impl Plugin for MagicPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugins((blueprint::BlueprintPlugin, spell::SpellPlugin))
-      .add_systems(Startup, magic_test_scene)
+      .add_plugins((
+        blueprint::BlueprintPlugin,
+        source::SourcePlugin,
+        spell::SpellPlugin,
+        target::TargetPlugin,
+      ))
+      // .add_systems(Startup, magic_test_scene)
       .add_systems(Update, spawn_spell_test);
   }
 }
 
-fn magic_test_scene(mut commands: Commands) {
-  commands.spawn((
-    SpatialBundle {
-      transform: Transform::from_xyz(0.0, 3.0, 3.0),
-      ..default()
-    },
-    ActiveBlueprint::new(blueprint::BlueprintDescriptor::MassBarrier),
-    Name::new("blueprint_test"),
-  ));
-}
+// fn magic_test_scene(mut commands: Commands) {
+//   commands.spawn((
+//     SpatialBundle {
+//       transform: Transform::from_xyz(0.0, 3.0, 3.0),
+//       ..default()
+//     },
+//     ActiveBlueprint::new(&blueprint::BlueprintDescriptor::MassBarrier {
+//       target: target::Target::RelativeCoords(Vec3::new(0.0, 0.0, 0.0)),
+//       radius: 1.0,
+//     }),
+//     Name::new("blueprint_test"),
+//   ));
+// }
 
 fn spawn_spell_test(
   mut commands: Commands,
@@ -42,10 +53,17 @@ fn spawn_spell_test(
 
   let mut spell_desc = SpellDescriptor::default();
   spell_desc.add(SpellBlock::new(
-    vec![blueprint::BlueprintDescriptor::MassBarrier],
+    vec![blueprint::BlueprintDescriptor::MassBarrier {
+      target: target::Target::RelativeCoords(Vec3::new(0.0, 0.0, 0.0)),
+      radius: 1.0,
+    }],
     SpellTrigger::AtStart,
     SpellTrigger::AtStart,
-    SpellTrigger::OnBlockCompleted(BlockRef::SelfBlock),
+    SpellTrigger::AfterTime {
+      trigger:    Box::new(SpellTrigger::OnBlockActive(BlockRef::SelfBlock)),
+      started_at: None,
+      duration:   Duration::from_secs(10),
+    },
   ));
 
   commands.spawn((

@@ -4,8 +4,10 @@ use std::f32::consts::{FRAC_PI_4, PI};
 
 use bevy::{
   core_pipeline::{
+    bloom::BloomSettings,
     clear_color::ClearColorConfig,
     prepass::{DepthPrepass, NormalPrepass},
+    tonemapping::Tonemapping,
   },
   pbr::NotShadowCaster,
   prelude::*,
@@ -53,6 +55,10 @@ fn setup_camera_and_lights(mut commands: Commands) {
         clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)),
         ..default()
       },
+      camera: Camera {
+        hdr: true,
+        ..default()
+      },
       transform: Transform::from_xyz(
         64.0,
         (PI / 6.0).tan() * 64.0 * 2.0_f32.sqrt(),
@@ -64,10 +70,12 @@ fn setup_camera_and_lights(mut commands: Commands) {
         ..default()
       }
       .into(),
+      tonemapping: Tonemapping::TonyMcMapface,
       ..default()
     },
     DepthPrepass,
     NormalPrepass,
+    BloomSettings::default(),
     MainCamera,
     LowResCamera { pixel_size: 4.0 },
     CameraPoseState::InState(CameraPose::Disabled),
