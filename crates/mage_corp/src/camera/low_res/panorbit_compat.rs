@@ -32,7 +32,10 @@ fn maintain_active_data(
 
     active_camera_data.set_if_neq(ActiveCameraData {
       entity:        Some(entity),
-      viewport_size: Some(texture_size),
+      viewport_size: Some(Vec2::new(
+        texture_size.x as f32,
+        texture_size.y as f32,
+      )),
       window_size:   Some(Vec2::new(window.width(), window.height())),
       manual:        true,
     });

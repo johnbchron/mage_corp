@@ -5,9 +5,9 @@ use bevy::{
   },
   prelude::*,
 };
-use bevy_diagnostic_vertex_count::{
-  VertexCountDiagnosticsPlugin, VertexCountDiagnosticsSettings,
-};
+// use bevy_diagnostic_vertex_count::{
+//   VertexCountDiagnosticsPlugin, VertexCountDiagnosticsSettings,
+// };
 
 pub struct DebugPlugin;
 
@@ -17,7 +17,8 @@ impl Plugin for DebugPlugin {
       .add_plugins(LogDiagnosticsPlugin::default())
       .add_plugins(FrameTimeDiagnosticsPlugin)
       .add_plugins(EntityCountDiagnosticsPlugin)
-      .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
-      .add_plugins(VertexCountDiagnosticsPlugin);
+      // .insert_resource(VertexCountDiagnosticsSettings { only_visible: true })
+      // .add_plugins(VertexCountDiagnosticsPlugin)
+    ;
   }
 }

@@ -78,19 +78,20 @@ pub struct Particle {
 /// A bundle for spawning emitted particles
 #[derive(Bundle, Default)]
 pub struct ParticleBundle {
-  pub particle:        Particle,
-  pub material:        Handle<ToonMaterial>,
-  pub mesh:            Handle<Mesh>,
-  pub transform:       Transform,
-  pub position:        Position,
-  pub velocity:        LinearVelocity,
-  pub collider:        Collider,
-  pub mass_properties: MassPropertiesBundle,
-  pub lifetime:        TimerLifetime,
-  pub computed:        ComputedVisibility,
-  pub visibility:      Visibility,
-  pub global:          GlobalTransform,
-  pub no_shadows:      NotShadowCaster,
+  pub particle:             Particle,
+  pub material:             Handle<ToonMaterial>,
+  pub mesh:                 Handle<Mesh>,
+  pub transform:            Transform,
+  pub position:             Position,
+  pub velocity:             LinearVelocity,
+  pub collider:             Collider,
+  pub mass_properties:      MassPropertiesBundle,
+  pub lifetime:             TimerLifetime,
+  pub visibility:           Visibility,
+  pub inherited_visibility: InheritedVisibility,
+  pub view_visibility:      ViewVisibility,
+  pub global:               GlobalTransform,
+  pub no_shadows:           NotShadowCaster,
 }
 
 impl Default for ParticleEmitter {

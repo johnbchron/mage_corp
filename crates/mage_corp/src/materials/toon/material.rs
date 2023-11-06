@@ -6,7 +6,7 @@ use bevy::{
 
 use super::ConvertToToonMaterial;
 
-#[derive(AsBindGroup, TypeUuid, Reflect, Debug, Clone)]
+#[derive(AsBindGroup, TypeUuid, Asset, Reflect, Debug, Clone)]
 #[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e1"]
 #[reflect(Default, Debug)]
 pub struct ToonMaterial {
