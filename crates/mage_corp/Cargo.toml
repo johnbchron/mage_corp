@@ -12,7 +12,7 @@ bevy_obj = { version = "0.11.0", features = ["scene"] }
 bevy_diagnostic_vertex_count = { git = "https://github.com/johnbchron/bevy_diagnostic_vertex_count", tag = "v0.4" }
 nanorand = "0.7.0"
 bevy_shader_utils = "0.5.2"
-bevy_panorbit_camera = { version = "0.8.0", features = ["bevy_egui"] }
+bevy_panorbit_camera = { version = "0.9.0", features = ["bevy_egui"] }
 planiscope = { path = "../planiscope" }
 spatialtree = "0.1.1"
 futures-lite = "1.13.0"
