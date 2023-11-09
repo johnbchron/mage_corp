@@ -78,7 +78,7 @@ impl Default for ToonMaterial {
       outline_scale:            1.0,
       outline_normal_threshold: 0.1,
       outline_depth_threshold:  0.1,
-      shades:                   2.0,
+      shades:                   1.0,
       shade_cutoff:             0.15,
       dither_strength:          0.0,
       alpha_mode:               AlphaMode::Opaque,

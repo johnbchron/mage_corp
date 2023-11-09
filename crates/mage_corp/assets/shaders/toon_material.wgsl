@@ -1,12 +1,12 @@
 #import bevy_pbr::mesh_view_bindings
-#import bevy_pbr::mesh_vertex_output  MeshVertexOutput
+#import bevy_pbr::forward_io::VertexOutput
 #import bevy_pbr::prepass_utils
-#import bevy_pbr::utils               coords_to_viewport_uv
+#import bevy_pbr::utils::coords_to_viewport_uv
 #import bevy_pbr::shadows as shadows
-#import bevy_core_pipeline::tonemapping screen_space_dither
+#import bevy_core_pipeline::tonemapping::screen_space_dither
 
-#import mage_corp::prepass get_depth
-#import mage_corp::prepass get_normal
+#import mage_corp::prepass::get_depth
+#import mage_corp::prepass::get_normal
 
 var<private> neighbours: array<vec2<f32>, 9> = array<vec2<f32>, 9>(
   vec2<f32>(-1.0, 1.0),  // 0. top left
@@ -108,7 +108,7 @@ fn detect_edge_normal(frag_coord: vec2<f32>, scale: f32) -> f32 {
 
 @fragment
 fn fragment(
-  mesh: MeshVertexOutput,
+  mesh: VertexOutput,
 ) -> @location(0) vec4<f32> {
   let surface_normal = get_normal(mesh.position.xy);
   

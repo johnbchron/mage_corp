@@ -44,7 +44,7 @@ fn tick_timer_lifetimes(
 ) {
   timer_lifetimes
     .par_iter_mut()
-    .for_each_mut(|mut timer_lifetime| {
+    .for_each(|mut timer_lifetime| {
       timer_lifetime.tick(time.delta());
     });
 }

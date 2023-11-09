@@ -213,15 +213,15 @@ fn spawn_particles(
 fn update_particle(
   mut query: Query<(&Particle, &mut Transform, &TimerLifetime)>,
 ) {
-  query.par_iter_mut().for_each_mut(
-    |(particle, mut transform, timer_lifetime)| {
+  query
+    .par_iter_mut()
+    .for_each(|(particle, mut transform, timer_lifetime)| {
       if !particle.shrink_with_life {
         return;
       }
       transform.scale =
         particle.original_scale * timer_lifetime.remaining_frac();
-    },
-  );
+    });
 }
 
 /// A plugin for managing particles

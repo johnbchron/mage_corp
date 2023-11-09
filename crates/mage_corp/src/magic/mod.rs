@@ -6,7 +6,6 @@ pub mod target;
 use std::time::Duration;
 
 use bevy::prelude::*;
-use blueprint::ActiveBlueprint;
 
 use self::spell::{BlockRef, SpellBlock, SpellDescriptor, SpellTrigger};
 
