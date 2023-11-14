@@ -42,15 +42,17 @@ fn main() {
         //   }),
         //   ..default()
         // })
-        // .set(WindowPlugin {
-        //   primary_window: Some(Window {
-        //     present_mode: bevy::window::PresentMode::AutoNoVsync,
-        //     ..default()
-        //   }),
-        //   ..default()
-        // })
+        .set(WindowPlugin {
+          primary_window: Some(Window {
+            present_mode: bevy::window::PresentMode::AutoNoVsync,
+            ..default()
+          }),
+          ..default()
+        })
         .set(ImagePlugin::default_nearest()),
     )
+    // other mage_corp crates
+    .add_plugins(bevy_implicits::ImplicitsPlugin)
     // semantics
     .add_plugins(markers::MarkerPlugin)
     // graphics
