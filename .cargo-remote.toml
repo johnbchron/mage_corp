@@ -1,3 +1,0 @@
-[[remote]]
-host = "rust-builder"
-env = "~/.profile"

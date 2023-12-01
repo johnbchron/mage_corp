@@ -21,7 +21,7 @@
         rust_deps = [ toolchain pkgs.lldb pkgs.bacon ];
         bevy_build_deps = with pkgs; [
           pkg-config
-          mold clang
+          mold clang lld
           makeWrapper
         ];
         bevy_runtime_deps = with pkgs; [
