@@ -7,7 +7,7 @@ use base64::{engine::general_purpose, Engine as _};
 use bevy::{
   asset::{
     io::{AssetReader, AssetReaderError, AssetSource, PathStream, Reader},
-    AssetLoader, AsyncReadExt,
+    AssetLoader, AssetPath, AsyncReadExt,
   },
   prelude::*,
   utils::BoxedFuture,
@@ -20,6 +20,18 @@ use planiscope::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+fn path_from_inputs(inputs: MesherInputs) -> Result<PathBuf> {
+  TryInto::<PathBuf>::try_into(ImplicitInputs(inputs))
+}
+
+pub fn mesh_path(inputs: MesherInputs) -> Result<AssetPath<'static>> {
+  Ok(
+    AssetPath::from_path(path_from_inputs(inputs)?.as_path())
+      .resolve("#mesh")?
+      .to_owned(),
+  )
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImplicitInputs(MesherInputs);
 
@@ -27,7 +39,7 @@ impl TryFrom<PathBuf> for ImplicitInputs {
   type Error = anyhow::Error;
 
   fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-    println!("starting with path: {:?}", path);
+    // println!("starting with path: {:?}", path);
 
     let file_prefix = path
       .file_prefix()
@@ -36,7 +48,7 @@ impl TryFrom<PathBuf> for ImplicitInputs {
       })?
       .to_string_lossy()
       .to_string();
-    println!("base64_encoded: {:?}", file_prefix);
+    // println!("base64_encoded: {:?}", file_prefix);
 
     // decode from base64
     let base64_decoded = general_purpose::URL_SAFE
@@ -58,9 +70,9 @@ impl TryFrom<ImplicitInputs> for PathBuf {
   fn try_from(inputs: ImplicitInputs) -> Result<Self, Self::Error> {
     let messagepack_encoded = rmp_serde::to_vec(&inputs)
       .context(format!("serde failed to serialize: {:?}", &inputs))?;
-    println!("messagepack_encoded: {:?}", messagepack_encoded);
+    // println!("messagepack_encoded: {:?}", messagepack_encoded);
     let base64_encoded = general_purpose::URL_SAFE.encode(&messagepack_encoded);
-    println!("base64_encoded: {:?}", base64_encoded);
+    // println!("base64_encoded: {:?}", base64_encoded);
 
     Ok(PathBuf::from(format!(
       "implicit://{}.implicit",
