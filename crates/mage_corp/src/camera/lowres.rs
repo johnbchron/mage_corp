@@ -1,32 +1,42 @@
-use std::ops::Range;
+use std::ops::RangeInclusive;
 
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct LowresCamera {
-  pub configs: Vec<(Range<f32>, u8)>,
-  pub near:    f32,
-  pub far:     f32,
+#[derive(Component, Debug)]
+pub struct LowresCameraConfig {
+  /// A list of depth ranges and their corresponding resolution. The ranges
+  /// should be in increasing order, and should cover the entire range [0.0,
+  /// 1.0].
+  pub configs:      Vec<(RangeInclusive<f32>, u8)>,
+  pub overall_proj: PerspectiveProjection,
 }
 
-impl LowresCamera {
-  fn from_n_cameras(n: u8, near: f32, far: f32) -> Self {
-    let max_unit = 2_u32.pow(n as u32) - 1;
+impl LowresCameraConfig {
+  /// Constructs a LowresCamera from a number of cameras, near and far.
+  ///
+  /// Each successive camera will have double the linear depth of the previous,
+  /// and 1 pixel less resolution. The last camera will have 2-pixel resolution.
+  fn from_n_cameras(n: u8, proj: PerspectiveProjection) -> Self {
+    let total_max = 2_u32.pow(n as u32) - 1;
     let configs = (0..n)
       .map(|i| {
-        let min = 2_f32.powf(i as f32) / max_unit as f32;
-        let max = 2_f32.powf((i + 1) as f32) / max_unit as f32;
-        let pixel_size = n - (i + 1) + 2;
-        (min..max, pixel_size)
+        let min = 2_u32.pow(i as u32) - 1;
+        let max = 2_u32.pow((i + 1) as u32) - 1;
+        let min = min as f32 / total_max as f32;
+        let max = max as f32 / total_max as f32;
+        (min..=max, n - i + 1)
       })
       .collect();
-    Self { configs, near, far }
+    Self {
+      configs,
+      overall_proj: proj,
+    }
   }
 }
 
-impl Default for LowresCamera {
+impl Default for LowresCameraConfig {
   fn default() -> Self {
-    Self::from_n_cameras(4, 0.1, 1000.0)
+    Self::from_n_cameras(4, PerspectiveProjection::default())
   }
 }
 
@@ -43,13 +53,38 @@ mod tests {
   use super::*;
 
   #[test]
+  fn from_n_cameras_works() {
+    let lowres_camera =
+      LowresCameraConfig::from_n_cameras(3, PerspectiveProjection::default());
+    let expected_configs = vec![
+      (0.0..=(1.0 / 7.0), 4),
+      ((1.0 / 7.0)..=(3.0 / 7.0), 3),
+      ((3.0 / 7.0)..=(7.0 / 7.0), 2),
+    ];
+    assert_eq!(lowres_camera.configs, expected_configs);
+
+    let lowres_camera =
+      LowresCameraConfig::from_n_cameras(4, PerspectiveProjection::default());
+    let expected_configs = vec![
+      (0.0..=(1.0 / 15.0), 5),
+      ((1.0 / 15.0)..=(3.0 / 15.0), 4),
+      ((3.0 / 15.0)..=(7.0 / 15.0), 3),
+      ((7.0 / 15.0)..=(15.0 / 15.0), 2),
+    ];
+    assert_eq!(lowres_camera.configs, expected_configs);
+  }
+
+  #[test]
   fn child_cameras_are_spawned() {
     let mut app = App::new();
     app.add_plugins(LowresCameraPlugin);
     let lowres_camera = app
       .world
-      .spawn((SpatialBundle::default(), LowresCamera::default()))
+      .spawn((SpatialBundle::default(), LowresCameraConfig::default()))
       .id();
+
+    dbg!(LowresCameraConfig::default());
+
     app.update();
     let lowres_camera = app.world.get_entity(lowres_camera).unwrap();
     assert!(
