@@ -16,7 +16,7 @@ bevy_panorbit_camera = { version = "0.9.0", features = ["bevy_egui"] }
 planiscope = { path = "../planiscope" }
 bevy-implicits = { path = "../bevy-implicits" }
 spatialtree = "0.1.1"
-futures-lite = "1.13.0"
+futures-lite = "2.0.1"
 serde = { version = "1.0.188", features = ["derive"] }
 bevy_xpbd_3d = { version = "0.3.0", features = ["simd"] }
 interpolation = "0.3.0"
