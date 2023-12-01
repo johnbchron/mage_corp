@@ -18,7 +18,7 @@
           extensions = [ "rust-analyzer" "rust-src" ];
         };
         
-        rust_deps = [ toolchain pkgs.lldb pkgs.bacon ];
+        rust_deps = [ toolchain pkgs.lldb pkgs.bacon pkgs.cargo-nextest ];
         bevy_build_deps = with pkgs; [
           pkg-config
           mold clang lld
@@ -60,6 +60,10 @@
           nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps ++ rust_deps;
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
           LIBCLANG_PATH = "${pkgs.libclang}/lib";
+
+          shellHook = ''
+            export DYLD_FALLBACK_LIBRARY_PATH="$(rustc --print sysroot)/lib";
+          '';
         };
       }
     );
