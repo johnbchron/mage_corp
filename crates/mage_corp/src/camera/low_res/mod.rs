@@ -43,10 +43,10 @@ pub fn calculate_texture_resolution(
   window_x: f32,
   window_y: f32,
   pixel_size: u8,
-) -> Vec2 {
-  Vec2::new(
-    (window_x / f32::from(pixel_size)).ceil(),
-    (window_y / f32::from(pixel_size)).ceil(),
+) -> UVec2 {
+  UVec2::new(
+    (window_x / f32::from(pixel_size)).ceil() as u32,
+    (window_y / f32::from(pixel_size)).ceil() as u32,
   )
 }
 
@@ -70,9 +70,7 @@ fn rebuild_texture_setup(
   // if the camera already has a texture and it's the right size, use that
   if let RenderTarget::Image(image_handle) = &camera.target {
     let image = images.get(image_handle).unwrap();
-    if (image.size().x - desired_texture_size.x as f32).abs() < 0.01
-      && (image.size().y - desired_texture_size.y as f32).abs() < 0.01
-    {
+    if image.size() == desired_texture_size {
       commands.entity(lowres_target).insert(image_handle.clone());
       return;
     }
@@ -100,7 +98,8 @@ fn trigger_projection_rescaling(
       window.height(),
       lowres_camera.pixel_size(),
     );
-    projection.update(desired_texture_size.x, desired_texture_size.y);
+    projection
+      .update(desired_texture_size.x as f32, desired_texture_size.y as f32);
   }
 }
 
@@ -111,10 +110,10 @@ fn window_size_changed(
 }
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn build_texture_image(x: f32, y: f32) -> Image {
+fn build_texture_image(x: u32, y: u32) -> Image {
   let image_size = Extent3d {
-    width:                 x as u32,
-    height:                y as u32,
+    width:                 x,
+    height:                y,
     depth_or_array_layers: 1,
   };
 

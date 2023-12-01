@@ -1,10 +1,10 @@
 #import bevy_pbr::mesh_view_bindings
-#import bevy_pbr::mesh_view_bindings globals
-#import bevy_pbr::mesh_vertex_output MeshVertexOutput
+#import bevy_pbr::mesh_view_bindings::globals
+#import bevy_pbr::forward_io::VertexOutput
 
 #import mage_corp::prepass
 
-#import bevy_shader_utils::simplex_noise_3d simplex_noise_3d
+#import bevy_shader_utils::simplex_noise_3d::simplex_noise_3d
 
 struct ForceMaterial {
   color: vec4<f32>,
@@ -31,7 +31,7 @@ fn compute_closest_contact_point(world_pos: vec3<f32>) -> f32 {
 
 @fragment
 fn fragment(
-  mesh: MeshVertexOutput,
+  mesh: VertexOutput,
 ) -> @location(0) vec4<f32> {
   let surface_normal = mesh.world_normal;
   

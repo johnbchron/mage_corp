@@ -18,7 +18,6 @@ mod test_scene;
 mod utils;
 
 use bevy::{
-  asset::ChangeWatcher,
   ecs::schedule::{LogLevel, ScheduleBuildSettings},
   prelude::*,
 };
@@ -37,12 +36,12 @@ fn main() {
     // add default plugins
     .add_plugins(
       DefaultPlugins
-        .set(AssetPlugin {
-          watch_for_changes: Some(ChangeWatcher {
-            delay: std::time::Duration::from_secs(1),
-          }),
-          ..default()
-        })
+        // .set(AssetPlugin {
+        //   watch_for_changes: Some(ChangeWatcher {
+        //     delay: std::time::Duration::from_secs(1),
+        //   }),
+        //   ..default()
+        // })
         .set(WindowPlugin {
           primary_window: Some(Window {
             present_mode: bevy::window::PresentMode::AutoNoVsync,
@@ -52,11 +51,13 @@ fn main() {
         })
         .set(ImagePlugin::default_nearest()),
     )
+    // other mage_corp crates
+    .add_plugins(bevy_implicits::ImplicitsPlugin)
     // semantics
     .add_plugins(markers::MarkerPlugin)
     // graphics
     .add_plugins(materials::MaterialsPlugin)
-    .add_plugins(bevy_stl::StlPlugin)
+    // .add_plugins(bevy_stl::StlPlugin)
     .add_plugins(camera::low_res::LowResPlugin)
     // physics
     .add_plugins(PhysicsPlugins::default())

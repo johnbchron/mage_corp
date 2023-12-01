@@ -81,7 +81,7 @@ impl Default for TerrainConfig {
 
 #[derive(Resource, Reflect)]
 #[reflect(Resource)]
-pub struct TerrainCurrentShape(pub Shape);
+pub struct TerrainCurrentShape(#[reflect(ignore)] pub Shape);
 
 impl Default for TerrainCurrentShape {
   fn default() -> Self {
@@ -111,6 +111,7 @@ pub struct TerrainNextGeneration {
   #[reflect(ignore)]
   pub mesh_gen_tasks:           Vec<MeshGenTask>,
   pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
+  #[reflect(ignore)]
   pub shape:                    Shape,
   pub start_time:               Duration,
 }
@@ -137,7 +138,7 @@ impl Plugin for TerrainPlugin {
     app
       .add_state::<TerrainEnabledState>()
       // configure `TerrainMesh`
-      .add_asset::<TerrainMesh>()
+      .init_asset::<TerrainMesh>()
       .register_type::<TerrainMesh>()
       .register_asset_reflect::<TerrainMesh>()
       // configure `TerrainConfig`
@@ -151,7 +152,7 @@ impl Plugin for TerrainPlugin {
       // configure events
       .add_event::<TerrainTriggerRegeneration>()
       // configure set
-      .configure_set(
+      .configure_sets(
         Update,
         TerrainSystemSet.run_if(in_state(TerrainEnabledState::Enabled)),
       )
@@ -221,7 +222,7 @@ fn init_next_generation(
   terrain_meshes: Res<Assets<TerrainMesh>>,
   time: Res<Time>,
 ) {
-  if let Some(event) = events.iter().next() {
+  if let Some(event) = events.read().next() {
     // hash the current composition
     let comp_hash = hash_single(&current_shape.0);
 
@@ -239,8 +240,8 @@ fn init_next_generation(
         for (t_mesh_handle_id, t_mesh) in terrain_meshes.iter() {
           if t_mesh.region == **r && t_mesh.comp_hash == comp_hash {
             // build a strong handle out of the handle ID
-            let mut handle = Handle::weak(t_mesh_handle_id);
-            handle.make_strong(&terrain_meshes);
+            let handle = Handle::from(Handle::Weak(t_mesh_handle_id));
+            // handle.make_strong(&terrain_meshes);
             existing_terrain_meshes.push(handle);
             debug!("recycling terrain mesh for region: {:?}", r);
             return false;

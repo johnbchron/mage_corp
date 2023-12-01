@@ -3,7 +3,7 @@ use bevy_xpbd_3d::prelude::*;
 
 use super::region::TerrainRegion;
 
-#[derive(Debug, TypeUuid, Reflect)]
+#[derive(Debug, TypeUuid, Asset, Reflect)]
 #[uuid = "3dc0b7c0-e829-4634-b490-2f5f53873a1d"]
 pub struct TerrainMesh {
   /// Contains the bevy mesh for this terrain mesh.

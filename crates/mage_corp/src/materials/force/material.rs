@@ -11,7 +11,7 @@ use bevy::{
   },
 };
 
-#[derive(AsBindGroup, TypeUuid, Reflect, Debug, Clone)]
+#[derive(AsBindGroup, TypeUuid, Asset, Reflect, Debug, Clone)]
 #[uuid = "c5cb7df5-a1a2-4028-9a22-766824de2ba6"]
 #[reflect(Default, Debug)]
 pub struct ForceMaterial {

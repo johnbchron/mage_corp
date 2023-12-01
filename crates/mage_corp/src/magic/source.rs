@@ -11,11 +11,7 @@ pub struct Source {
 
 impl Default for Source {
   fn default() -> Self {
-    Self {
-      max_chr_capacity: 100.0,
-      max_chr_flow:     5.0,
-      stored_chr:       100.0,
-    }
+    Self::new(100.0, 5.0)
   }
 }
 
@@ -28,10 +24,12 @@ impl Source {
     }
   }
 
+  #[allow(dead_code)]
   pub fn max_flow(&self) -> f32 {
     self.max_chr_flow
   }
 
+  #[allow(dead_code)]
   pub fn max_capacity(&self) -> f32 {
     self.max_chr_capacity
   }
