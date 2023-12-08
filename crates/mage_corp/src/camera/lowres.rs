@@ -8,7 +8,7 @@ use bevy::{
     render_resource::Extent3d,
     view::RenderLayers,
   },
-  window::PrimaryWindow,
+  window::{PrimaryWindow, WindowResized},
 };
 
 #[derive(Component, Debug, Reflect)]
@@ -74,17 +74,32 @@ impl Plugin for LowresCameraPlugin {
   fn build(&self, app: &mut App) {
     app
       .register_type::<LowresCamera>()
-      .register_type::<RangeInclusive<f32>>()
-      .add_systems(Update, build_setup);
+      .add_event::<RebuildEvent>()
+      .add_systems(Update, (trigger_rebuild, rebuild_setup).chain());
   }
 }
 
-fn build_setup(
+#[derive(Event, Default)]
+struct RebuildEvent;
+
+fn trigger_rebuild(
+  mut event_writer: EventWriter<RebuildEvent>,
+  lowres_cameras: Query<(), Changed<LowresCamera>>,
+  mut resize_events: EventReader<WindowResized>,
+) {
+  if lowres_cameras.iter().next().is_some() {
+    debug!("triggering lowres camera rebuild due to LowresCamera change");
+    event_writer.send(RebuildEvent::default());
+  } else if resize_events.read().next().is_some() {
+    debug!("triggering lowres camera rebuild due to PrimaryWindow change");
+    event_writer.send(RebuildEvent::default());
+  }
+}
+
+fn rebuild_setup(
   mut commands: Commands,
-  lowres_cameras: Query<
-    (&LowresCamera, Entity, Option<&Children>),
-    Changed<LowresCamera>,
-  >,
+  mut event_reader: EventReader<RebuildEvent>,
+  lowres_cameras: Query<(&LowresCamera, Entity, Option<&Children>)>,
   old_sub_cameras: Query<&LowresSubCamera>,
   old_targets: Query<Entity, With<LowresTarget>>,
   old_target_cameras: Query<Entity, With<LowresTargetCamera>>,
@@ -97,6 +112,11 @@ fn build_setup(
   else {
     return;
   };
+
+  // exit if there are no rebuild events
+  if event_reader.read().next().is_none() {
+    return;
+  }
 
   // delete any existing sub cameras
   if let Some(children) = children {
