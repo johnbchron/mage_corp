@@ -10,7 +10,27 @@ pub struct ToonExtension {
   // do not conflict, so we start from binding slot 100, leaving slots 0-99
   // for the base material.
   #[uniform(100)]
-  pub quantize_steps: u32,
+  pub dark_threshold:      f32,
+  #[uniform(100)]
+  pub highlight_threshold: f32,
+  #[uniform(100)]
+  pub dark_color:          Color,
+  #[uniform(100)]
+  pub highlight_color:     Color,
+  #[uniform(100)]
+  pub blend_factor:        f32,
+}
+
+impl Default for ToonExtension {
+  fn default() -> Self {
+    Self {
+      dark_threshold:      0.5,
+      highlight_threshold: 6.0,
+      dark_color:          Color::rgb(0.25, 0.25, 0.25),
+      highlight_color:     Color::rgb(1.5, 1.5, 1.5),
+      blend_factor:        0.01,
+    }
+  }
 }
 
 impl MaterialExtension for ToonExtension {
@@ -29,6 +49,8 @@ pub struct MaterialsPlugin;
 
 impl Plugin for MaterialsPlugin {
   fn build(&self, app: &mut App) {
-    app.add_plugins(MaterialPlugin::<ToonMaterial>::default());
+    app
+      .add_plugins(MaterialPlugin::<ToonMaterial>::default())
+      .register_asset_reflect::<ToonMaterial>();
   }
 }

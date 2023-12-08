@@ -11,7 +11,6 @@ fn test_scene(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
-  mut std_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // spawn the camera
   commands.spawn((
@@ -35,7 +34,7 @@ fn test_scene(
     },
     transform: Transform {
       translation: Vec3::new(0.0, 2.0, 0.0),
-      rotation: Quat::from_rotation_x(-PI / 4.),
+      rotation: Quat::from_euler(EulerRot::XYZ, -PI / 4.0, -PI / 4.0, 0.0),
       ..default()
     },
     ..default()
@@ -59,7 +58,7 @@ fn test_scene(
           reflectance: 0.1,
           ..default()
         },
-        extension: ToonExtension { quantize_steps: 1 },
+        extension: ToonExtension::default(),
       }
       .into(),
     ),
@@ -82,7 +81,7 @@ fn test_scene(
           reflectance: 0.1,
           ..default()
         },
-        extension: ToonExtension { quantize_steps: 2 },
+        extension: ToonExtension::default(),
       }
       .into(),
     ),

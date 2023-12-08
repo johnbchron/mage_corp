@@ -16,11 +16,20 @@
 #endif
 
 struct ToonMaterial {
-  quantize_steps: u32,
+  dark_threshold: f32,
+  highlight_threshold: f32,
+  dark_color: vec4<f32>,
+  highlight_color: vec4<f32>,
+  blend_factor: f32,
 }
 
 @group(1) @binding(100)
 var<uniform> toon_material: ToonMaterial;
+
+// https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+fn luminance(color: vec3<f32>) -> f32 {
+  return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
 
 @fragment
 fn fragment(
@@ -44,12 +53,23 @@ fn fragment(
   // apply lighting
   out.color = apply_pbr_lighting(pbr_input);
 
-  // we can optionally modify the lit color before post-processing is applied
-
-  let luminance = dot(out.color.rgb, vec3(0.2126, 0.7152, 0.0722));
-  let luminance_quantized = floor(luminance * f32(toon_material.quantize_steps)) / f32(toon_material.quantize_steps);
-  out.color = vec4(out.color.rgb * luminance_quantized, out.color.a);
+  // here is our actual toon shading logic
   
+  let dark_luminance_threshold = luminance(pbr_input.material.base_color.rgb * toon_material.dark_threshold);
+  let highlight_luminance_threshold = luminance(pbr_input.material.base_color.rgb * toon_material.highlight_threshold);
+
+  let dark_color = vec4(pbr_input.material.base_color.rgb, out.color.a) * toon_material.dark_color;
+  let normal_color = vec4(pbr_input.material.base_color.rgb, out.color.a);
+  let highlight_color = vec4(pbr_input.material.base_color.rgb, out.color.a) * toon_material.highlight_color;
+
+  let luminance = luminance(out.color.rgb);
+  if luminance < dark_luminance_threshold {
+    out.color = dark_color;
+  } else if luminance > highlight_luminance_threshold {
+    out.color = highlight_color;
+  } else {
+    out.color = normal_color;
+  }
 
   // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
   // note this does not include fullscreen postprocessing effects like bloom.
