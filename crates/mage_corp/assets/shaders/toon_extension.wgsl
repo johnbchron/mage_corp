@@ -15,12 +15,12 @@
 }
 #endif
 
-struct MyExtendedMaterial {
+struct ToonMaterial {
   quantize_steps: u32,
 }
 
 @group(1) @binding(100)
-var<uniform> my_extended_material: MyExtendedMaterial;
+var<uniform> toon_material: ToonMaterial;
 
 @fragment
 fn fragment(
@@ -47,7 +47,7 @@ fn fragment(
   // we can optionally modify the lit color before post-processing is applied
 
   let luminance = dot(out.color.rgb, vec3(0.2126, 0.7152, 0.0722));
-  let luminance_quantized = floor(luminance * f32(my_extended_material.quantize_steps)) / f32(my_extended_material.quantize_steps);
+  let luminance_quantized = floor(luminance * f32(toon_material.quantize_steps)) / f32(toon_material.quantize_steps);
   out.color = vec4(out.color.rgb * luminance_quantized, out.color.a);
   
 
