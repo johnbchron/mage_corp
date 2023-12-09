@@ -40,7 +40,7 @@ fn test_scene(
     ..default()
   });
 
-  // spawn a cube
+  // spawn a sphere
   commands.spawn((
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 2.0, 0.0)),
     meshes.add(
@@ -62,7 +62,8 @@ fn test_scene(
       }
       .into(),
     ),
-    Name::new("cube"),
+    crate::terrain::TerrainDetailTarget,
+    Name::new("sphere"),
   ));
 
   // spawn a green ground plane
