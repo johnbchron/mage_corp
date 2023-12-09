@@ -20,6 +20,7 @@ fn main() {
         }),
       camera::lowres::LowresCameraPlugin,
       materials::MaterialsPlugin,
+      terrain::TerrainPlugin,
       test_scene::TestScenePlugin,
       WorldInspectorPlugin::default(),
     ))
