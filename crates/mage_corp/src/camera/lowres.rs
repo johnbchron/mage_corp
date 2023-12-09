@@ -1,5 +1,3 @@
-use std::ops::RangeInclusive;
-
 use bevy::{
   core_pipeline::clear_color::ClearColorConfig,
   prelude::*,
@@ -13,49 +11,40 @@ use bevy::{
 
 #[derive(Component, Debug, Reflect)]
 pub struct LowresCamera {
-  /// A list of depth ranges and their corresponding resolution. The ranges
-  /// should be in increasing order, and should cover the entire range [0.0,
-  /// 1.0].
-  pub configs:      Vec<(RangeInclusive<f32>, u8)>,
-  pub overall_proj: PerspectiveProjection,
+  pub n_cameras:       u8,
+  pub min_pixel_scale: u32,
+  pub overall_proj:    PerspectiveProjection,
 }
 
 impl LowresCamera {
-  /// Constructs a LowresCamera from a number of cameras, near and far.
-  ///
-  /// Each successive camera will have double the linear depth of the previous,
-  /// and 1 pixel less resolution. The last camera will have 2-pixel resolution.
-  pub fn from_n_cameras(n: u8, proj: PerspectiveProjection) -> Self {
-    let total_max = 2_u32.pow(n as u32) - 1;
-    let configs = (0..n)
-      .map(|i| {
-        let min = 2_u32.pow(i as u32) - 1;
-        let max = 2_u32.pow((i + 1) as u32) - 1;
-        let min = min as f32 / total_max as f32;
-        let max = max as f32 / total_max as f32;
-        (min..=max, n - i + 1)
-      })
-      .collect();
-    Self {
-      configs,
-      overall_proj: proj,
+  fn projection_for_index(&self, i: usize) -> PerspectiveProjection {
+    let total_max = 2_u32.pow(self.n_cameras as u32) - 1;
+    let frac_near = (2_u32.pow(i as u32) - 1) as f32 / total_max as f32;
+    let frac_far = (2_u32.pow((i + 1) as u32) - 1) as f32 / total_max as f32;
+    let near = self.overall_proj.near
+      + frac_near * (self.overall_proj.far - self.overall_proj.near);
+    let far = self.overall_proj.near
+      + frac_far * (self.overall_proj.far - self.overall_proj.near);
+
+    PerspectiveProjection {
+      near,
+      far,
+      ..self.overall_proj.clone()
     }
   }
 
-  fn projection_for_index(&self, i: usize) -> PerspectiveProjection {
-    let (range, _) = self.configs[i].clone();
-    let mut proj = self.overall_proj.clone();
-
-    proj.near = proj.near + (proj.far - proj.near) * range.start();
-    proj.far = proj.near + (proj.far - proj.near) * range.end();
-
-    proj
+  fn pixel_size_for_index(&self, i: usize) -> u32 {
+    self.n_cameras as u32 - i as u32 - 1 + self.min_pixel_scale
   }
 }
 
 impl Default for LowresCamera {
   fn default() -> Self {
-    Self::from_n_cameras(4, PerspectiveProjection::default())
+    Self {
+      n_cameras:       4,
+      min_pixel_scale: 2,
+      overall_proj:    PerspectiveProjection::default(),
+    }
   }
 }
 
@@ -142,10 +131,9 @@ fn rebuild_setup(
   let window_size = Vec2::new(window.width(), window.height());
 
   // build the textures for the sub cameras
-  let texture_handles = lowres_camera
-    .configs
-    .iter()
-    .map(|(_, res)| (window_size / *res as f32).ceil())
+  let texture_handles = (0..lowres_camera.n_cameras)
+    .map(|i| lowres_camera.pixel_size_for_index(i as usize))
+    .map(|pixel_scale| (window_size / pixel_scale as f32).ceil())
     .map(|size| textures.add(build_texture(size.x as u32, size.y as u32)))
     .collect::<Vec<_>>();
 
@@ -263,24 +251,29 @@ mod tests {
   use super::*;
 
   #[test]
-  fn from_n_cameras_works() {
-    let lowres_camera =
-      LowresCamera::from_n_cameras(3, PerspectiveProjection::default());
+  fn near_and_far_fields_calculate_correctly() {
+    let lowres_camera = LowresCamera {
+      n_cameras:       3,
+      min_pixel_scale: 2,
+      overall_proj:    PerspectiveProjection {
+        near: 0.0,
+        far: 1.0,
+        ..default()
+      },
+    };
     let expected_configs = vec![
       (0.0..=(1.0 / 7.0), 4),
       ((1.0 / 7.0)..=(3.0 / 7.0), 3),
       ((3.0 / 7.0)..=(7.0 / 7.0), 2),
     ];
-    assert_eq!(lowres_camera.configs, expected_configs);
 
-    let lowres_camera =
-      LowresCamera::from_n_cameras(4, PerspectiveProjection::default());
-    let expected_configs = vec![
-      (0.0..=(1.0 / 15.0), 5),
-      ((1.0 / 15.0)..=(3.0 / 15.0), 4),
-      ((3.0 / 15.0)..=(7.0 / 15.0), 3),
-      ((7.0 / 15.0)..=(15.0 / 15.0), 2),
-    ];
-    assert_eq!(lowres_camera.configs, expected_configs);
+    for (i, expected_config) in expected_configs.iter().enumerate() {
+      let config = lowres_camera.projection_for_index(i);
+
+      let (range, pixel_size) = expected_config;
+      assert_eq!(config.near, *range.start());
+      assert_eq!(config.far, *range.end());
+      assert_eq!(lowres_camera.pixel_size_for_index(i), *pixel_size);
+    }
   }
 }

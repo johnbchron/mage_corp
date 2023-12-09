@@ -14,11 +14,11 @@ fn test_scene(
 ) {
   // spawn the camera
   commands.spawn((
-    LowresCamera::from_n_cameras(1, PerspectiveProjection {
-      near: 1.0,
-      far: 1000.0,
+    LowresCamera {
+      n_cameras: 1,
+      min_pixel_scale: 4,
       ..default()
-    }),
+    },
     SpatialBundle::from_transform(
       Transform::from_xyz(0.0, 5.0, 10.0)
         .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
