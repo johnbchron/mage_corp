@@ -65,29 +65,6 @@ fn test_scene(
     crate::terrain::TerrainDetailTarget,
     Name::new("sphere"),
   ));
-
-  // spawn a green ground plane
-  commands.spawn((
-    SpatialBundle::default(),
-    meshes.add(Mesh::from(shape::Plane {
-      size: 100.0,
-      ..default()
-    })),
-    // std_materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-    toon_materials.add(
-      ToonMaterial {
-        base:      StandardMaterial {
-          base_color: Color::rgb(0.3, 0.5, 0.3),
-          perceptual_roughness: 0.2,
-          reflectance: 0.1,
-          ..default()
-        },
-        extension: ToonExtension::default(),
-      }
-      .into(),
-    ),
-    Name::new("ground"),
-  ));
 }
 
 pub struct TestScenePlugin;

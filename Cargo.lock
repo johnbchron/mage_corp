@@ -2686,6 +2686,7 @@ dependencies = [
  "bevy",
  "bevy-implicits",
  "bevy-inspector-egui",
+ "bevy_xpbd_3d",
  "spatialtree",
 ]
 

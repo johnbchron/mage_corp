@@ -1,3 +1,5 @@
+use std::ops::Rem;
+
 use bevy::prelude::*;
 
 #[derive(Resource, Reflect, Clone)]
@@ -26,8 +28,8 @@ pub struct TerrainConfig {
   pub n_same_size_meshes: u8,
   /// Controls how many times to subdivide the world box.
   pub n_sizes: u8,
-  /// Whether to place 1/8th scale cubes at the position of each mesh.
-  pub debug_transform_cubes: bool,
+  // /// Whether to place 1/8th scale cubes at the position of each mesh.
+  // pub debug_transform_cubes: bool,
 }
 
 impl TerrainConfig {
@@ -37,6 +39,11 @@ impl TerrainConfig {
   }
   pub fn trigger_distance(&self) -> f32 {
     self.render_dist / 2.0_f32.powf(self.render_cube_subdiv_trigger)
+  }
+
+  pub fn too_far_away(&self, a: Vec3, b: Vec3) -> bool {
+    return (a - a.rem(self.trigger_distance()))
+      != (b - b.rem(self.trigger_distance()));
   }
 }
 
@@ -50,7 +57,7 @@ impl Default for TerrainConfig {
       mesh_bleed: 1.05,
       n_same_size_meshes: 1,
       n_sizes: 5,
-      debug_transform_cubes: false,
+      // debug_transform_cubes: false,
     }
   }
 }
