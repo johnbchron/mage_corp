@@ -1,6 +1,9 @@
 #![feature(path_file_prefix)]
 
-use std::path::PathBuf;
+use std::{
+  io::{Cursor, Read},
+  path::PathBuf,
+};
 
 use anyhow::{anyhow, Context, Result};
 use base64::{engine::general_purpose, Engine as _};
@@ -21,10 +24,13 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub mod prelude {
-  pub use planiscope::mesher::{MesherDetail, MesherInputs, MesherRegion};
+  pub use planiscope::{
+    mesher::{MesherDetail, MesherInputs, MesherRegion},
+    shape::Shape,
+  };
 
   pub use crate::{
-    ColliderAsset, ImplicitInputs, ImplicitMesh, ImplicitsPlugin,
+    asset_path, ColliderAsset, ImplicitInputs, ImplicitMesh, ImplicitsPlugin,
   };
 }
 
@@ -34,12 +40,9 @@ fn path_from_inputs(inputs: MesherInputs) -> Result<PathBuf> {
 
 /// Generates a `bevy::asset::AssetPath` for a mesh generated from the given
 /// `MesherInputs`.
-pub fn mesh_path(inputs: MesherInputs) -> Result<AssetPath<'static>> {
-  Ok(
-    AssetPath::from_path(path_from_inputs(inputs)?.as_path())
-      .resolve("#mesh")?
-      .to_owned(),
-  )
+pub fn asset_path(inputs: MesherInputs) -> Result<AssetPath<'static>> {
+  let path = path_from_inputs(inputs)?;
+  Ok(AssetPath::from(path).with_source("implicit"))
 }
 
 /// A wrapper around `planiscope::mesher::MesherInputs` that implements
@@ -51,8 +54,6 @@ impl TryFrom<PathBuf> for ImplicitInputs {
   type Error = anyhow::Error;
 
   fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-    // println!("starting with path: {:?}", path);
-
     let file_prefix = path
       .file_prefix()
       .ok_or_else(|| {
@@ -60,7 +61,6 @@ impl TryFrom<PathBuf> for ImplicitInputs {
       })?
       .to_string_lossy()
       .to_string();
-    // println!("base64_encoded: {:?}", file_prefix);
 
     // decode from base64
     let base64_decoded = general_purpose::URL_SAFE
@@ -71,6 +71,8 @@ impl TryFrom<PathBuf> for ImplicitInputs {
     let decoded: Self = rmp_serde::from_slice(&base64_decoded).context(
       "failed to decode messagepack from base64-decoded file prefix",
     )?;
+
+    info!("decoded MesherInputs from path: {:?}", decoded);
 
     Ok(decoded)
   }
@@ -86,27 +88,27 @@ impl TryFrom<ImplicitInputs> for PathBuf {
     let base64_encoded = general_purpose::URL_SAFE.encode(&messagepack_encoded);
     // println!("base64_encoded: {:?}", base64_encoded);
 
-    Ok(PathBuf::from(format!(
-      "implicit://{}.implicit",
-      base64_encoded
-    )))
+    Ok(PathBuf::from(format!("{}.implicit", base64_encoded)))
   }
 }
 
-struct DummyAsyncReader<T: Serialize + for<'a> Deserialize<'a>>(T);
+struct CursorAsyncReader(Cursor<Vec<u8>>);
 
-impl<T: Serialize + for<'a> Deserialize<'a>> futures_io::AsyncRead
-  for DummyAsyncReader<T>
-{
+impl CursorAsyncReader {
+  fn new<T: Serialize + for<'a> Deserialize<'a>>(inner: T) -> Self {
+    Self(Cursor::new(bincode::serialize(&inner).unwrap()))
+  }
+}
+
+impl futures_io::AsyncRead for CursorAsyncReader {
   fn poll_read(
     self: std::pin::Pin<&mut Self>,
     _cx: &mut std::task::Context<'_>,
     buf: &mut [u8],
   ) -> std::task::Poll<std::io::Result<usize>> {
-    let bytes = bincode::serialize(&self.0).unwrap();
-    let buf_len = buf.len();
-    buf[buf_len..buf_len + bytes.len()].copy_from_slice(&bytes);
-    std::task::Poll::Ready(Ok(bytes.len()))
+    let bytes_read = self.get_mut().0.read(buf)?;
+    info!("read {} bytes", bytes_read);
+    std::task::Poll::Ready(Ok(bytes_read))
   }
 }
 
@@ -121,7 +123,7 @@ impl AssetReader for ImplicitInputsAssetReader {
     match ImplicitInputs::try_from(path.to_path_buf()) {
       Ok(inputs) => {
         let reader: Box<dyn futures_io::AsyncRead + Send + Sync + Unpin> =
-          Box::new(DummyAsyncReader(inputs));
+          Box::new(CursorAsyncReader::new(inputs));
         Box::pin(async move { Ok(reader) })
       }
       Err(err) => Box::pin(async move {
@@ -196,15 +198,12 @@ impl AssetLoader for ImplicitMeshAssetLoader {
   ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
     Box::pin(async move {
       let mut bytes = Vec::new();
-      let _ = reader.read_to_end(&mut bytes);
+      reader.read_to_end(&mut bytes).await.unwrap();
       let inputs: ImplicitInputs = bincode::deserialize(&bytes).unwrap();
 
       let (mesh, collider) =
         DiskCacheProvider::<FastSurfaceNetsMesher>::default()
-          .get_mesh_and_collider(&planiscope::mesher::MesherInputs {
-            shape:  inputs.0.shape.clone(),
-            region: inputs.0.region.clone(),
-          });
+          .get_mesh_and_collider(&inputs.0);
       let mesh = mesh.map_err(|e| ImplicitMeshError::MeshError(e))?;
       let mesh = bevy_mesh_from_pls_mesh(mesh);
       let collider = collider.map(|s| Collider::from(s));
@@ -227,20 +226,25 @@ impl AssetLoader for ImplicitMeshAssetLoader {
   }
 }
 
-/// The central plugin for this crate.
-/// It registers the asset types, loaders, and sources.
+pub struct ImplicitsAssetSourcePlugin;
+
+impl Plugin for ImplicitsAssetSourcePlugin {
+  fn build(&self, app: &mut App) {
+    app.register_asset_source(
+      "implicit",
+      AssetSource::build().with_reader(|| Box::new(ImplicitInputsAssetReader)),
+    );
+  }
+}
+
 pub struct ImplicitsPlugin;
 
 impl Plugin for ImplicitsPlugin {
   fn build(&self, app: &mut App) {
-    let asset_source =
-      AssetSource::build().with_reader(|| Box::new(ImplicitInputsAssetReader));
-
     app
       .init_asset::<ImplicitMesh>()
       .init_asset::<ColliderAsset>()
-      .register_asset_loader(ImplicitMeshAssetLoader)
-      .register_asset_source("implicit", asset_source);
+      .register_asset_loader(ImplicitMeshAssetLoader);
   }
 }
 
