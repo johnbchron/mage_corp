@@ -72,8 +72,6 @@ impl TryFrom<PathBuf> for ImplicitInputs {
       "failed to decode messagepack from base64-decoded file prefix",
     )?;
 
-    info!("decoded MesherInputs from path: {:?}", decoded);
-
     Ok(decoded)
   }
 }
@@ -107,7 +105,6 @@ impl futures_io::AsyncRead for CursorAsyncReader {
     buf: &mut [u8],
   ) -> std::task::Poll<std::io::Result<usize>> {
     let bytes_read = self.get_mut().0.read(buf)?;
-    info!("read {} bytes", bytes_read);
     std::task::Poll::Ready(Ok(bytes_read))
   }
 }

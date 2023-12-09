@@ -9,6 +9,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 fn main() {
   App::new()
     .add_plugins((
+      bevy_implicits::ImplicitsAssetSourcePlugin,
       DefaultPlugins
         .set(ImagePlugin::default_nearest())
         .set(WindowPlugin {
@@ -18,6 +19,7 @@ fn main() {
           }),
           ..default()
         }),
+      bevy_implicits::ImplicitsPlugin,
       camera::lowres::LowresCameraPlugin,
       materials::MaterialsPlugin,
       terrain::TerrainPlugin,
