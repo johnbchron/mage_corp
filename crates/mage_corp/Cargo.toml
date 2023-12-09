@@ -9,3 +9,4 @@ edition = "2021"
 bevy = "0.12.1"
 bevy-inspector-egui = "0.21.0"
 bevy-implicits = { path = "../bevy-implicits" }
+spatialtree = "0.1.1"

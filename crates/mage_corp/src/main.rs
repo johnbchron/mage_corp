@@ -1,5 +1,6 @@
 mod camera;
 mod materials;
+mod terrain;
 mod test_scene;
 
 use bevy::prelude::*;
