@@ -128,7 +128,10 @@ fn rebuild_setup(
 
   // get the logical size of the window
   let window = primary_window.single();
-  let window_size = Vec2::new(window.width(), window.height());
+  let window_size = Vec2::new(
+    window.physical_width() as f32,
+    window.physical_height() as f32,
+  );
 
   // build the textures for the sub cameras
   let texture_handles = (0..lowres_camera.n_cameras)
