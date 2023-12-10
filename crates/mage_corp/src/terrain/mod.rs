@@ -243,7 +243,7 @@ fn graduate_generation(
         implicit_mesh: handle.clone(),
         mesh:          implicit_mesh.mesh.clone(),
         material:      terrain_material.material.clone(),
-        rigid_body:    RigidBody::default(),
+        rigid_body:    RigidBody::Static,
         position:      Position(implicit_mesh.inputs.region.position.into()),
       });
 
