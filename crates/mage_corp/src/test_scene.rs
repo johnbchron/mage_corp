@@ -5,7 +5,7 @@ use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
 
 use crate::{
-  camera::lowres::LowresCamera,
+  camera::lowres::{LowresCamera, LowresCameraBundle},
   materials::{ToonExtension, ToonMaterial},
 };
 
@@ -16,17 +16,18 @@ fn test_scene(
 ) {
   // spawn the camera
   commands.spawn((
-    LowresCamera {
-      n_cameras: 1,
-      min_pixel_scale: 4,
+    LowresCameraBundle {
+      lowres_camera: LowresCamera {
+        n_cameras: 1,
+        min_pixel_scale: 2,
+        ..default()
+      },
+      spatial_bundle: SpatialBundle::from_transform(
+        Transform::from_xyz(0.0, 50.0, 100.0)
+          .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
+      ),
       ..default()
     },
-    SpatialBundle::from_transform(
-      Transform::from_xyz(0.0, 5.0, 10.0)
-        .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
-    ),
-    Projection::Perspective(PerspectiveProjection::default()),
-    Name::new("lowres_camera"),
     PanOrbitCamera::default(),
   ));
 

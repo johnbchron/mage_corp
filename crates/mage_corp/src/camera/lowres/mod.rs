@@ -52,22 +52,24 @@ impl Default for LowresCamera {
   }
 }
 
-// #[derive(Bundle)]
-// pub struct LowresCameraBundle {
-//   pub lowres_camera:  LowresCamera,
-//   pub projection:     Projection,
-//   pub spatial_bundle: SpatialBundle,
-//   pub name:           Name,
-// }
+#[derive(Bundle)]
+pub struct LowresCameraBundle {
+  pub lowres_camera:  LowresCamera,
+  pub projection:     Projection,
+  pub spatial_bundle: SpatialBundle,
+  pub name:           Name,
+}
 
-// impl Default for LowresCameraBundle {
-//   fn default() -> Self {
-//     Self {
-//       name: Name::new("lowres_camera"),
-//       ..default()
-//     }
-//   }
-// }
+impl Default for LowresCameraBundle {
+  fn default() -> Self {
+    Self {
+      lowres_camera:  LowresCamera::default(),
+      projection:     Projection::Perspective(PerspectiveProjection::default()),
+      spatial_bundle: SpatialBundle::default(),
+      name:           Name::new("lowres_camera"),
+    }
+  }
+}
 
 #[derive(Component)]
 pub struct LowresSubCamera;
