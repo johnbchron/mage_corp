@@ -13,23 +13,26 @@ use bevy::{
 pub struct LowresCamera {
   pub n_cameras:       u8,
   pub min_pixel_scale: u32,
-  pub overall_proj:    PerspectiveProjection,
 }
 
 impl LowresCamera {
-  fn projection_for_index(&self, i: usize) -> PerspectiveProjection {
+  fn projection_for_index(
+    &self,
+    i: usize,
+    overall_proj: &PerspectiveProjection,
+  ) -> PerspectiveProjection {
     let total_max = 2_u32.pow(self.n_cameras as u32) - 1;
     let frac_near = (2_u32.pow(i as u32) - 1) as f32 / total_max as f32;
     let frac_far = (2_u32.pow((i + 1) as u32) - 1) as f32 / total_max as f32;
-    let near = self.overall_proj.near
-      + frac_near * (self.overall_proj.far - self.overall_proj.near);
-    let far = self.overall_proj.near
-      + frac_far * (self.overall_proj.far - self.overall_proj.near);
+    let near =
+      overall_proj.near + frac_near * (overall_proj.far - overall_proj.near);
+    let far =
+      overall_proj.near + frac_far * (overall_proj.far - overall_proj.near);
 
     PerspectiveProjection {
       near,
       far,
-      ..self.overall_proj.clone()
+      ..overall_proj.clone()
     }
   }
 
@@ -43,10 +46,26 @@ impl Default for LowresCamera {
     Self {
       n_cameras:       4,
       min_pixel_scale: 2,
-      overall_proj:    PerspectiveProjection::default(),
     }
   }
 }
+
+// #[derive(Bundle)]
+// pub struct LowresCameraBundle {
+//   pub lowres_camera:  LowresCamera,
+//   pub projection:     Projection,
+//   pub spatial_bundle: SpatialBundle,
+//   pub name:           Name,
+// }
+
+// impl Default for LowresCameraBundle {
+//   fn default() -> Self {
+//     Self {
+//       name: Name::new("lowres_camera"),
+//       ..default()
+//     }
+//   }
+// }
 
 #[derive(Component)]
 pub struct LowresSubCamera;
@@ -88,18 +107,29 @@ fn trigger_rebuild(
 fn rebuild_setup(
   mut commands: Commands,
   mut event_reader: EventReader<RebuildEvent>,
-  lowres_cameras: Query<(&LowresCamera, Entity, Option<&Children>)>,
+  lowres_cameras: Query<(
+    &LowresCamera,
+    &Projection,
+    Entity,
+    Option<&Children>,
+  )>,
   old_sub_cameras: Query<&LowresSubCamera>,
   old_targets: Query<Entity, With<LowresTarget>>,
   old_target_cameras: Query<Entity, With<LowresTargetCamera>>,
   primary_window: Query<&Window, With<PrimaryWindow>>,
   mut textures: ResMut<Assets<Image>>,
 ) {
+  // info!("rebuilding lowres cameras");
+
   // exit if there are no lowres cameras
-  let Ok((lowres_camera, lowres_camera_entity, children)) =
+  let Ok((lowres_camera, lowres_camera_proj, lowres_camera_entity, children)) =
     lowres_cameras.get_single()
   else {
     return;
+  };
+  let lowres_camera_proj = match lowres_camera_proj {
+    Projection::Perspective(proj) => proj,
+    _ => return,
   };
 
   // exit if there are no rebuild events
@@ -128,10 +158,7 @@ fn rebuild_setup(
 
   // get the logical size of the window
   let window = primary_window.single();
-  let window_size = Vec2::new(
-    window.physical_width() as f32,
-    window.physical_height() as f32,
-  );
+  let window_size = Vec2::new(window.width(), window.height());
 
   // build the textures for the sub cameras
   let texture_handles = (0..lowres_camera.n_cameras)
@@ -154,7 +181,7 @@ fn rebuild_setup(
               ..default()
             },
             projection: Projection::Perspective(
-              lowres_camera.projection_for_index(i),
+              lowres_camera.projection_for_index(i, lowres_camera_proj),
             ),
             camera_3d: Camera3d {
               clear_color: ClearColorConfig::Custom(Color::NONE),
@@ -225,7 +252,7 @@ fn build_texture(x: u32, y: u32) -> Image {
 
   let mut image = Image {
     texture_descriptor: bevy::render::render_resource::TextureDescriptor {
-      label:           None,
+      label:           Some("lowres_camera_texture"),
       size:            image_size,
       dimension:       bevy::render::render_resource::TextureDimension::D2,
       format:
@@ -258,11 +285,11 @@ mod tests {
     let lowres_camera = LowresCamera {
       n_cameras:       3,
       min_pixel_scale: 2,
-      overall_proj:    PerspectiveProjection {
-        near: 0.0,
-        far: 1.0,
-        ..default()
-      },
+    };
+    let overall_proj = PerspectiveProjection {
+      near: 0.0,
+      far: 1.0,
+      ..default()
     };
     let expected_configs = vec![
       (0.0..=(1.0 / 7.0), 4),
@@ -271,7 +298,7 @@ mod tests {
     ];
 
     for (i, expected_config) in expected_configs.iter().enumerate() {
-      let config = lowres_camera.projection_for_index(i);
+      let config = lowres_camera.projection_for_index(i, &overall_proj);
 
       let (range, pixel_size) = expected_config;
       assert_eq!(config.near, *range.start());
