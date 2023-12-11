@@ -1,5 +1,6 @@
 mod config;
 mod regions;
+mod timing;
 
 use bevy::prelude::*;
 use bevy_implicits::prelude::*;
@@ -19,8 +20,8 @@ pub struct TerrainCurrentShape(#[reflect(ignore)] pub Shape);
 impl Default for TerrainCurrentShape {
   fn default() -> Self {
     TerrainCurrentShape(Shape::new_expr(
-      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
-       20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
+      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((cos(x / \
+       20.0) + cos(y / 20.0) + cos(z / 20.0)) * 4.0)",
     ))
   }
 }
@@ -62,7 +63,10 @@ impl FromWorld for TerrainMaterial {
     let mut materials =
       world.get_resource_mut::<Assets<ToonMaterial>>().unwrap();
     let material = materials.add(ToonMaterial {
-      base:      StandardMaterial::from(Color::hex("5DBB63").unwrap()),
+      base:      StandardMaterial {
+        base_color: Color::hex("5DBB63").unwrap(),
+        ..default()
+      },
       extension: ToonExtension::default(),
     });
     TerrainMaterial { material }
@@ -104,7 +108,8 @@ impl Plugin for TerrainPlugin {
           create_generation,
         )
           .chain(),
-      );
+      )
+      .add_plugins(timing::TerrainGenerationTimingPlugin);
   }
 }
 
