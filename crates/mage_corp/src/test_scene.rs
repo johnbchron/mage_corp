@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
 
 use crate::{
@@ -26,6 +27,7 @@ fn test_scene(
     ),
     Projection::Perspective(PerspectiveProjection::default()),
     Name::new("lowres_camera"),
+    PanOrbitCamera::default(),
   ));
 
   // spawn a directional light

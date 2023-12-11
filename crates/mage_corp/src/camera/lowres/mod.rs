@@ -1,3 +1,5 @@
+mod panorbit_compat;
+
 use bevy::{
   core_pipeline::clear_color::ClearColorConfig,
   prelude::*,
@@ -83,12 +85,13 @@ impl Plugin for LowresCameraPlugin {
     app
       .register_type::<LowresCamera>()
       .add_event::<RebuildEvent>()
-      .add_systems(Update, (trigger_rebuild, rebuild_setup).chain());
+      .add_systems(Update, (trigger_rebuild, rebuild_setup).chain())
+      .add_plugins(panorbit_compat::LowResPanOrbitCompatPlugin);
   }
 }
 
 #[derive(Event, Default)]
-struct RebuildEvent;
+pub struct RebuildEvent;
 
 fn trigger_rebuild(
   mut event_writer: EventWriter<RebuildEvent>,

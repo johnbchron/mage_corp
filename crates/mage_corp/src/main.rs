@@ -15,6 +15,7 @@ fn main() {
       bevy_implicits::ImplicitsPlugin,
       xpbd::PhysicsPlugins::default(),
       WorldInspectorPlugin::default(),
+      bevy_panorbit_camera::PanOrbitCameraPlugin,
     ))
     .add_plugins((
       camera::lowres::LowresCameraPlugin,

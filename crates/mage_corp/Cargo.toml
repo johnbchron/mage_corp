@@ -11,3 +11,4 @@ bevy-inspector-egui = "0.21.0"
 bevy-implicits = { path = "../bevy-implicits" }
 spatialtree = "0.1.1"
 bevy_xpbd_3d = { version = "0.3.2", features = [ "debug-plugin" ] }
+bevy_panorbit_camera = { version = "0.9.2", features = ["bevy_egui"] }
