@@ -63,13 +63,13 @@ fn fragment(
   let highlight_color = vec4(pbr_input.material.base_color.rgb, out.color.a) * toon_material.highlight_color;
 
   let luminance = luminance(out.color.rgb);
-  if luminance < dark_luminance_threshold {
-    out.color = dark_color;
-  } else if luminance > highlight_luminance_threshold {
-    out.color = highlight_color;
-  } else {
-    out.color = normal_color;
-  }
+  // if luminance < dark_luminance_threshold {
+  //   out.color = dark_color;
+  // } else if luminance > highlight_luminance_threshold {
+  //   out.color = highlight_color;
+  // } else {
+  //   out.color = normal_color;
+  // }
 
   // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
   // note this does not include fullscreen postprocessing effects like bloom.
