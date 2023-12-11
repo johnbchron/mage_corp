@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_xpbd_3d::prelude::*;
 
 use crate::{
   camera::lowres::LowresCamera,
@@ -63,6 +64,8 @@ fn test_scene(
       .into(),
     ),
     crate::terrain::TerrainDetailTarget,
+    RigidBody::Dynamic,
+    Collider::ball(0.5),
     Name::new("sphere"),
   ));
 }
