@@ -19,6 +19,8 @@ pub struct ToonExtension {
   pub highlight_color:     Color,
   #[uniform(100)]
   pub blend_factor:        f32,
+  #[uniform(100)]
+  pub far_bleed:           f32,
 }
 
 impl Default for ToonExtension {
@@ -29,16 +31,13 @@ impl Default for ToonExtension {
       dark_color:          Color::rgb(0.25, 0.25, 0.25),
       highlight_color:     Color::rgb(1.5, 1.5, 1.5),
       blend_factor:        0.01,
+      far_bleed:           0.1,
     }
   }
 }
 
 impl MaterialExtension for ToonExtension {
   fn fragment_shader() -> ShaderRef {
-    "shaders/toon_extension.wgsl".into()
-  }
-
-  fn deferred_fragment_shader() -> ShaderRef {
     "shaders/toon_extension.wgsl".into()
   }
 }

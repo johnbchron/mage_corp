@@ -427,14 +427,13 @@ checksum = "ec800b7cf98151b5dbff80f0eb6dffcb4bcfceef6e457888b395ead4eb7e75ba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
 name = "bevy_a11y"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68080288c932634f6563d3a8299efe0ddc9ea6787539c4c771ba250d089a94f0"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "accesskit",
  "bevy_app",
@@ -445,8 +444,7 @@ dependencies = [
 [[package]]
 name = "bevy_animation"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7aa37683b1281e1ba8cf285644e6e3f0704f14b3901c5ee282067ff7ff6f4a56"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -464,8 +462,7 @@ dependencies = [
 [[package]]
 name = "bevy_app"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d41731817993f92e4363dd3335558e779e290bc71eefc0b5547052b85810907e"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_derive",
  "bevy_ecs",
@@ -480,8 +477,7 @@ dependencies = [
 [[package]]
 name = "bevy_asset"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "935984568f75867dd7357133b06f4b1502cd2be55e4642d483ce597e46e63bff"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "async-broadcast",
  "async-fs",
@@ -512,20 +508,18 @@ dependencies = [
 [[package]]
 name = "bevy_asset_macros"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f48b9bbe4ec605e4910b5cd1e1a0acbfbe0b80af5f3bcc4489a9fdd1e80058c"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
 name = "bevy_audio"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18a69889e1bfa4dbac4e641536b94f91c441da55796ad9832e77836b8264688b"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -542,8 +536,7 @@ dependencies = [
 [[package]]
 name = "bevy_core"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3daa24502a14839509f02407bc7e48299fe84d260877de23b60662de0f4f4b6c"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -557,8 +550,7 @@ dependencies = [
 [[package]]
 name = "bevy_core_pipeline"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4b77c4fca6e90edbe2e72da7bc9aa7aed7dfdfded0920ae0a0c845f5e11084a"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -579,19 +571,17 @@ dependencies = [
 [[package]]
 name = "bevy_derive"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f484318350462c58ba3942a45a656c1fd6b6e484a6b6b7abc3a787ad1a51e500"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
 name = "bevy_diagnostic"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa38ca5967d335cc1006a0e0f1a86c350e2f15fd1878449f61d04cd57a7c4060"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_core",
@@ -615,8 +605,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709fbd22f81fb681534cd913c41e1cd18b17143368743281195d7f024b61aea"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "async-channel 1.9.0",
  "bevy_ecs_macros",
@@ -636,13 +625,12 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_macros"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8843aa489f159f25cdcd9fee75cd7d221a7098a71eaa72cb2d6b40ac4e3f1ba"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -661,8 +649,7 @@ dependencies = [
 [[package]]
 name = "bevy_encase_derive"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5328a3715e933ebbff07d0e99528dc423c4f7a53590ed1ac19a120348b028990"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "encase_derive_impl",
@@ -671,8 +658,7 @@ dependencies = [
 [[package]]
 name = "bevy_gilrs"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b81ca2ebf66cbc7f998f1f142b15038ffe3c4ae1d51f70adda26dcf51b0c4ca"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -687,8 +673,7 @@ dependencies = [
 [[package]]
 name = "bevy_gizmos"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db232274ddca2ae452eb2731b98267b795d133ddd14013121bc7daddde1c7491"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -707,8 +692,7 @@ dependencies = [
 [[package]]
 name = "bevy_gltf"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85adc6b1fc86687bf67149e0bafaa4d6da432232fa956472d1b37f19121d3ace"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "base64 0.13.1",
  "bevy_animation",
@@ -737,8 +721,7 @@ dependencies = [
 [[package]]
 name = "bevy_hierarchy"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06bd477152ce2ae1430f5e0a4f19216e5785c22fee1ab23788b5982dc59d1a55"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_core",
@@ -752,8 +735,7 @@ dependencies = [
 [[package]]
 name = "bevy_input"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab9a599189b2a694c182d60cd52219dd9364f9892ff542d87799b8e45d9e6dc"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -766,8 +748,7 @@ dependencies = [
 [[package]]
 name = "bevy_internal"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f124bece9831afd80897815231072d51bfe3ac58c6bb58eca8880963b6d0487c"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_a11y",
  "bevy_animation",
@@ -805,8 +786,7 @@ dependencies = [
 [[package]]
 name = "bevy_log"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0dc10ba1d225a8477b9e80a1bf797d8a8b8274e83c9b24fb4d9351aec9229755"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "android_log-sys",
  "bevy_app",
@@ -821,21 +801,19 @@ dependencies = [
 [[package]]
 name = "bevy_macro_utils"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e566640c6b6dced73d2006c764c2cffebe1a82be4809486c4a5d7b4b50efed4d"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "proc-macro2",
  "quote",
  "rustc-hash",
- "syn 2.0.39",
+ "syn 2.0.40",
  "toml_edit 0.20.7",
 ]
 
 [[package]]
 name = "bevy_math"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58ddc2b76783939c530178f88e5711a1b01044d7b02db4033e2eb8b43b6cf4ec"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "glam 0.24.2",
  "serde",
@@ -844,8 +822,7 @@ dependencies = [
 [[package]]
 name = "bevy_mikktspace"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ec4962977a746d870170532fc92759e04d3dbcae8b7b82e7ca3bb83b1d75277"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "glam 0.24.2",
 ]
@@ -864,8 +841,7 @@ dependencies = [
 [[package]]
 name = "bevy_pbr"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "520bfd2a898c74f84ea52cfb8eb061f37373ad15e623489d5f75d27ebd6138fe"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -890,14 +866,12 @@ dependencies = [
 [[package]]
 name = "bevy_ptr"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c77ec20c8fafcdc196508ef5ccb4f0400a8d193cb61f7b14a36ed9a25ad423cf"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 
 [[package]]
 name = "bevy_reflect"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7921f15fc944c9c8ad01d7dbcea6505b8909c6655cd9382bab1407181556038"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_math",
  "bevy_ptr",
@@ -915,21 +889,19 @@ dependencies = [
 [[package]]
 name = "bevy_reflect_derive"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4a8c5475f216e751ef4452a1306b00711f33d2d04d9f149e4c845dfeb6753a0"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
  "uuid",
 ]
 
 [[package]]
 name = "bevy_render"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdefdd3737125b0d94a6ff20bb70fa8cfe9d7d5dcd72ba4dfe6c5f1d30d9f6e4"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "async-channel 1.9.0",
  "bevy_app",
@@ -974,20 +946,18 @@ dependencies = [
 [[package]]
 name = "bevy_render_macros"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64d86bfc5a1e7fbeeaec0c4ceab18155530f5506624670965db3415f75826bea"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_macro_utils",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
 name = "bevy_scene"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7df078b5e406e37c8a1c6ba0d652bf105fde713ce3c3efda7263fe27467eee5"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -1007,8 +977,7 @@ dependencies = [
 [[package]]
 name = "bevy_sprite"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7cc0c9d946e17e3e0aaa202f182837bc796c4f862b2e5a805134f873f21cf7f"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_asset",
@@ -1033,8 +1002,7 @@ dependencies = [
 [[package]]
 name = "bevy_tasks"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4fefa7fe0da8923525f7500e274f1bd60dbd79918a25cf7d0dfa0a6ba15c1cf"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "async-channel 1.9.0",
  "async-executor",
@@ -1047,8 +1015,7 @@ dependencies = [
 [[package]]
 name = "bevy_text"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a9a79d49ca06170d69149949b134c14e8b99ace1444c1ca2cd4743b19d5b055"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "ab_glyph",
  "bevy_app",
@@ -1069,8 +1036,7 @@ dependencies = [
 [[package]]
 name = "bevy_time"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6250d76eed3077128b6a3d004f9f198b01107800b9824051e32bb658054e837"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -1083,8 +1049,7 @@ dependencies = [
 [[package]]
 name = "bevy_transform"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d541e0c292edbd96afae816ee680e02247422423ccd5dc635c1e211a20ed64be"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -1097,8 +1062,7 @@ dependencies = [
 [[package]]
 name = "bevy_ui"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d785e3b75dabcb2a8ad0d50933f8f3446d59e512cabc2d2a145e28c2bb8792ba"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_a11y",
  "bevy_app",
@@ -1127,8 +1091,7 @@ dependencies = [
 [[package]]
 name = "bevy_utils"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7915222f4a08ccc782e08d10b751b42e5f9d786e697d0cb3fd09333cb7e8b6ea"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "ahash",
  "bevy_utils_proc_macros",
@@ -1145,19 +1108,17 @@ dependencies = [
 [[package]]
 name = "bevy_utils_proc_macros"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7aafecc952b6b8eb1a93c12590bd867d25df2f4ae1033a01dfdfc3c35ebccfff"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
 name = "bevy_window"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41ee72bf7f974000e9b31bb971a89387f1432ba9413f35c4fef59fef49767260"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "bevy_a11y",
  "bevy_app",
@@ -1172,8 +1133,7 @@ dependencies = [
 [[package]]
 name = "bevy_winit"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1eb71f287eca9006dda998784c7b931e400ae2cc4c505da315882a8b082f21ad"
+source = "git+https://github.com/johnbchron/bevy.git?branch=far-plane-culling#8722fafae5e54173933e17e7c2ee1f76e8345e3e"
 dependencies = [
  "accesskit_winit",
  "approx 0.5.1",
@@ -1219,7 +1179,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e1ef1d5e328abe1b76df974245f78e17fd17867583883d5e77444c6a8223a64"
 dependencies = [
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -1248,7 +1208,7 @@ dependencies = [
  "regex",
  "rustc-hash",
  "shlex",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -1358,7 +1318,7 @@ checksum = "965ab7eb5f8f97d2a083c799f3a1b994fc397b2fe2da5d1da1626ce15a39f2b1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -1834,7 +1794,7 @@ checksum = "3fe2568f851fd6144a45fa91cfed8fe5ca8fc0b56ba6797bfc1ed2771b90e37c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -1847,7 +1807,7 @@ dependencies = [
  "num-traits",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -2037,7 +1997,7 @@ checksum = "1a5c6c585bc94aaf2c7b51dd4c2ba22680844aba4c687be581871a6f518c5742"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -2228,7 +2188,7 @@ dependencies = [
  "inflections",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -2624,9 +2584,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.150"
+version = "0.2.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89d92a4743f9a61002fae18374ed11e7973f530cb3a3255fb354818118b2203c"
+checksum = "302d7ab3130588088d277783b1e2d2e10c9e9e4a16dd9050e6ec93fb3e7048f4"
 
 [[package]]
 name = "libloading"
@@ -3125,7 +3085,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -3494,9 +3454,9 @@ dependencies = [
 
 [[package]]
 name = "profiling"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f89dff0959d98c9758c88826cc002e2c3d0b9dfac4139711d1f30de442f1139b"
+checksum = "1de09527cd2ea2c2d59fb6c2f8c1ab8c71709ed9d1b6d60b0e1c9fbb6fdcb33c"
 
 [[package]]
 name = "quote"
@@ -3685,7 +3645,7 @@ checksum = "853977598f084a492323fe2f7896b4100a86284ee8473612de60021ea341310f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -3772,9 +3732,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.15"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
+checksum = "f98d2aa92eebf49b69786be48e4477826b256916e84a57ff2a4f21923b48eb4c"
 
 [[package]]
 name = "safe_arch"
@@ -3823,7 +3783,7 @@ checksum = "43576ca501357b9b071ac53cdc7da8ef0cbd9493d8df094cd821777ea6e894d3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -3996,9 +3956,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.39"
+version = "2.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23e78b90f2fcf45d3e842032ce32e3f2d1545ba6636271dcbf24fa306d87be7a"
+checksum = "13fa70a4ee923979ffb522cacce59d34421ebdea5625e1073c4326ef9d2dd42e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4066,7 +4026,7 @@ checksum = "e4c60d69f36615a077cc7663b9cb8e42275722d23e58a7fa3d2c7f2915d09d04"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -4077,7 +4037,7 @@ checksum = "266b2e40bc00e5a6c09c3584011e08b06f123c00362c92b975ba9843aaaa14b8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -4172,7 +4132,7 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]
 
 [[package]]
@@ -4373,7 +4333,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
  "wasm-bindgen-shared",
 ]
 
@@ -4407,7 +4367,7 @@ checksum = "f0eb82fcb7930ae6219a7ecfd55b217f5f0893484b7a13022ebb2b2bf20b5283"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -4851,9 +4811,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.5.26"
+version = "0.5.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67b5f0a4e7a27a64c651977932b9dc5667ca7fc31ac44b03ed37a0cf42fdfff"
+checksum = "6c830786f7720c2fd27a1a0e27a709dbd3c4d009b56d098fc742d4f4eab91fe2"
 dependencies = [
  "memchr",
 ]
@@ -4920,5 +4880,5 @@ checksum = "be912bf68235a88fbefd1b73415cb218405958d1655b2ece9035a19920bdf6ba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn 2.0.40",
 ]

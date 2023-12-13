@@ -15,6 +15,7 @@ use bevy::{
 pub struct LowresCamera {
   pub n_cameras:       u8,
   pub min_pixel_scale: u32,
+  pub final_far:       Option<f32>,
 }
 
 impl LowresCamera {
@@ -28,8 +29,13 @@ impl LowresCamera {
     let frac_far = (2_u32.pow((i + 1) as u32) - 1) as f32 / total_max as f32;
     let near =
       overall_proj.near + frac_near * (overall_proj.far - overall_proj.near);
-    let far =
+    let mut far =
       overall_proj.near + frac_far * (overall_proj.far - overall_proj.near);
+    if let Some(final_far) = self.final_far {
+      if i == self.n_cameras as usize - 1 {
+        far = far.max(final_far);
+      }
+    }
 
     PerspectiveProjection {
       near,
@@ -48,6 +54,7 @@ impl Default for LowresCamera {
     Self {
       n_cameras:       4,
       min_pixel_scale: 2,
+      final_far:       None,
     }
   }
 }
@@ -97,11 +104,15 @@ pub struct RebuildEvent;
 
 fn trigger_rebuild(
   mut event_writer: EventWriter<RebuildEvent>,
-  lowres_cameras: Query<(), Changed<LowresCamera>>,
+  changed_lowres_cameras: Query<(), Changed<LowresCamera>>,
+  changed_projections: Query<(), (Changed<Projection>, With<LowresCamera>)>,
   mut resize_events: EventReader<WindowResized>,
 ) {
-  if lowres_cameras.iter().next().is_some() {
+  if changed_lowres_cameras.iter().next().is_some() {
     debug!("triggering lowres camera rebuild due to LowresCamera change");
+    event_writer.send(RebuildEvent::default());
+  } else if changed_projections.iter().next().is_some() {
+    debug!("triggering lowres camera rebuild due to Projection change");
     event_writer.send(RebuildEvent::default());
   } else if resize_events.read().next().is_some() {
     debug!("triggering lowres camera rebuild due to PrimaryWindow change");

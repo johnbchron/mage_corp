@@ -19,3 +19,42 @@ opt-level = 3
 # lto = true
 strip = true
 codegen-units = 1
+
+[patch.crates-io]
+bevy_a11y = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_animation = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_app = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_asset = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_audio = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_core = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_core_pipeline = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_derive = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_diagnostic = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+# bevy_dylib = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+# bevy_dynamic_plugin = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_ecs = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_encase_derive = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_gilrs = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_gizmos = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_gltf = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_hierarchy = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_input = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_internal = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_log = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_macro_utils = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_math = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_mikktspace = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_pbr = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_ptr = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_reflect = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_render = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_scene = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_sprite = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_tasks = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_text = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_time = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_transform = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_ui = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_utils = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_window = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }
+bevy_winit = { git = "https://github.com/johnbchron/bevy.git", branch = "far-plane-culling" }

@@ -18,8 +18,8 @@ fn test_scene(
   commands.spawn((
     LowresCameraBundle {
       lowres_camera: LowresCamera {
-        n_cameras: 1,
         min_pixel_scale: 2,
+        final_far: Some(10000.0),
         ..default()
       },
       spatial_bundle: SpatialBundle::from_transform(
