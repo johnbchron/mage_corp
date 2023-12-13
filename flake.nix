@@ -36,7 +36,6 @@
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
           LIBCLANG_PATH = "${pkgs.libclang}/lib";
 
-          # for cargo-nextest, because works using dynamic linking
           shellHook = ''
             export DYLD_FALLBACK_LIBRARY_PATH="$(rustc --print sysroot)/lib";
           '';
