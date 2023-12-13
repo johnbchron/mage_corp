@@ -301,6 +301,7 @@ mod tests {
     let lowres_camera = LowresCamera {
       n_cameras:       3,
       min_pixel_scale: 2,
+      final_far:       None,
     };
     let overall_proj = PerspectiveProjection {
       near: 0.0,
