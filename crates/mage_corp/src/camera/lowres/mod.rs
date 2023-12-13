@@ -120,6 +120,7 @@ fn trigger_rebuild(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn rebuild_setup(
   mut commands: Commands,
   mut event_reader: EventReader<RebuildEvent>,
@@ -187,8 +188,8 @@ fn rebuild_setup(
   commands
     .entity(lowres_camera_entity)
     .with_children(|parent| {
-      for i in 0..texture_handles.len() {
-        let texture_handle = texture_handles[i].clone();
+      for (i, texture_handle) in texture_handles.iter().enumerate() {
+        let texture_handle = texture_handle.clone();
 
         parent.spawn((
           Camera3dBundle {
