@@ -83,7 +83,7 @@ impl TryFrom<ImplicitInputs> for PathBuf {
     let messagepack_encoded = rmp_serde::to_vec(&inputs)
       .context(format!("serde failed to serialize: {:?}", &inputs))?;
     // println!("messagepack_encoded: {:?}", messagepack_encoded);
-    let base64_encoded = general_purpose::URL_SAFE.encode(&messagepack_encoded);
+    let base64_encoded = general_purpose::URL_SAFE.encode(messagepack_encoded);
     // println!("base64_encoded: {:?}", base64_encoded);
 
     Ok(PathBuf::from(format!("{}.implicit", base64_encoded)))
@@ -201,9 +201,9 @@ impl AssetLoader for ImplicitMeshAssetLoader {
       let (mesh, collider) =
         DiskCacheProvider::<FastSurfaceNetsMesher>::default()
           .get_mesh_and_collider(&inputs.0);
-      let mesh = mesh.map_err(|e| ImplicitMeshError::MeshError(e))?;
+      let mesh = mesh.map_err(ImplicitMeshError::MeshError)?;
       let mesh = bevy_mesh_from_pls_mesh(mesh);
-      let collider = collider.map(|s| Collider::from(s));
+      let collider = collider.map(Collider::from);
 
       let mesh_handle =
         load_context.add_labeled_asset("mesh".to_string(), mesh);

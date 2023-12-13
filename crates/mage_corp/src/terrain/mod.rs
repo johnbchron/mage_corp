@@ -282,7 +282,7 @@ fn clean_generation(
   if generations.next.len() >= 10 {
     info!(
       "pruning surpassed queued generation: {:?}",
-      generations.next.get(0).unwrap()
+      generations.next.first().unwrap()
     );
     generations.next.remove(0);
   }

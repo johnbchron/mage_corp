@@ -64,8 +64,7 @@ fn test_scene(
           ..default()
         },
         extension: ToonExtension::default(),
-      }
-      .into(),
+      },
     ),
     crate::terrain::TerrainDetailTarget,
     RigidBody::Dynamic,

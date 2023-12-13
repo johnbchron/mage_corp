@@ -110,13 +110,13 @@ fn trigger_rebuild(
 ) {
   if changed_lowres_cameras.iter().next().is_some() {
     debug!("triggering lowres camera rebuild due to LowresCamera change");
-    event_writer.send(RebuildEvent::default());
+    event_writer.send(RebuildEvent);
   } else if changed_projections.iter().next().is_some() {
     debug!("triggering lowres camera rebuild due to Projection change");
-    event_writer.send(RebuildEvent::default());
+    event_writer.send(RebuildEvent);
   } else if resize_events.read().next().is_some() {
     debug!("triggering lowres camera rebuild due to PrimaryWindow change");
-    event_writer.send(RebuildEvent::default());
+    event_writer.send(RebuildEvent);
   }
 }
 

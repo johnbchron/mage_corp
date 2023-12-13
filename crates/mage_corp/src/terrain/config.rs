@@ -42,8 +42,8 @@ impl TerrainConfig {
   }
 
   pub fn too_far_away(&self, a: Vec3, b: Vec3) -> bool {
-    return (a - a.rem(self.trigger_distance()))
-      != (b - b.rem(self.trigger_distance()));
+    (a - a.rem(self.trigger_distance()))
+      != (b - b.rem(self.trigger_distance()))
   }
 }
 
