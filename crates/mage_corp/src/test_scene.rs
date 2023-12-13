@@ -55,19 +55,6 @@ fn test_scene(
       })
       .unwrap(),
     ),
-<<<<<<< HEAD
-    toon_materials.add(
-      ToonMaterial {
-        base:      StandardMaterial {
-          base_color: Color::rgb(0.8, 0.7, 0.6),
-          perceptual_roughness: 0.2,
-          reflectance: 0.1,
-          ..default()
-        },
-        extension: ToonExtension::default(),
-      },
-    ),
-=======
     toon_materials.add(ToonMaterial {
       base:      StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
@@ -77,7 +64,6 @@ fn test_scene(
       },
       extension: ToonExtension::default(),
     }),
->>>>>>> 5b097b3 (clippy lints)
     crate::terrain::TerrainDetailTarget,
     RigidBody::Dynamic,
     Collider::ball(0.5),

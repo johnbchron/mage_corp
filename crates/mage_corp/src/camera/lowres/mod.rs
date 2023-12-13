@@ -189,11 +189,8 @@ fn rebuild_setup(
     .entity(lowres_camera_entity)
     .with_children(|parent| {
       for (i, texture_handle) in texture_handles.iter().enumerate() {
-<<<<<<< HEAD
         let texture_handle = texture_handle.clone();
 
-=======
->>>>>>> 5b097b3 (clippy lints)
         parent.spawn((
           Camera3dBundle {
             camera: Camera {

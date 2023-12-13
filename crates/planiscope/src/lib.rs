@@ -1,3 +1,5 @@
+#![feature(result_option_inspect)]
+
 pub mod cache;
 pub mod collider;
 pub mod mesher;
