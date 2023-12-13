@@ -35,7 +35,7 @@ fn fragment(
   let far_half_space = view.frustum[5];
   let in_view_space = view_transformations::position_world_to_view(in.world_position.xyz);
   if dot(far_half_space, in.world_position) <= toon_material.far_bleed * in_view_space.z {
-    // discard;
+    discard;
   }
 
   // generate a PbrInput struct from the StandardMaterial bindings
