@@ -2693,6 +2693,7 @@ dependencies = [
  "bevy",
  "common",
  "nanorand",
+ "thiserror",
 ]
 
 [[package]]

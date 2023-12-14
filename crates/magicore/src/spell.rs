@@ -5,6 +5,7 @@ use bevy::{
   utils::{HashMap, Instant},
 };
 use nanorand::Rng;
+use thiserror::Error;
 
 use super::{
   blueprint::{ActiveBlueprint, BlueprintDescriptor},
@@ -33,9 +34,17 @@ impl SpellBlock {
       descriptors: bluep_desc,
     }
   }
+
+  fn invalid_refs(&self, ids: &[u64]) -> Vec<BlockRef> {
+    let mut invalid_refs = vec![];
+    invalid_refs.extend(self.init_trigger.invalid_refs(ids));
+    invalid_refs.extend(self.activate_trigger.invalid_refs(ids));
+    invalid_refs.extend(self.end_trigger.invalid_refs(ids));
+    invalid_refs
+  }
 }
 
-#[derive(Clone, Copy, Default, Reflect)]
+#[derive(Clone, Copy, Debug, Default, Reflect)]
 pub enum BlockRef {
   Id(u64),
   #[default]
@@ -47,6 +56,13 @@ impl BlockRef {
     match self {
       Self::Id(id) => *id,
       Self::SelfBlock => self_block_id,
+    }
+  }
+
+  fn is_valid(&self, ids: &[u64]) -> bool {
+    match self {
+      Self::Id(id) => ids.contains(id),
+      Self::SelfBlock => true,
     }
   }
 }
@@ -85,6 +101,23 @@ impl SpellTrigger {
       }
       // recurse because this trigger contains another trigger
       trigger.update_if_needed(_active_spell, _self_block_id);
+    }
+  }
+
+  fn invalid_refs(&self, ids: &[u64]) -> Vec<BlockRef> {
+    match self {
+      Self::AtStart => vec![],
+      Self::OnBlockInit(block_ref)
+      | Self::OnBlockBuilt(block_ref)
+      | Self::OnBlockActive(block_ref)
+      | Self::OnBlockEnd(block_ref) => {
+        if !block_ref.is_valid(ids) {
+          vec![*block_ref]
+        } else {
+          vec![]
+        }
+      }
+      Self::AfterTime { trigger, .. } => trigger.invalid_refs(ids),
     }
   }
 
@@ -177,11 +210,45 @@ impl SpellDescriptor {
     self.blocks.insert(id, block);
     id
   }
+  pub fn is_valid(&self) -> Result<(), SpellInvalidError> {
+    if self.blocks.is_empty() {
+      return Err(SpellInvalidError::NoBlocks);
+    }
+
+    let ids = self.ids();
+    let invalid_refs = self
+      .blocks
+      .values()
+      .flat_map(|b| b.invalid_refs(&ids))
+      .collect::<Vec<_>>();
+
+    if !invalid_refs.is_empty() {
+      return Err(SpellInvalidError::InvalidBlockRef {
+        containing_block: 0,
+        block_ref:        invalid_refs[0],
+      });
+    }
+
+    Ok(())
+  }
   fn ids(&self) -> Vec<u64> {
     let mut block_ids = self.blocks.keys().copied().collect::<Vec<_>>();
     block_ids.sort();
     block_ids
   }
+}
+
+#[derive(Error, Debug, Clone, Reflect)]
+pub enum SpellInvalidError {
+  #[error("Spell has no blocks")]
+  NoBlocks,
+  #[error(
+    "Block {containing_block:#x} references an invalid block {block_ref:?}"
+  )]
+  InvalidBlockRef {
+    containing_block: u64,
+    block_ref:        BlockRef,
+  },
 }
 
 #[derive(Clone, Default, Reflect)]
