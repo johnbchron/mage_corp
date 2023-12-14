@@ -1,27 +1,55 @@
-pub mod force;
-pub mod toon;
+use bevy::{
+  pbr::{ExtendedMaterial, MaterialExtension},
+  prelude::*,
+  render::render_resource::{AsBindGroup, ShaderRef},
+};
 
-#[allow(clippy::unreadable_literal)]
-pub const PREPASS_SHADER_HANDLE: Handle<Shader> =
-  Handle::weak_from_u128(12104443487162275386);
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
+pub struct ToonExtension {
+  // We need to ensure that the bindings of the base material and the extension
+  // do not conflict, so we start from binding slot 100, leaving slots 0-99
+  // for the base material.
+  #[uniform(100)]
+  pub dark_threshold:      f32,
+  #[uniform(100)]
+  pub highlight_threshold: f32,
+  #[uniform(100)]
+  pub dark_color:          Color,
+  #[uniform(100)]
+  pub highlight_color:     Color,
+  #[uniform(100)]
+  pub blend_factor:        f32,
+  #[uniform(100)]
+  pub far_bleed:           f32,
+}
 
-use bevy::{asset::load_internal_asset, prelude::*};
+impl Default for ToonExtension {
+  fn default() -> Self {
+    Self {
+      dark_threshold:      0.5,
+      highlight_threshold: 6.0,
+      dark_color:          Color::rgb(0.25, 0.25, 0.25),
+      highlight_color:     Color::rgb(1.5, 1.5, 1.5),
+      blend_factor:        0.01,
+      far_bleed:           0.1,
+    }
+  }
+}
+
+impl MaterialExtension for ToonExtension {
+  fn fragment_shader() -> ShaderRef {
+    "shaders/toon_extension.wgsl".into()
+  }
+}
+
+pub type ToonMaterial = ExtendedMaterial<StandardMaterial, ToonExtension>;
 
 pub struct MaterialsPlugin;
 
 impl Plugin for MaterialsPlugin {
   fn build(&self, app: &mut App) {
-    // app.add_plugins(bevy_shader_utils::ShaderUtilsPlugin);
-
-    load_internal_asset!(
-      app,
-      PREPASS_SHADER_HANDLE,
-      "../../assets/shaders/prepass.wgsl",
-      Shader::from_wgsl
-    );
-
     app
-      .add_plugins(force::ForceMaterialPlugin)
-      .add_plugins(toon::ToonMaterialPlugin);
+      .add_plugins(MaterialPlugin::<ToonMaterial>::default())
+      .register_asset_reflect::<ToonMaterial>();
   }
 }

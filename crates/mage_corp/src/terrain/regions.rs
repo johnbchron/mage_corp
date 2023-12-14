@@ -1,41 +1,15 @@
 use std::ops::Rem;
 
 use bevy::prelude::*;
-use planiscope::mesher::MesherRegion;
-use spatialtree::{tree::OctTree, OctVec};
+use bevy_implicits::prelude::*;
+use spatialtree::{OctTree, OctVec};
 
-use super::*;
-
-#[derive(Debug, Clone, Copy, Reflect, PartialEq)]
-pub struct TerrainRegion {
-  pub position: Vec3,
-  pub scale:    Vec3,
-  pub subdivs:  u8,
-}
-
-impl From<TerrainRegion> for MesherRegion {
-  fn from(value: TerrainRegion) -> Self {
-    Self {
-      position: value.position.into(),
-      scale:    value.scale.into(),
-      detail:   planiscope::mesher::MesherDetail::Subdivs(value.subdivs),
-      prune:    false,
-    }
-  }
-}
-
-// TODO: this is terrible
-impl Hash for TerrainRegion {
-  fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-    // use the debug format to hash
-    format!("{self:?}").hash(state);
-  }
-}
+use super::config::TerrainConfig;
 
 pub fn calculate_regions(
   config: &TerrainConfig,
   target_location: Vec3,
-) -> Vec<TerrainRegion> {
+) -> Vec<MesherRegion> {
   let render_cube_origin = target_location
     - target_location.rem(config.render_cube_translation_increment());
   // the target relative to the render cube
@@ -65,10 +39,11 @@ pub fn calculate_regions(
         * config.render_dist
         + render_cube_origin;
       let scale = float_size * config.render_dist * config.mesh_bleed;
-      TerrainRegion {
-        position: pos,
-        scale:    Vec3::splat(scale),
-        subdivs:  config.mesh_subdivs,
+      MesherRegion {
+        position: pos.into(),
+        scale:    Vec3::splat(scale).into(),
+        detail:   MesherDetail::Subdivs(config.mesh_subdivs),
+        prune:    false,
       }
     })
     .collect()

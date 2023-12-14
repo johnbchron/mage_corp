@@ -5,6 +5,9 @@ run:
 
 run-release:
 	MTL_HUD_ENABLED=1 cargo run --release --package mage_corp
+
+test:
+	cargo nextest run
 	
 # run the pre-commit checklist
 pre-c:

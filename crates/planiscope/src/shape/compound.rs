@@ -129,7 +129,7 @@ fn hash_mat4<H: Hasher>(s: &glam::Mat4, state: &mut H) {
     .iter()
     .for_each(|v| decorum::hash::FloatHash::float_hash(v, state));
 }
-fn hash_vec_triplet_f32<H: Hasher>(s: &Vec<[f32; 3]>, state: &mut H) {
+fn hash_vec_triplet_f32<H: Hasher>(s: &[[f32; 3]], state: &mut H) {
   s.iter().for_each(|a| {
     a.iter()
       .for_each(|v| decorum::hash::FloatHash::float_hash(v, state))

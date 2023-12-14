@@ -1,2 +1,1 @@
-pub mod low_res;
-pub mod posing;
+pub mod lowres;

@@ -17,4 +17,3 @@ fidget = { git = "https://github.com/johnbchron/fidget", tag = "0.3", default-fe
 serde = { version = "1.0.192", features = ["derive"] }
 thiserror = "1.0.50"
 bevy_xpbd_3d = "0.3.2"
-parry3d = "0.13.5"

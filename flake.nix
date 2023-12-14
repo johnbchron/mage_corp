@@ -14,14 +14,14 @@
           inherit system overlays;
         };
         
-        toolchain = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
+        toolchain = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-analyzer" "rust-src" ];
-        };
+        });
         
-        rust_deps = [ toolchain pkgs.lldb pkgs.bacon ];
+        rust_deps = [ toolchain pkgs.lldb pkgs.bacon pkgs.cargo-nextest ];
         bevy_build_deps = with pkgs; [
           pkg-config
-          mold clang
+          mold clang lld
           makeWrapper
         ];
         bevy_runtime_deps = with pkgs; [
@@ -31,35 +31,14 @@
           rustPlatform.bindgenHook darwin.apple_sdk.frameworks.Cocoa
         ];
       in {
-        defaultPackage = let 
-          naersk' = pkgs.callPackage naersk {
-            cargo = toolchain;
-            rustc = toolchain;
-          };
-        in naersk'.buildPackage rec {
-          pname = "mage_corp";
-          src = ./.;
-
-          nativeBuildInputs = bevy_build_deps;
-          buildInputs = bevy_runtime_deps;
-          
-          overrideMain = attrs: {
-            fixupPhase = ''
-              wrapProgram $out/bin/${pname} \
-                --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath bevy_runtime_deps} \
-                # --prefix XCURSOR_THEME : "Adwaita" \
-                # --prefix ALSA_PLUGIN_DIR : ${"pkgs.pipewire.lib"}/lib/alsa-lib
-              mkdir -p $out/bin/assets
-              cp -a crates/mage_corp/assets $out/bin
-            '';
-          };
-        };
-
-        # For `nix develop`:
         devShells.default = pkgs.mkShell rec {
           nativeBuildInputs = bevy_build_deps ++ bevy_runtime_deps ++ rust_deps;
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
           LIBCLANG_PATH = "${pkgs.libclang}/lib";
+
+          shellHook = ''
+            export DYLD_FALLBACK_LIBRARY_PATH="$(rustc --print sysroot)/lib";
+          '';
         };
       }
     );

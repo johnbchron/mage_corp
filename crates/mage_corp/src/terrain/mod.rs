@@ -1,83 +1,17 @@
-mod mesh;
-mod region;
-use std::{hash::Hash, ops::Rem, time::Duration};
+mod config;
+mod regions;
+mod timing;
 
-use bevy::{
-  prelude::*,
-  tasks::{AsyncComputeTaskPool, Task},
-};
+use bevy::prelude::*;
+use bevy_implicits::prelude::*;
 use bevy_xpbd_3d::prelude::*;
-use futures_lite::future::{block_on, poll_once};
-use planiscope::{
-  cache::{CacheProvider, DiskCacheProvider},
-  mesher::FastSurfaceNetsMesher,
-  shape::Shape,
-};
 
-use crate::{
-  materials::toon::ToonMaterial,
-  terrain::{mesh::TerrainMesh, region::TerrainRegion},
-  utils::{bevy_mesh_from_pls_mesh, despawn::DespawnTag, hash_single},
-};
+use self::config::TerrainConfig;
+use crate::materials::{ToonExtension, ToonMaterial};
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct TerrainDetailTarget;
-
-#[derive(Resource, Reflect, Clone)]
-#[reflect(Resource)]
-pub struct TerrainConfig {
-  /// The half-size of the render cube to build (smallest distance from player
-  /// to edge).
-  pub render_dist: f32,
-  /// Controls how far from the previous target position the target needs to
-  /// move to trigger a terrain regeneration. The trigger distance is equal
-  /// to `render_dist / 2.0_f32.powf(render_cube_subdiv_trigger)`.
-  /// Should be greater than or equal to
-  /// `render_cube_translation_subdiv_increment`, and less than or equal to
-  /// `n_sizes`.
-  pub render_cube_subdiv_trigger: f32,
-  /// Controls the increment in which the render cube will move from the origin
-  /// to follow the player. The increment is equal to `render_dist /
-  /// 2.0_f32.powf(render_cube_translation_subdiv_increment)`.
-  pub render_cube_translation_subdiv_increment: f32,
-  /// Controls the maximum subdivisions of each mesh.
-  pub mesh_subdivs: u8,
-  /// Controls how much each mesh bleeds into the next.
-  pub mesh_bleed: f32,
-  /// Controls the minimum number of same-sized meshes that form the border
-  /// between two sizes.
-  pub n_same_size_meshes: u8,
-  /// Controls how many times to subdivide the world box.
-  pub n_sizes: u8,
-  /// Whether to place 1/8th scale cubes at the position of each mesh.
-  pub debug_transform_cubes: bool,
-}
-
-impl TerrainConfig {
-  pub fn render_cube_translation_increment(&self) -> f32 {
-    self.render_dist
-      / 2.0_f32.powf(self.render_cube_translation_subdiv_increment)
-  }
-  pub fn trigger_distance(&self) -> f32 {
-    self.render_dist / 2.0_f32.powf(self.render_cube_subdiv_trigger)
-  }
-}
-
-impl Default for TerrainConfig {
-  fn default() -> Self {
-    Self {
-      render_dist: 1000.0,
-      render_cube_subdiv_trigger: 4.0,
-      render_cube_translation_subdiv_increment: 3.0,
-      mesh_subdivs: 6,
-      mesh_bleed: 1.05,
-      n_same_size_meshes: 1,
-      n_sizes: 5,
-      debug_transform_cubes: false,
-    }
-  }
-}
 
 #[derive(Resource, Reflect)]
 #[reflect(Resource)]
@@ -86,34 +20,31 @@ pub struct TerrainCurrentShape(#[reflect(ignore)] pub Shape);
 impl Default for TerrainCurrentShape {
   fn default() -> Self {
     TerrainCurrentShape(Shape::new_expr(
-      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
-       20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
+      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((cos(x / \
+       20.0) + cos(y / 20.0) + cos(z / 20.0)) * 4.0)",
     ))
   }
 }
 
 #[derive(Resource, Reflect, Default)]
 #[reflect(Resource)]
-pub struct TerrainCurrentGeneration {
-  pub target_location:  Vec3,
-  pub terrain_entities: Vec<Entity>,
-  #[reflect(ignore)]
-  pub shape:            Shape,
+pub struct TerrainGenerations {
+  pub current: (u32, Vec3),
+  pub next:    Vec<(u32, Vec3)>,
 }
 
-type MeshGenTask = Task<((Mesh, Option<Collider>), TerrainRegion)>;
+impl TerrainGenerations {
+  pub fn next(&self) -> u32 {
+    u32::max(
+      self.current.0 + 1,
+      self.next.iter().map(|(i, _)| i).max().copied().unwrap_or(0) + 1,
+    )
+  }
+}
 
-#[derive(Resource, Reflect, Default)]
-#[reflect(Resource)]
-pub struct TerrainNextGeneration {
-  pub target_location:          Vec3,
-  pub regions:                  Vec<region::TerrainRegion>,
-  #[reflect(ignore)]
-  pub mesh_gen_tasks:           Vec<MeshGenTask>,
-  pub resulting_terrain_meshes: Vec<Handle<TerrainMesh>>,
-  #[reflect(ignore)]
-  pub shape:                    Shape,
-  pub start_time:               Duration,
+#[derive(Component, Reflect)]
+pub struct TerrainPiece {
+  pub generation: u32,
 }
 
 #[derive(Event)]
@@ -121,365 +52,245 @@ pub struct TerrainTriggerRegeneration {
   pub target_location: Vec3,
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Reflect)]
-pub enum TerrainEnabledState {
-  #[default]
-  Enabled,
-  Disabled,
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
+pub struct TerrainMaterial {
+  pub material: Handle<ToonMaterial>,
 }
 
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
-pub struct TerrainSystemSet;
+impl FromWorld for TerrainMaterial {
+  fn from_world(world: &mut World) -> Self {
+    let mut materials =
+      world.get_resource_mut::<Assets<ToonMaterial>>().unwrap();
+    let material = materials.add(ToonMaterial {
+      base:      StandardMaterial {
+        base_color: Color::hex("5DBB63").unwrap(),
+        ..default()
+      },
+      extension: ToonExtension::default(),
+    });
+    TerrainMaterial { material }
+  }
+}
+
+#[derive(Bundle)]
+pub struct TerrainBundle {
+  pub spatial:       SpatialBundle,
+  pub implicit_mesh: Handle<ImplicitMesh>,
+  pub mesh:          Handle<Mesh>,
+  pub material:      Handle<ToonMaterial>,
+  pub rigid_body:    RigidBody,
+  pub position:      Position,
+}
 
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_state::<TerrainEnabledState>()
-      // configure `TerrainMesh`
-      .init_asset::<TerrainMesh>()
-      .register_type::<TerrainMesh>()
-      .register_asset_reflect::<TerrainMesh>()
-      // configure `TerrainConfig`
-      .register_type::<TerrainConfig>()
-      // register other components & resources
-      .register_type::<TerrainEnabledState>()
+      .init_resource::<TerrainConfig>()
+      .init_resource::<TerrainCurrentShape>()
+      .init_resource::<TerrainGenerations>()
+      .init_resource::<TerrainMaterial>()
       .register_type::<TerrainDetailTarget>()
-      .register_type::<TerrainCurrentGeneration>()
-      .register_type::<TerrainNextGeneration>()
+      .register_type::<TerrainPiece>()
+      .register_type::<TerrainConfig>()
       .register_type::<TerrainCurrentShape>()
-      // configure events
+      .register_type::<TerrainGenerations>()
+      .register_type::<TerrainMaterial>()
       .add_event::<TerrainTriggerRegeneration>()
-      // configure set
-      .configure_sets(
-        Update,
-        TerrainSystemSet.run_if(in_state(TerrainEnabledState::Enabled)),
-      )
-      // add systems
       .add_systems(
         Update,
         (
-          kickstart_terrain.run_if(
-            in_state(TerrainEnabledState::Enabled)
-              .and_then(eligible_for_new_gen),
-          ),
-          init_next_generation.run_if(
-            in_state(TerrainEnabledState::Enabled)
-              .and_then(on_event::<TerrainTriggerRegeneration>()),
-          ),
-          flush_assets_from_next_generation.run_if(
-            in_state(TerrainEnabledState::Enabled)
-              .and_then(resource_exists::<TerrainNextGeneration>()),
-          ),
-          transition_generations.run_if(
-            in_state(TerrainEnabledState::Enabled).and_then(next_gen_is_ready),
-          ),
+          kickstart_terrain,
+          graduate_generation,
+          clean_generation,
+          create_generation,
         )
-          .chain()
-          .in_set(TerrainSystemSet),
+          .chain(),
       )
-      .add_systems(OnEnter(TerrainEnabledState::Enabled), setup_terrain)
-      .add_systems(OnExit(TerrainEnabledState::Enabled), cleanup_terrain);
+      .add_plugins(timing::TerrainGenerationTimingPlugin);
   }
 }
 
-fn setup_terrain(mut commands: Commands) {
-  commands.insert_resource(TerrainConfig::default());
-  commands.insert_resource(TerrainCurrentShape::default());
-  info!("setup terrain resources");
-}
-
-fn cleanup_terrain(world: &mut World) {
-  // despawn all the current entities
-  if let Some(current_gen) = world.remove_resource::<TerrainCurrentGeneration>()
-  {
-    current_gen.terrain_entities.iter().for_each(|entity| {
-      world.entity_mut(*entity).despawn_recursive();
-    });
-  }
-
-  // cancel all the next generation tasks
-  if let Some(next_gen) = world.remove_resource::<TerrainNextGeneration>() {
-    // the cancel method consumes the task
-    next_gen.mesh_gen_tasks.into_iter().for_each(|task| {
-      block_on(task.cancel());
-    });
-  }
-
-  // remove the rest of the resources
-  world.remove_resource::<TerrainConfig>();
-  world.remove_resource::<TerrainCurrentShape>();
-}
-
-/// Builds `TerrainNextGeneration` when a `TerrainTriggerRegeneration` event is
-/// received.
-fn init_next_generation(
-  mut commands: Commands,
-  mut events: EventReader<TerrainTriggerRegeneration>,
-  config: Res<TerrainConfig>,
-  current_shape: Res<TerrainCurrentShape>,
-  terrain_meshes: Res<Assets<TerrainMesh>>,
-  time: Res<Time>,
-) {
-  if let Some(event) = events.read().next() {
-    // hash the current composition
-    let comp_hash = hash_single(&current_shape.0);
-
-    // start a vector for `TerrainMesh`'s which have already been built
-    let mut existing_terrain_meshes: Vec<Handle<TerrainMesh>> = vec![];
-
-    // calculate the regions that need to be built
-    let regions = region::calculate_regions(&config, event.target_location)
-      .iter()
-      .filter(|r| {
-        // Iterate through all of the terrain meshes to look for ones which
-        // match the region and composition hash we're working with.
-        // It's fine to iterate through all of them every time because
-        // terrain meshes are actually only 88 bytes.
-        for (t_mesh_handle_id, t_mesh) in terrain_meshes.iter() {
-          if t_mesh.region == **r && t_mesh.comp_hash == comp_hash {
-            // build a strong handle out of the handle ID
-            let handle = Handle::from(Handle::Weak(t_mesh_handle_id));
-            // handle.make_strong(&terrain_meshes);
-            existing_terrain_meshes.push(handle);
-            debug!("recycling terrain mesh for region: {:?}", r);
-            return false;
-          }
-        }
-        true
-      })
-      .copied()
-      .collect::<Vec<TerrainRegion>>();
-
-    // spawn tasks for generating meshes for the regions
-    let thread_pool = AsyncComputeTaskPool::get();
-    let mesh_gen_tasks = regions
-      .clone()
-      .into_iter()
-      .map(|region| {
-        thread_pool.spawn({
-          let shape = current_shape.0.clone();
-          async move {
-            let (mesh, collider) =
-              DiskCacheProvider::<FastSurfaceNetsMesher>::default()
-                .get_mesh_and_collider(&planiscope::mesher::MesherInputs {
-                  shape,
-                  region: region.into(),
-                });
-            (
-              (
-                bevy_mesh_from_pls_mesh(mesh.unwrap()),
-                collider.map(Collider::from),
-              ),
-              region,
-            )
-          }
-        })
-      })
-      .collect();
-
-    info!(
-      "starting terrain generation with {:?}% recycled regions",
-      existing_terrain_meshes.len() * 100
-        / (existing_terrain_meshes.len() + regions.len())
-    );
-
-    // insert the `TerrainNextGeneration` resource
-    commands.insert_resource(TerrainNextGeneration {
-      target_location: event.target_location,
-      regions,
-      mesh_gen_tasks,
-      resulting_terrain_meshes: existing_terrain_meshes,
-      shape: current_shape.0.clone(),
-      start_time: time.elapsed(),
-    });
-  }
-}
-
-fn eligible_for_new_gen(
-  current_shape: Res<TerrainCurrentShape>,
-  current_gen: Option<Res<TerrainCurrentGeneration>>,
-  next_gen: Option<Res<TerrainNextGeneration>>,
-  target_query: Query<&Transform, With<TerrainDetailTarget>>,
-  config: Res<TerrainConfig>,
-) -> bool {
-  // if the next gen is already queued, don't bother
-  if next_gen.is_some() {
-    return false;
-  }
-  // if there is neither a current gen nor a next gen, go for it
-  if current_gen.is_none() {
-    return true;
-  }
-
-  // this means we have a current gen but no next gen
-  let current_gen = current_gen.unwrap();
-
-  // check if the current composition's hash matches the current gen's comp hash
-  if hash_single(&current_shape.0) != hash_single(&current_gen.shape) {
-    return true;
-  }
-
-  // check if the target is too far away from the current gen's target
-  if let Some(target_transform) = target_query.iter().next() {
-    let target_location = target_transform.translation;
-    // we compare to 1.0 to give it a little margin
-    return (current_gen.target_location
-      - current_gen.target_location.rem(config.trigger_distance()))
-      != (target_location - target_location.rem(config.trigger_distance()));
-  }
-  error!("no `TerrainDetailTarget` found");
-  false
-}
-
-/// Sends a `TerrainTriggerRegeneration` event.
 fn kickstart_terrain(
-  target_query: Query<&Transform, With<TerrainDetailTarget>>,
-  mut trigger_regen_events: EventWriter<TerrainTriggerRegeneration>,
-) {
-  if let Some(target_transform) = target_query.iter().next() {
-    info!(
-      "sending TerrainTriggerRegeneration event with target: {:?}",
-      target_transform.translation
-    );
-    trigger_regen_events.send(TerrainTriggerRegeneration {
-      target_location: target_transform.translation,
-    });
-  } else {
-    error!("no `TerrainDetailTarget` found");
-  }
-}
-
-/// Runs in service of `TerrainNextGeneration`. Moves task results from the
-/// `TerrainNextGeneration` resource and adds them as `Mesh` and `TerrainMesh`
-/// assets.
-fn flush_assets_from_next_generation(
-  mut next_gen: ResMut<TerrainNextGeneration>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut terrain_meshes: ResMut<Assets<TerrainMesh>>,
-) {
-  let mut finished_tasks = vec![];
-  let comp_hash = hash_single(&next_gen.shape);
-  next_gen
-    .mesh_gen_tasks
-    .iter_mut()
-    .enumerate()
-    .for_each(|(index, task)| {
-      if let Some(((mesh, collider), region)) = block_on(poll_once(task)) {
-        finished_tasks.push((
-          index,
-          terrain_meshes.add(TerrainMesh {
-            mesh: meshes.add(mesh),
-            collider,
-            region,
-            comp_hash,
-          }),
-        ));
-      } // no else clause bc a `None` just means the task isn't complete yet
-    });
-
-  // we reverse the finished tasks so that the index order from the enumerate
-  // is preserved when we `.remove` from mesh_gen_tasks
-  finished_tasks.reverse();
-  for (index, terrain_mesh) in finished_tasks {
-    std::mem::drop(next_gen.mesh_gen_tasks.remove(index));
-    next_gen.resulting_terrain_meshes.push(terrain_mesh);
-  }
-}
-
-/// Indicates whether `TerrainNextGeneration` is fully built.
-fn next_gen_is_ready(next_gen: Option<Res<TerrainNextGeneration>>) -> bool {
-  if let Some(next_gen) = next_gen {
-    return next_gen.mesh_gen_tasks.is_empty();
-  }
-  false
-}
-
-/// If `TerrainNextGeneration` is fully built, spawns entities from it and
-/// creates `TerrainCurrentGeneration`.
-#[allow(clippy::too_many_arguments)]
-fn transition_generations(
-  mut commands: Commands,
-  current_gen: Option<Res<TerrainCurrentGeneration>>,
-  next_gen: Res<TerrainNextGeneration>,
-  terrain_meshes: Res<Assets<TerrainMesh>>,
+  generations: Res<TerrainGenerations>,
   config: Res<TerrainConfig>,
-  time: Res<Time>,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut toon_materials: ResMut<Assets<ToonMaterial>>,
+  shape: Res<TerrainCurrentShape>,
+  mut event_writer: EventWriter<TerrainTriggerRegeneration>,
+  target_q: Query<&Transform, With<TerrainDetailTarget>>,
 ) {
-  let entites = next_gen
-    .resulting_terrain_meshes
-    .iter()
-    .filter_map(|terrain_mesh_handle| {
-      if let Some(terrain_mesh) = terrain_meshes.get(terrain_mesh_handle) {
-        let entity = {
-          let mut entity = commands.spawn((
-            SpatialBundle::from_transform(Transform::from_translation(
-              terrain_mesh.region.position,
-            )),
-            RigidBody::Static,
-            Position(terrain_mesh.region.position),
-            terrain_mesh.mesh.clone(),
-            terrain_mesh_handle.clone(),
-            toon_materials.add(ToonMaterial {
-              color: Color::rgb(0.180, 0.267, 0.169),
-              outline_scale: 0.0,
-              ..default()
-            }),
-            Name::new(format!("terrain_mesh_{:?}", terrain_mesh_handle.id())),
-          ));
-          if let Some(collider) = terrain_mesh.collider.clone() {
-            entity.insert(collider);
-          }
-          entity
-        }
-        .id();
+  let Ok(transform) = target_q.get_single() else {
+    return;
+  };
+  let mut reason: Option<&str> = None;
 
-        if config.debug_transform_cubes {
-          commands.entity(entity).with_children(|parent| {
-            parent.spawn(MaterialMeshBundle {
-              mesh: meshes.add(Mesh::from(shape::Cube::new(1.0))),
-              material: toon_materials.add(ToonMaterial {
-                color: Color::WHITE,
-                outline_scale: 0.0,
-                ..default()
-              }),
-              transform: Transform::from_scale(terrain_mesh.region.scale / 8.0),
-              ..default()
-            });
-          });
-        }
-        Some(entity)
-      } else {
-        error!(
-          "TerrainMesh not found for terrain mesh handle: {:?}",
-          terrain_mesh_handle
-        );
-        None
+  if generations.current.0 == 0 && generations.next.is_empty() {
+    reason = Some("no generations");
+  } else if config.is_changed() {
+    reason = Some("config changed");
+  } else if shape.is_changed() {
+    reason = Some("shape changed");
+  } else if config.too_far_away(generations.current.1, transform.translation)
+    && generations
+      .next
+      .last()
+      .map(|(_, pos)| *pos != transform.translation)
+      .unwrap_or(true)
+  {
+    reason = Some("too far away");
+  }
+
+  if let Some(reason) = reason {
+    info!("triggering terrain regeneration: {}", reason);
+    event_writer.send(TerrainTriggerRegeneration {
+      target_location: transform.translation,
+    });
+  }
+}
+
+fn create_generation(
+  mut commands: Commands,
+  mut generations: ResMut<TerrainGenerations>,
+  mut event_reader: EventReader<TerrainTriggerRegeneration>,
+  shape: Res<TerrainCurrentShape>,
+  config: Res<TerrainConfig>,
+  asset_server: Res<AssetServer>,
+) {
+  let Some(event) = event_reader.read().next() else {
+    return;
+  };
+
+  let gen_id = generations.next();
+
+  for (i, region) in regions::calculate_regions(&config, event.target_location)
+    .into_iter()
+    .enumerate()
+  {
+    let inputs = MesherInputs {
+      shape: shape.0.clone(),
+      region,
+    };
+    let path =
+      bevy_implicits::asset_path(inputs).expect("failed to get mesh path");
+
+    let handle: Handle<ImplicitMesh> = asset_server.load(path);
+    commands.spawn((
+      TerrainPiece { generation: gen_id },
+      handle,
+      Name::new(format!("terrain-{:03}-{:04}", gen_id, i)),
+    ));
+  }
+
+  generations.next.push((gen_id, event.target_location));
+}
+
+fn graduate_generation(
+  mut commands: Commands,
+  mut generations: ResMut<TerrainGenerations>,
+  terrain_material: Res<TerrainMaterial>,
+  q: Query<(Entity, &TerrainPiece, &Handle<ImplicitMesh>)>,
+  asset_server: Res<AssetServer>,
+  implicit_meshes: Res<Assets<ImplicitMesh>>,
+  colliders: Res<Assets<ColliderAsset>>,
+) {
+  if generations.next.is_empty() {
+    return;
+  }
+
+  let q_list = q.iter().collect::<Vec<_>>();
+
+  let mut unloaded_generations = q_list
+    .clone()
+    .into_iter()
+    .filter_map(|(_, piece, handle)| {
+      match asset_server.is_loaded_with_dependencies(handle) {
+        false => Some(piece.generation),
+        true => None,
       }
     })
-    .collect::<Vec<Entity>>();
+    .collect::<Vec<_>>();
 
-  // despawn the old entities if current_gen exists
-  if let Some(current_gen) = current_gen {
-    for entity in &current_gen.terrain_entities {
-      commands.entity(*entity).insert(DespawnTag);
+  unloaded_generations.sort();
+  unloaded_generations.dedup();
+
+  // subtract to get the loaded generations
+  let mut loaded_generations = generations
+    .next
+    .iter()
+    .copied()
+    .filter(|gen| !unloaded_generations.contains(&gen.0))
+    .collect::<Vec<_>>();
+  loaded_generations.sort_by_key(|gen| gen.0);
+
+  // if no loaded generations, then we can't graduate
+  if loaded_generations.is_empty() {
+    return;
+  }
+
+  // pick the latest loaded generation
+  let latest_loaded = *loaded_generations.last().unwrap();
+  generations.current = latest_loaded;
+  info!("graduated to terrain generation {:?}", latest_loaded);
+
+  // add the terrain bundle to the entities of the new generation
+  for (entity, piece, handle) in q_list.into_iter() {
+    if piece.generation == latest_loaded.0 {
+      let implicit_mesh = implicit_meshes.get(handle).unwrap();
+
+      commands.entity(entity).insert(TerrainBundle {
+        spatial:       SpatialBundle {
+          transform: Transform::from_translation(
+            implicit_mesh.inputs.region.position.into(),
+          ),
+          ..SpatialBundle::default()
+        },
+        implicit_mesh: handle.clone(),
+        mesh:          implicit_mesh.mesh.clone(),
+        material:      terrain_material.material.clone(),
+        rigid_body:    RigidBody::Static,
+        position:      Position(implicit_mesh.inputs.region.position.into()),
+      });
+
+      // add the collider if it exists
+      if let Some(collider) = colliders
+        .get(implicit_mesh.collider.clone())
+        .unwrap()
+        .0
+        .clone()
+      {
+        commands.entity(entity).insert(collider);
+      }
     }
-  } // no else clause because the old current_gen is allowed to not exist
+  }
 
-  info!(
-    "completed terrain generation with {} terrain entities in {}ms",
-    entites.len(),
-    (time.elapsed() - next_gen.start_time).as_millis()
-  );
+  // remove earlier unloaded generations
+  generations.next = generations
+    .next
+    .iter()
+    .copied()
+    .filter(|gen| gen.0 > latest_loaded.0)
+    .collect();
+}
 
-  commands.insert_resource(TerrainCurrentGeneration {
-    target_location:  next_gen.target_location,
-    terrain_entities: entites,
-    shape:            next_gen.shape.clone(),
-  });
+fn clean_generation(
+  mut commands: Commands,
+  mut generations: ResMut<TerrainGenerations>,
+  q: Query<(Entity, &TerrainPiece)>,
+) {
+  // remove generations that have been surpassed
+  if generations.next.len() >= 10 {
+    info!(
+      "pruning surpassed queued generation: {:?}",
+      generations.next.first().unwrap()
+    );
+    generations.next.remove(0);
+  }
 
-  commands.remove_resource::<TerrainNextGeneration>();
+  // remove the entities of old generations
+  for (entity, piece) in q.iter() {
+    if piece.generation < generations.current.0 {
+      commands.entity(entity).despawn_recursive();
+    }
+  }
 }
