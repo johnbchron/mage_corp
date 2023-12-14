@@ -58,8 +58,8 @@ fn maintain_blueprint_visuals(
     commands
       .entity(entity)
       .with_children(|p| match bluep.stage {
-        BlueprintStage::Initialized { stored }
-        | BlueprintStage::Built { stored } => match bluep.descriptor {
+        BlueprintState::Initialized { stored }
+        | BlueprintState::Built { stored } => match bluep.descriptor {
           BlueprintDescriptor::MassBarrier { radius, .. } => {
             let material = materials.add(ToonMaterial {
               base:      StandardMaterial {

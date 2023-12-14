@@ -7,20 +7,20 @@ use super::{source::Source, spell::SourceLink, target::Target};
 #[derive(Component, Clone, Reflect)]
 pub struct ActiveBlueprint {
   descriptor: BlueprintDescriptor,
-  stage:      BlueprintStage,
+  stage:      BlueprintState,
 }
 
 impl ActiveBlueprint {
   pub fn new(descriptor: &BlueprintDescriptor) -> Self {
     Self {
       descriptor: descriptor.clone(),
-      stage:      BlueprintStage::Initialized { stored: 0.0 },
+      stage:      BlueprintState::Initialized { stored: 0.0 },
     }
   }
   pub fn saturated(&self) -> bool {
     match self.stage {
-      BlueprintStage::Active { deficit } => deficit <= 0.0,
-      BlueprintStage::Built { stored } => {
+      BlueprintState::Active { deficit } => deficit <= 0.0,
+      BlueprintState::Built { stored } => {
         stored >= self.descriptor.static_cost()
       }
       _ => false,
@@ -43,29 +43,29 @@ impl ActiveBlueprint {
   }
   pub fn supply(&mut self, amount: f32) {
     match &mut self.stage {
-      BlueprintStage::Initialized { stored } => {
+      BlueprintState::Initialized { stored } => {
         *stored += amount;
         if *stored >= self.descriptor.static_cost() {
-          self.stage = BlueprintStage::Built { stored: *stored };
+          self.stage = BlueprintState::Built { stored: *stored };
         }
       }
-      BlueprintStage::Built { stored } => {
+      BlueprintState::Built { stored } => {
         *stored += amount;
       }
-      BlueprintStage::Active { deficit } => {
+      BlueprintState::Active { deficit } => {
         *deficit -= amount;
       }
     }
   }
   pub fn remaining(&self) -> f32 {
     match self.stage {
-      BlueprintStage::Initialized { stored } => {
+      BlueprintState::Initialized { stored } => {
         self.descriptor.static_cost() - stored
       }
-      BlueprintStage::Built { stored } => {
+      BlueprintState::Built { stored } => {
         self.descriptor.static_cost() - stored
       }
-      BlueprintStage::Active { deficit } => deficit,
+      BlueprintState::Active { deficit } => deficit,
     }
   }
 }
@@ -89,13 +89,13 @@ impl BlueprintDescriptor {
 }
 
 #[derive(Clone, Reflect)]
-enum BlueprintStage {
+enum BlueprintState {
   Initialized { stored: f32 },
   Built { stored: f32 },
   Active { deficit: f32 },
 }
 
-impl Default for BlueprintStage {
+impl Default for BlueprintState {
   fn default() -> Self {
     Self::Initialized { stored: 0.0 }
   }
