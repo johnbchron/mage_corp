@@ -413,10 +413,7 @@ fn cleanup_phase(
 ) {
   for (entity, spell) in spell_q.iter() {
     let spell_is_active = spell.active_blocks.values().any(|b| {
-      matches!(
-        b.block_state,
-        BlockState::Uninit | BlockState::Init(_) | BlockState::Active(_)
-      )
+      matches!(b.block_state, BlockState::Init(_) | BlockState::Active(_))
     });
 
     if !spell_is_active {
