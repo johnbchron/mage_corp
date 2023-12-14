@@ -5,7 +5,7 @@ mod test_scene;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_xpbd_3d::prelude as xpbd;
-pub use common::materials;
+pub use common::{markers, materials};
 
 fn main() {
   App::new()
@@ -22,6 +22,7 @@ fn main() {
       materials::MaterialsPlugin,
       terrain::TerrainPlugin,
       test_scene::TestScenePlugin,
+      magicore::MagicPlugin,
     ))
     .insert_resource(Msaa::Off)
     .run();
