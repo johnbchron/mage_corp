@@ -2675,8 +2675,13 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_panorbit_camera",
  "bevy_xpbd_3d",
+ "magicore",
  "spatialtree",
 ]
+
+[[package]]
+name = "magicore"
+version = "0.1.0"
 
 [[package]]
 name = "malloc_buf"
