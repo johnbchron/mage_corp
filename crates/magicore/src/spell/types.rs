@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::OnceLock, time::Duration};
 
 use bevy::{
   prelude::*,
@@ -198,7 +198,9 @@ pub struct TriggerState {
 
 #[derive(Component, Clone, Default, Reflect)]
 pub struct SpellDescriptor {
-  blocks: HashMap<u64, SpellBlock>,
+  blocks:   HashMap<u64, SpellBlock>,
+  #[reflect(ignore)]
+  is_valid: OnceLock<Result<(), SpellInvalidError>>,
 }
 
 impl SpellDescriptor {
@@ -206,9 +208,21 @@ impl SpellDescriptor {
     let mut rng = nanorand::tls_rng();
     let id = rng.generate::<u64>();
     self.blocks.insert(id, block);
+
+    // invalidate the cached is_valid
+    self.is_valid.take();
+
     id
   }
+
   pub fn is_valid(&self) -> Result<(), SpellInvalidError> {
+    self
+      .is_valid
+      .get_or_init(|| self.calculate_is_valid())
+      .clone()
+  }
+
+  fn calculate_is_valid(&self) -> Result<(), SpellInvalidError> {
     if self.blocks.is_empty() {
       return Err(SpellInvalidError::NoBlocks);
     }
@@ -229,6 +243,7 @@ impl SpellDescriptor {
 
     Ok(())
   }
+
   fn sorted_block_ids(&self) -> Vec<u64> {
     let mut block_ids = self.blocks.keys().copied().collect::<Vec<_>>();
     block_ids.sort();
