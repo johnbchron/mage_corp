@@ -41,7 +41,6 @@ fn init_spell(
 
 fn check_for_disconnected_spells(
   mut commands: Commands,
-
   source_q: Query<&Source>,
   active_spell_q: Query<(Entity, &ActiveSpell), Changed<ActiveSpell>>,
 ) {
