@@ -42,6 +42,15 @@ pub enum BlockRef {
   SelfBlock,
 }
 
+impl BlockRef {
+  fn to_id(&self, self_block_id: u64) -> u64 {
+    match self {
+      Self::Id(id) => *id,
+      Self::SelfBlock => self_block_id,
+    }
+  }
+}
+
 #[derive(Clone, Default, Reflect)]
 pub enum SpellTrigger {
   #[default]
@@ -88,20 +97,13 @@ impl SpellTrigger {
       // AtStart is always true
       Self::AtStart => Some(true),
       Self::OnBlockInit(block_ref) => {
-        let id = match block_ref {
-          BlockRef::Id(id) => *id,
-          BlockRef::SelfBlock => self_block_id,
-        };
+        let id = block_ref.to_id(self_block_id);
         let block = active_spell.active_blocks.get(&id)?;
         Some(matches!(block.block_state, BlockState::Uninit))
       }
       Self::OnBlockBuilt(block_ref) => {
-        let id = match block_ref {
-          BlockRef::Id(id) => *id,
-          BlockRef::SelfBlock => self_block_id,
-        };
+        let id = block_ref.to_id(self_block_id);
         let block = active_spell.active_blocks.get(&id)?;
-
         let built = block.trigger_state.built;
         match block.block_state {
           BlockState::Uninit => Some(false),
@@ -110,10 +112,7 @@ impl SpellTrigger {
         }
       }
       Self::OnBlockActive(block_ref) => {
-        let id = match block_ref {
-          BlockRef::Id(id) => *id,
-          BlockRef::SelfBlock => self_block_id,
-        };
+        let id = block_ref.to_id(self_block_id);
         let block = active_spell.active_blocks.get(&id)?;
         match block.block_state {
           BlockState::Uninit | BlockState::Init(_) => Some(false),
@@ -121,10 +120,7 @@ impl SpellTrigger {
         }
       }
       Self::OnBlockEnd(block_ref) => {
-        let id = match block_ref {
-          BlockRef::Id(id) => *id,
-          BlockRef::SelfBlock => self_block_id,
-        };
+        let id = block_ref.to_id(self_block_id);
         let block = active_spell.active_blocks.get(&id)?;
         Some(matches!(block.block_state, BlockState::End))
       }
