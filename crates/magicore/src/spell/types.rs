@@ -33,6 +33,14 @@ impl SpellBlock {
     }
   }
 
+  fn triggers(&self) -> Vec<&SpellTrigger> {
+    vec![
+      &self.init_trigger,
+      &self.activate_trigger,
+      &self.end_trigger,
+    ]
+  }
+
   fn invalid_refs(&self, ids: &[u64]) -> Vec<BlockRef> {
     let mut invalid_refs = vec![];
     invalid_refs.extend(self.init_trigger.invalid_refs(ids));
@@ -102,21 +110,23 @@ impl SpellTrigger {
     }
   }
 
-  fn invalid_refs(&self, ids: &[u64]) -> Vec<BlockRef> {
+  fn refs(&self) -> Vec<BlockRef> {
     match self {
       Self::AtStart => vec![],
       Self::OnBlockInit(block_ref)
       | Self::OnBlockBuilt(block_ref)
       | Self::OnBlockActive(block_ref)
-      | Self::OnBlockEnd(block_ref) => {
-        if !block_ref.is_valid(ids) {
-          vec![*block_ref]
-        } else {
-          vec![]
-        }
-      }
-      Self::AfterTime { trigger, .. } => trigger.invalid_refs(ids),
+      | Self::OnBlockEnd(block_ref) => vec![*block_ref],
+      Self::AfterTime { trigger, .. } => trigger.refs(),
     }
+  }
+
+  fn invalid_refs(&self, ids: &[u64]) -> Vec<BlockRef> {
+    self
+      .refs()
+      .into_iter()
+      .filter(|r| !r.is_valid(ids))
+      .collect::<Vec<_>>()
   }
 
   fn evaluate(
@@ -200,29 +210,34 @@ pub struct TriggerState {
 pub struct SpellDescriptor {
   blocks:   HashMap<u64, SpellBlock>,
   #[reflect(ignore)]
-  is_valid: OnceLock<Result<(), SpellInvalidError>>,
+  is_valid: OnceLock<Result<Vec<SpellWarning>, SpellInvalidError>>,
 }
 
 impl SpellDescriptor {
   pub fn add(&mut self, block: SpellBlock) -> u64 {
     let mut rng = nanorand::tls_rng();
     let id = rng.generate::<u64>();
-    self.blocks.insert(id, block);
 
-    // invalidate the cached is_valid
-    self.is_valid.take();
+    self.add_with_id(id, block);
 
     id
   }
 
-  pub fn is_valid(&self) -> Result<(), SpellInvalidError> {
+  pub fn add_with_id(&mut self, id: u64, block: SpellBlock) {
+    self.blocks.insert(id, block);
+
+    // invalidate the cached is_valid
+    self.is_valid.take();
+  }
+
+  pub fn is_valid(&self) -> Result<Vec<SpellWarning>, SpellInvalidError> {
     self
       .is_valid
       .get_or_init(|| self.calculate_is_valid())
       .clone()
   }
 
-  fn calculate_is_valid(&self) -> Result<(), SpellInvalidError> {
+  fn calculate_is_valid(&self) -> Result<Vec<SpellWarning>, SpellInvalidError> {
     if self.blocks.is_empty() {
       return Err(SpellInvalidError::NoBlocks);
     }
@@ -241,7 +256,27 @@ impl SpellDescriptor {
       });
     }
 
-    Ok(())
+    Ok(self.calculate_warnings())
+  }
+
+  fn calculate_warnings(&self) -> Vec<SpellWarning> {
+    let mut warnings = vec![];
+
+    for (id, block) in self.blocks.iter() {
+      for trigger in block.triggers() {
+        for block_ref in trigger.refs() {
+          if let BlockRef::Id(block_id) = block_ref {
+            if block_id == *id {
+              warnings.push(SpellWarning::ExplicitSelfRef {
+                containing_block: *id,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    warnings
   }
 
   fn sorted_block_ids(&self) -> Vec<u64> {
@@ -262,6 +297,15 @@ pub enum SpellInvalidError {
     containing_block: u64,
     block_ref:        BlockRef,
   },
+}
+
+#[derive(Error, Debug, Clone, Reflect)]
+pub enum SpellWarning {
+  #[error(
+    "Block {containing_block:#x} has a trigger referencing itself with an \
+     explicit ID"
+  )]
+  ExplicitSelfRef { containing_block: u64 },
 }
 
 #[derive(Clone, Default, Reflect)]
