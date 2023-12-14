@@ -1,4 +1,3 @@
-
 pub mod blueprint;
 pub mod source;
 pub mod spell;
@@ -42,7 +41,7 @@ impl Plugin for MagicPlugin {
 
 fn spawn_spell_test(
   mut commands: Commands,
-  player_q: Query<Entity, With<crate::markers::Player>>,
+  player_q: Query<Entity, With<common::markers::Player>>,
   keys: Res<Input<KeyCode>>,
 ) {
   if !keys.just_pressed(KeyCode::T) {

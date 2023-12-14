@@ -1,9 +1,9 @@
 use std::f32::consts::PI;
 
 use bevy::{pbr::NotShadowCaster, prelude::*};
+use common::materials::{ToonExtension, ToonMaterial};
 
 use super::*;
-use crate::materials::force::ForceMaterial;
 
 #[derive(Component, Default, Reflect)]
 struct BlueprintVisualsChild;
@@ -23,7 +23,7 @@ impl FromWorld for BlueprintVisualsPrefabs {
   }
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 struct BlueprintVisualsBundle<M: Material> {
   spatial:           SpatialBundle,
   mesh:              Handle<Mesh>,
@@ -35,7 +35,7 @@ struct BlueprintVisualsBundle<M: Material> {
 fn maintain_blueprint_visuals(
   time: Res<Time>,
   mut commands: Commands,
-  mut force_materials: ResMut<Assets<ForceMaterial>>,
+  mut materials: ResMut<Assets<ToonMaterial>>,
   prefabs: Res<BlueprintVisualsPrefabs>,
   bluep_q: Query<
     (&ActiveBlueprint, Entity, Option<&Children>),
@@ -61,11 +61,12 @@ fn maintain_blueprint_visuals(
         BlueprintStage::Initialized { stored }
         | BlueprintStage::Built { stored } => match bluep.descriptor {
           BlueprintDescriptor::MassBarrier { radius, .. } => {
-            let material = force_materials.add(ForceMaterial {
-              color: Color::rgb(0.01, 0.45, 0.81),
-              alpha_min: 0.0005,
-              influence: 10.0,
-              ..default()
+            let material = materials.add(ToonMaterial {
+              base:      StandardMaterial {
+                base_color: Color::rgb(0.01, 0.45, 0.81),
+                ..default()
+              },
+              extension: ToonExtension::default(),
             });
             for i in 0..3 {
               let t = (stored / bluep.descriptor.static_cost()).clamp(0.0, 1.0);
@@ -82,13 +83,14 @@ fn maintain_blueprint_visuals(
               let rot = Quat::slerp(rot, Quat::IDENTITY, t);
 
               p.spawn(BlueprintVisualsBundle {
-                spatial: SpatialBundle::from_transform(
+                spatial:           SpatialBundle::from_transform(
                   Transform::from_rotation(rot)
                     .with_scale(Vec3::splat((3.0 - i as f32) / 3.0 * radius)),
                 ),
-                mesh: prefabs.mass_barrier_mesh.clone(),
-                material: material.clone(),
-                ..default()
+                mesh:              prefabs.mass_barrier_mesh.clone(),
+                material:          material.clone(),
+                marker:            BlueprintVisualsChild,
+                not_shadow_caster: NotShadowCaster,
               });
             }
           }

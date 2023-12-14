@@ -1425,6 +1425,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2674,6 +2681,7 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_panorbit_camera",
  "bevy_xpbd_3d",
+ "common",
  "magicore",
  "spatialtree",
 ]
@@ -2683,6 +2691,7 @@ name = "magicore"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "common",
  "nanorand",
 ]
 

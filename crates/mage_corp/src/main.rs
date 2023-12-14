@@ -1,11 +1,11 @@
 mod camera;
-mod materials;
 mod terrain;
 mod test_scene;
 
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_xpbd_3d::prelude as xpbd;
+pub use common::materials;
 
 fn main() {
   App::new()
