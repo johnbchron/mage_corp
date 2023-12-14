@@ -52,9 +52,9 @@ pub enum BlockRef {
 }
 
 impl BlockRef {
-  fn to_id(&self, self_block_id: u64) -> u64 {
+  fn to_id(self, self_block_id: u64) -> u64 {
     match self {
-      Self::Id(id) => *id,
+      Self::Id(id) => id,
       Self::SelfBlock => self_block_id,
     }
   }
