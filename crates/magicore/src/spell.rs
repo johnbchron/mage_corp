@@ -17,11 +17,10 @@ impl Plugin for SpellPlugin {
         Update,
         (
           init_spell,
-          check_for_disconnected_spells,
           trigger_phase,
           state_phase,
           expend_phase,
-          cleanup_phase,
+          cleanup_spells,
         )
           .chain(),
       );
@@ -36,22 +35,6 @@ fn init_spell(
     commands
       .entity(entity)
       .insert(ActiveSpell::new(descriptor.clone(), source_link.0));
-  }
-}
-
-fn check_for_disconnected_spells(
-  mut commands: Commands,
-  source_q: Query<&Source>,
-  active_spell_q: Query<(Entity, &ActiveSpell), Changed<ActiveSpell>>,
-) {
-  for (spell_entity, active_spell) in active_spell_q.iter() {
-    if source_q.get(active_spell.source()).is_err() {
-      error!(
-        "Spell source entity was deleted or didn't exist, removing spell \
-         entity"
-      );
-      commands.entity(spell_entity).despawn_recursive();
-    }
   }
 }
 
@@ -86,13 +69,17 @@ fn expend_phase(
   }
 }
 
-fn cleanup_phase(
+fn cleanup_spells(
   mut commands: Commands,
+  source_q: Query<&Source>,
   spell_q: Query<(Entity, &ActiveSpell)>,
 ) {
   for (entity, spell) in spell_q.iter() {
     if !spell.is_active() {
-      warn!("Spell entity is no longer active, despawning");
+      info!("spell_cleanup: inactive");
+      commands.entity(entity).despawn_recursive();
+    } else if source_q.get(spell.source()).is_err() {
+      warn!("spell_cleanup: source {:?} not found", spell.source());
       commands.entity(entity).despawn_recursive();
     }
   }
