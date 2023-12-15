@@ -68,6 +68,8 @@ fn test_scene(
     RigidBody::Dynamic,
     Collider::ball(0.5),
     Name::new("sphere"),
+    crate::markers::Player,
+    magicore::source::Source::default(),
   ));
 }
 

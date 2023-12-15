@@ -14,9 +14,7 @@
           inherit system overlays;
         };
         
-        toolchain = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-          extensions = [ "rust-analyzer" "rust-src" ];
-        });
+        toolchain = pkgs.rust-bin.nightly."2023-11-10".complete;
         
         rust_deps = [ toolchain pkgs.lldb pkgs.bacon pkgs.cargo-nextest ];
         bevy_build_deps = with pkgs; [
