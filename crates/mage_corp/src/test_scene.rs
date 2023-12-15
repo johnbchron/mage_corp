@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{pbr::wireframe::Wireframe, prelude::*};
+use bevy::prelude::*;
 use bevy_implicits::prelude::*;
 use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
@@ -98,7 +98,6 @@ fn test_scene(
       gen_collider: true,
     }),
     SyncImplicits,
-    Wireframe,
     Name::new("implicits_test"),
   ));
 }
