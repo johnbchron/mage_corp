@@ -1,5 +1,3 @@
-pub mod visuals;
-
 use bevy::prelude::*;
 
 use super::{source::Source, spell::SourceLink, target::Target};
@@ -115,7 +113,6 @@ impl Plugin for BlueprintPlugin {
   fn build(&self, app: &mut App) {
     app
       .register_type::<ActiveBlueprint>()
-      .add_plugins(visuals::BlueprintVisualsPlugin)
       .add_systems(Update, check_for_disconnected_bluep);
   }
 }
