@@ -2,12 +2,13 @@ use std::path::PathBuf;
 
 use anyhow::{anyhow, Context, Result};
 use base64::{engine::general_purpose, Engine as _};
+use bevy::prelude::Component;
 use planiscope::mesher::MesherInputs;
 use serde::{Deserialize, Serialize};
 
 /// A wrapper around `planiscope::mesher::MesherInputs` that implements
 /// `bevy::asset::Asset` and can be de/serialized to a file path.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct ImplicitInputs(pub MesherInputs);
 
 impl TryFrom<PathBuf> for ImplicitInputs {

@@ -2,7 +2,7 @@ mod camera;
 mod terrain;
 mod test_scene;
 
-use bevy::prelude::*;
+use bevy::{pbr::wireframe::WireframePlugin, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_xpbd_3d::prelude as xpbd;
 pub use common::{markers, materials};
@@ -12,6 +12,7 @@ fn main() {
     .add_plugins((
       bevy_implicits::ImplicitsAssetSourcePlugin,
       DefaultPlugins.set(ImagePlugin::default_nearest()),
+      WireframePlugin,
       bevy_implicits::ImplicitsPlugin,
       xpbd::PhysicsPlugins::default(),
       WorldInspectorPlugin::default(),

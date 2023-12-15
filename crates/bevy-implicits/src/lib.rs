@@ -24,7 +24,7 @@ pub mod prelude {
 
   pub use crate::{
     asset_path, inputs::ImplicitInputs, ColliderAsset, ImplicitMesh,
-    ImplicitsPlugin,
+    ImplicitsPlugin, SyncImplicits,
   };
 }
 
@@ -71,7 +71,41 @@ impl Plugin for ImplicitsPlugin {
     app
       .init_asset::<ImplicitMesh>()
       .init_asset::<ColliderAsset>()
-      .register_asset_loader(ImplicitMeshAssetLoader);
+      .register_asset_loader(ImplicitMeshAssetLoader)
+      .add_systems(Update, sync_implicits);
+  }
+}
+
+#[derive(Component)]
+pub struct SyncImplicits;
+
+// When an entity has a `ImplicitInputs` and `SyncImplicits` component, this
+// system will add the `ImplicitMesh` asset built from the inputs to the entity,
+// and update the `Handle<Mesh>` and `Collider` components.
+fn sync_implicits(
+  mut commands: Commands,
+  query: Query<(Entity, &ImplicitInputs), With<SyncImplicits>>,
+  asset_server: Res<AssetServer>,
+  implicit_meshes: Res<Assets<ImplicitMesh>>,
+  colliders: Res<Assets<ColliderAsset>>,
+) {
+  for (entity, inputs) in query.iter() {
+    let asset_path = asset_path(inputs.0.clone()).unwrap();
+    let handle: Handle<ImplicitMesh> = asset_server.load(asset_path);
+
+    commands.entity(entity).insert(handle.clone());
+
+    if asset_server.is_loaded_with_dependencies(handle.clone()) {
+      let implicit_mesh = implicit_meshes.get(handle).unwrap();
+
+      let collider_handle = implicit_mesh.collider.clone();
+      let collider = colliders.get(collider_handle).unwrap();
+
+      commands.entity(entity).insert(implicit_mesh.mesh.clone());
+      if let Some(collider) = collider.0.clone() {
+        commands.entity(entity).insert(collider);
+      }
+    }
   }
 }
 
