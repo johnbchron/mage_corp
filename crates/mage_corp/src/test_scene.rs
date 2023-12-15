@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_implicits::prelude::*;
+use bevy_implicits::prelude::{builder as sb, *};
 use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
 
@@ -86,9 +86,7 @@ fn test_scene(
       extension: ToonExtension::default(),
     }),
     ImplicitInputs(MesherInputs {
-      shape:        Shape::Expression {
-        expr: "sqrt(square(x) + square(y) + square(z)) - 1.0".to_string(),
-      },
+      shape:        sb::sphere(1.0),
       region:       MesherRegion {
         position: Vec3::ZERO.into(),
         scale:    Vec3::splat(2.0).into(),

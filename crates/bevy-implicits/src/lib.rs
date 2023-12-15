@@ -19,7 +19,7 @@ use self::{inputs::*, loader::*, reader::*};
 pub mod prelude {
   pub use planiscope::{
     mesher::{MesherDetail, MesherInputs, MesherRegion},
-    shape::Shape,
+    shape::{builder, Shape},
   };
 
   pub use crate::{
