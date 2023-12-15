@@ -170,6 +170,7 @@ fn create_generation(
     let inputs = MesherInputs {
       shape: shape.0.clone(),
       region,
+      gen_collider: true,
     };
     let path =
       bevy_implicits::asset_path(inputs).expect("failed to get mesh path");

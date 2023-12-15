@@ -1,27 +1,20 @@
 #![feature(path_file_prefix)]
 
-use std::{
-  io::{Cursor, Read},
-  path::PathBuf,
-};
+mod inputs;
+mod loader;
+mod reader;
+mod utils;
 
-use anyhow::{anyhow, Context, Result};
-use base64::{engine::general_purpose, Engine as _};
+use std::path::PathBuf;
+
+use anyhow::Result;
 use bevy::{
-  asset::{
-    io::{AssetReader, AssetReaderError, AssetSource, PathStream, Reader},
-    AssetLoader, AssetPath, AsyncReadExt,
-  },
+  asset::{io::AssetSource, AssetPath},
   prelude::*,
-  utils::BoxedFuture,
 };
-use bevy_xpbd_3d::components::Collider;
-use planiscope::{
-  cache::{CacheProvider, DiskCacheProvider},
-  mesher::{FastSurfaceNetsMesher, FullMesh, MesherInputs},
-};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
+use planiscope::mesher::MesherInputs;
+
+use self::{inputs::*, loader::*, reader::*};
 
 pub mod prelude {
   pub use planiscope::{
@@ -30,7 +23,8 @@ pub mod prelude {
   };
 
   pub use crate::{
-    asset_path, ColliderAsset, ImplicitInputs, ImplicitMesh, ImplicitsPlugin,
+    asset_path, inputs::ImplicitInputs, ColliderAsset, ImplicitMesh,
+    ImplicitsPlugin, SyncImplicits,
   };
 }
 
@@ -45,119 +39,6 @@ pub fn asset_path(inputs: MesherInputs) -> Result<AssetPath<'static>> {
   Ok(AssetPath::from(path).with_source("implicit"))
 }
 
-/// A wrapper around `planiscope::mesher::MesherInputs` that implements
-/// `bevy::asset::Asset` and can be de/serialized to a file path.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ImplicitInputs(MesherInputs);
-
-impl TryFrom<PathBuf> for ImplicitInputs {
-  type Error = anyhow::Error;
-
-  fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-    let file_prefix = path
-      .file_prefix()
-      .ok_or_else(|| {
-        anyhow!("failed to get file prefix from path: {:?}", path)
-      })?
-      .to_string_lossy()
-      .to_string();
-
-    // decode from base64
-    let base64_decoded = general_purpose::URL_SAFE
-      .decode(file_prefix)
-      .context("failed to decode base64 from file prefix")?;
-
-    // decode from messagepack
-    let decoded: Self = rmp_serde::from_slice(&base64_decoded).context(
-      "failed to decode messagepack from base64-decoded file prefix",
-    )?;
-
-    Ok(decoded)
-  }
-}
-
-impl TryFrom<ImplicitInputs> for PathBuf {
-  type Error = anyhow::Error;
-
-  fn try_from(inputs: ImplicitInputs) -> Result<Self, Self::Error> {
-    let messagepack_encoded = rmp_serde::to_vec(&inputs)
-      .context(format!("serde failed to serialize: {:?}", &inputs))?;
-    // println!("messagepack_encoded: {:?}", messagepack_encoded);
-    let base64_encoded = general_purpose::URL_SAFE.encode(messagepack_encoded);
-    // println!("base64_encoded: {:?}", base64_encoded);
-
-    Ok(PathBuf::from(format!("{}.implicit", base64_encoded)))
-  }
-}
-
-struct CursorAsyncReader(Cursor<Vec<u8>>);
-
-impl CursorAsyncReader {
-  fn new<T: Serialize + for<'a> Deserialize<'a>>(inner: T) -> Self {
-    Self(Cursor::new(bincode::serialize(&inner).unwrap()))
-  }
-}
-
-impl futures_io::AsyncRead for CursorAsyncReader {
-  fn poll_read(
-    self: std::pin::Pin<&mut Self>,
-    _cx: &mut std::task::Context<'_>,
-    buf: &mut [u8],
-  ) -> std::task::Poll<std::io::Result<usize>> {
-    let bytes_read = self.get_mut().0.read(buf)?;
-    std::task::Poll::Ready(Ok(bytes_read))
-  }
-}
-
-/// An `AssetReader` that reads `ImplicitInputs` from a file path.
-struct ImplicitInputsAssetReader;
-
-impl AssetReader for ImplicitInputsAssetReader {
-  fn read<'a>(
-    &'a self,
-    path: &'a std::path::Path,
-  ) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
-    match ImplicitInputs::try_from(path.to_path_buf()) {
-      Ok(inputs) => {
-        let reader: Box<dyn futures_io::AsyncRead + Send + Sync + Unpin> =
-          Box::new(CursorAsyncReader::new(inputs));
-        Box::pin(async move { Ok(reader) })
-      }
-      Err(err) => Box::pin(async move {
-        error!("failed to decode planiscope payload: {:?}", err);
-        Err(AssetReaderError::NotFound(path.to_path_buf()))
-      }),
-    }
-  }
-
-  fn read_meta<'a>(
-    &'a self,
-    path: &'a std::path::Path,
-  ) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
-    Box::pin(async move { Err(AssetReaderError::NotFound(path.to_path_buf())) })
-  }
-
-  fn read_directory<'a>(
-    &'a self,
-    _path: &'a std::path::Path,
-  ) -> BoxedFuture<'a, Result<Box<PathStream>, AssetReaderError>> {
-    unimplemented!(
-      "`read_directory` makes no sense for generated assets. You might be \
-       generating your asset paths incorrectly."
-    )
-  }
-
-  fn is_directory<'a>(
-    &'a self,
-    _path: &'a std::path::Path,
-  ) -> BoxedFuture<'a, Result<bool, AssetReaderError>> {
-    unimplemented!(
-      "`is_directory` makes no sense for generated assets. You might be \
-       generating your asset paths incorrectly."
-    )
-  }
-}
-
 /// A wrapper around `bevy_xpbd_3d::components::Collider` that implements
 /// `bevy::asset::Asset`.
 #[derive(Debug, Clone, Asset, TypePath)]
@@ -170,57 +51,6 @@ pub struct ImplicitMesh {
   pub inputs:   MesherInputs,
   pub mesh:     Handle<Mesh>,
   pub collider: Handle<ColliderAsset>,
-}
-
-/// An `AssetLoader` that loads `ImplicitMesh` from a file path and generates
-/// the mesh if necessary.
-struct ImplicitMeshAssetLoader;
-
-#[derive(Error, Debug)]
-enum ImplicitMeshError {
-  #[error("Failed to generate mesh: {0}")]
-  MeshError(fidget::Error),
-}
-
-impl AssetLoader for ImplicitMeshAssetLoader {
-  type Asset = ImplicitMesh;
-  type Settings = ();
-  type Error = ImplicitMeshError;
-
-  fn load<'a>(
-    &'a self,
-    reader: &'a mut Reader,
-    _settings: &'a Self::Settings,
-    load_context: &'a mut bevy::asset::LoadContext,
-  ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
-    Box::pin(async move {
-      let mut bytes = Vec::new();
-      reader.read_to_end(&mut bytes).await.unwrap();
-      let inputs: ImplicitInputs = bincode::deserialize(&bytes).unwrap();
-
-      let (mesh, collider) =
-        DiskCacheProvider::<FastSurfaceNetsMesher>::default()
-          .get_mesh_and_collider(&inputs.0);
-      let mesh = mesh.map_err(ImplicitMeshError::MeshError)?;
-      let mesh = bevy_mesh_from_pls_mesh(mesh);
-      let collider = collider.map(Collider::from);
-
-      let mesh_handle =
-        load_context.add_labeled_asset("mesh".to_string(), mesh);
-      let collider_handle = load_context
-        .add_labeled_asset("collider".to_string(), ColliderAsset(collider));
-
-      Ok(ImplicitMesh {
-        inputs:   inputs.0,
-        mesh:     mesh_handle,
-        collider: collider_handle,
-      })
-    })
-  }
-
-  fn extensions(&self) -> &[&str] {
-    &["implicit"]
-  }
 }
 
 pub struct ImplicitsAssetSourcePlugin;
@@ -241,40 +71,43 @@ impl Plugin for ImplicitsPlugin {
     app
       .init_asset::<ImplicitMesh>()
       .init_asset::<ColliderAsset>()
-      .register_asset_loader(ImplicitMeshAssetLoader);
+      .register_type::<ImplicitInputs>()
+      .register_asset_loader(ImplicitMeshAssetLoader)
+      .add_systems(Update, sync_implicits);
   }
 }
 
-/// Converts a `planiscope::mesher::FullMesh` to a `bevy::render::mesh::Mesh`.
-pub fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
-  let mut bevy_mesh =
-    Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList);
+#[derive(Component)]
+pub struct SyncImplicits;
 
-  bevy_mesh.insert_attribute(
-    Mesh::ATTRIBUTE_POSITION,
-    mesh
-      .vertices
-      .into_iter()
-      .map(|v| v.to_array())
-      .collect::<Vec<_>>(),
-  );
-  bevy_mesh.insert_attribute(
-    Mesh::ATTRIBUTE_NORMAL,
-    mesh
-      .normals
-      .into_iter()
-      .map(|v| v.to_array())
-      .collect::<Vec<_>>(),
-  );
+// When an entity has a `ImplicitInputs` and `SyncImplicits` component, this
+// system will add the `ImplicitMesh` asset built from the inputs to the entity,
+// and update the `Handle<Mesh>` and `Collider` components.
+fn sync_implicits(
+  mut commands: Commands,
+  query: Query<(Entity, &ImplicitInputs), With<SyncImplicits>>,
+  asset_server: Res<AssetServer>,
+  implicit_meshes: Res<Assets<ImplicitMesh>>,
+  colliders: Res<Assets<ColliderAsset>>,
+) {
+  for (entity, inputs) in query.iter() {
+    let asset_path = asset_path(inputs.0.clone()).unwrap();
+    let handle: Handle<ImplicitMesh> = asset_server.load(asset_path);
 
-  bevy_mesh.set_indices(Some(bevy::render::mesh::Indices::U32(
-    mesh
-      .triangles
-      .into_iter()
-      .flat_map(|v| v.to_array())
-      .collect(),
-  )));
-  bevy_mesh
+    commands.entity(entity).insert(handle.clone());
+
+    if asset_server.is_loaded_with_dependencies(handle.clone()) {
+      let implicit_mesh = implicit_meshes.get(handle).unwrap();
+
+      let collider_handle = implicit_mesh.collider.clone();
+      let collider = colliders.get(collider_handle).unwrap();
+
+      commands.entity(entity).insert(implicit_mesh.mesh.clone());
+      if let Some(collider) = collider.0.clone() {
+        commands.entity(entity).insert(collider);
+      }
+    }
+  }
 }
 
 #[cfg(test)]
@@ -286,13 +119,14 @@ mod tests {
   #[test]
   fn test_implicit_inputs() {
     let inputs = ImplicitInputs(MesherInputs {
-      shape:  planiscope::shape::builder::sphere(1.0),
-      region: planiscope::mesher::MesherRegion {
+      shape:        planiscope::shape::builder::sphere(1.0),
+      region:       planiscope::mesher::MesherRegion {
         position: Vec3::ZERO.into(),
         scale:    Vec3::ONE.into(),
         detail:   planiscope::mesher::MesherDetail::Resolution(8.0),
         prune:    true,
       },
+      gen_collider: true,
     });
     let path: PathBuf = inputs.clone().try_into().unwrap();
     let inputs2: ImplicitInputs = path.try_into().unwrap();

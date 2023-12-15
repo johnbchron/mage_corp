@@ -67,6 +67,10 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     &self,
     inputs: &MesherInputs,
   ) -> Option<parry3d::shape::SharedShape> {
+    if !inputs.gen_collider {
+      return None;
+    }
+
     // get the hash and resulting path
     let inputs_hash = hash_single(inputs);
     let path = format!("{}{}", self.mesh_path, inputs_hash);
@@ -98,6 +102,10 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
 
     let inputs_hash = hash_single(inputs);
     let path = format!("{}{}", self.collider_path, inputs_hash);
+
+    if !inputs.gen_collider {
+      return (mesh, None);
+    }
 
     let collider = match deserialize_from_file::<SharedShape>(&path) {
       Some(s) => Some(s),

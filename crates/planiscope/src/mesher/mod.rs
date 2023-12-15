@@ -2,6 +2,7 @@ pub mod fsn_mesher;
 
 use std::hash::{Hash, Hasher};
 
+use bevy_reflect::Reflect;
 use educe::Educe;
 use fidget::eval::Tape;
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,7 @@ pub struct FullMesh {
 }
 
 /// The region over which a mesh is generated.
-#[derive(Clone, Debug, Educe, Serialize, Deserialize)]
+#[derive(Clone, Debug, Reflect, Educe, Serialize, Deserialize)]
 #[educe(Hash)]
 pub struct MesherRegion {
   /// The position in node-space around which the mesh is generated.
@@ -48,7 +49,7 @@ impl MesherRegion {
 }
 
 /// A descriptor to determine how many voxel cells to mesh with.
-#[derive(Clone, Debug, Educe, Serialize, Deserialize)]
+#[derive(Clone, Debug, Reflect, Educe, Serialize, Deserialize)]
 #[educe(Hash)]
 pub enum MesherDetail {
   /// Subdivides the side length `x` times to determine the voxel count; i.e. a
@@ -64,10 +65,11 @@ pub enum MesherDetail {
 }
 
 /// All of the inputs required to build a mesh.
-#[derive(Clone, Debug, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Hash, Reflect, Serialize, Deserialize)]
 pub struct MesherInputs {
-  pub shape:  Shape,
-  pub region: MesherRegion,
+  pub shape:        Shape,
+  pub region:       MesherRegion,
+  pub gen_collider: bool,
 }
 
 #[derive(Clone, Debug, Default)]
