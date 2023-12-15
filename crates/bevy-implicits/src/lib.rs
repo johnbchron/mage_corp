@@ -286,13 +286,14 @@ mod tests {
   #[test]
   fn test_implicit_inputs() {
     let inputs = ImplicitInputs(MesherInputs {
-      shape:  planiscope::shape::builder::sphere(1.0),
-      region: planiscope::mesher::MesherRegion {
+      shape:        planiscope::shape::builder::sphere(1.0),
+      region:       planiscope::mesher::MesherRegion {
         position: Vec3::ZERO.into(),
         scale:    Vec3::ONE.into(),
         detail:   planiscope::mesher::MesherDetail::Resolution(8.0),
         prune:    true,
       },
+      gen_collider: true,
     });
     let path: PathBuf = inputs.clone().try_into().unwrap();
     let inputs2: ImplicitInputs = path.try_into().unwrap();

@@ -66,8 +66,9 @@ pub enum MesherDetail {
 /// All of the inputs required to build a mesh.
 #[derive(Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct MesherInputs {
-  pub shape:  Shape,
-  pub region: MesherRegion,
+  pub shape:        Shape,
+  pub region:       MesherRegion,
+  pub gen_collider: bool,
 }
 
 #[derive(Clone, Debug, Default)]
