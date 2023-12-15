@@ -71,6 +71,7 @@ impl Plugin for ImplicitsPlugin {
     app
       .init_asset::<ImplicitMesh>()
       .init_asset::<ColliderAsset>()
+      .register_type::<ImplicitInputs>()
       .register_asset_loader(ImplicitMeshAssetLoader)
       .add_systems(Update, sync_implicits);
   }
