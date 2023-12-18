@@ -23,12 +23,25 @@ impl<T> Grid<T> {
     let index = position.index(&self.size);
     self.elements[index] = value;
   }
-  pub fn iter(&self) -> impl Iterator<Item = &T> { self.elements.iter() }
+  pub fn iter_values(&self) -> impl Iterator<Item = &T> { self.elements.iter() }
+  pub fn iter_values_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    self.elements.iter_mut()
+  }
+  pub fn iter_entries(&self) -> impl Iterator<Item = (Position, &T)> {
+    self.elements.iter().enumerate().map(move |(index, value)| {
+      (Position::from_index(index, &self.size), value)
+    })
+  }
+  pub fn iter_entries_mut(
+    &mut self,
+  ) -> impl Iterator<Item = (&mut T, Position)> {
+    self.elements.iter_mut().zip(self.size.iter_positions())
+  }
   pub(crate) fn values(&self) -> &Vec<T> { &self.elements }
 }
 
 impl<T: Clone> Grid<T> {
-  pub fn new_with_default(default: T, size: Position) -> Self {
+  pub fn new_with_fill(default: T, size: Position) -> Self {
     let elements = vec![default; (size.x() * size.y() * size.z()) as usize];
     Self::new(elements, size)
   }

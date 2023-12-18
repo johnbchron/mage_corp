@@ -28,7 +28,7 @@ impl<T: Element> Solver<T> {
     Self {
       stack: vec![(
         Generation::new(initial.clone()),
-        Grid::new_with_default(None, initial.size()),
+        Grid::new_with_fill(None, initial.size()),
       )],
     }
   }
@@ -40,7 +40,7 @@ impl<T: Element> Solver<T> {
       let diff = generation.collapse();
 
       // if we made progress, push the new generation onto the stack
-      if diff.iter().any(|value| value.is_some()) {
+      if diff.iter_values().any(|value| value.is_some()) {
         self.stack.push((generation, diff));
         continue;
       }
@@ -112,7 +112,7 @@ mod tests {
 
   #[test]
   fn test_solver() {
-    let mut init_values = Grid::new_with_default(None, Position::new(3, 3, 1));
+    let mut init_values = Grid::new_with_fill(None, Position::new(3, 3, 1));
     init_values.set(Position::new(0, 0, 0), Some(Color::Red));
     init_values.set(Position::new(1, 0, 0), Some(Color::Green));
     init_values.set(Position::new(2, 2, 0), Some(Color::Blue));
@@ -125,5 +125,16 @@ mod tests {
     assert_eq!(solution.get(Position::new(0, 0, 0)), Some(&Color::Red));
     assert_eq!(solution.get(Position::new(1, 0, 0)), Some(&Color::Green));
     assert_eq!(solution.get(Position::new(2, 2, 0)), Some(&Color::Blue));
+  }
+
+  #[test]
+  fn solver_stress_test() {
+    let mut init_values = Grid::new_with_fill(None, Position::new(10, 10, 10));
+    init_values.set(Position::new(0, 0, 0), Some(Color::Red));
+    init_values.set(Position::new(4, 4, 4), Some(Color::Green));
+    init_values.set(Position::new(9, 9, 9), Some(Color::Blue));
+
+    let mut solver = Solver::new(init_values);
+    let solution = solver.naive_solve().unwrap();
   }
 }

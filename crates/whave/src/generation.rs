@@ -29,41 +29,43 @@ impl<T: Element> Generation<T> {
   /// Calculate the domain for each cell.
   fn calculate_domains(&self) -> Grid<HashSet<T>> {
     let constraints = T::constraints();
-    // make sure that the constraints are defined for all possible values
     debug_assert!(
       constraints.keys().cloned().collect::<HashSet<_>>() == T::full_set(),
-      "Constraints are not defined for all possible values"
+      "Constraints are not defined for all possible values. Add an empty \
+       entry for values that should not have constraints."
     );
-    let mut domains = Grid::new_with_default(T::full_set(), self.values.size());
+    let mut domains = Grid::new_with_fill(T::full_set(), self.values.size());
 
     // remove domain for cells that are already set
-    for (position, _) in
-      self.values.iter().enumerate().filter(|(_, v)| v.is_some())
-    {
-      let position = Position::from_index(position, &self.values.size());
-      domains.set(position, HashSet::new());
-    }
+    self
+      .values
+      .iter_values()
+      .enumerate()
+      .filter(|(_, v)| v.is_some())
+      .for_each(|(index, _)| {
+        let position = Position::from_index(index, &self.values.size());
+        domains.set(position, HashSet::new());
+      });
 
     // begin passes
     loop {
       // iterate over all unset positions
       let old_domains = domains.clone();
-      for (index, _) in
-        self.values.iter().enumerate().filter(|(_, v)| v.is_none())
-      {
-        let position = Position::from_index(index, &self.values.size());
-        let mut remaining_domain = domains.get(position).unwrap().clone();
-
-        // iterate through possibilities for this position
-        // retain possibilities that satisfy all constraints
-        let sampler = Sampler::new(position, &self.values, &domains);
-        remaining_domain.retain(|value| {
-          let constraints = constraints.get(value).unwrap();
-          constraints.iter().all(|constraint| constraint(&sampler))
+      domains
+        .iter_entries_mut()
+        .filter(|(domain, _)| !domain.is_empty())
+        .for_each(|(domain, position)| {
+          // retain possibilities that satisfy all constraints
+          let sampler = Sampler::new(position, &self.values, &old_domains);
+          domain.retain(|value| {
+            constraints
+              .get(value)
+              .unwrap()
+              .iter()
+              .all(|constraint| constraint(&sampler))
+          })
         });
 
-        domains.set(position, remaining_domain);
-      }
       // if no domains changed, we're done
       if old_domains == domains {
         break;
@@ -75,13 +77,13 @@ impl<T: Element> Generation<T> {
 
   /// Collapses all cells with only one possible value
   pub(crate) fn collapse(&mut self) -> Grid<Option<T>> {
-    let mut diff = Grid::new_with_default(None, self.values.size());
+    let mut diff = Grid::new_with_fill(None, self.values.size());
 
     // iterate over all unset positions
     for (position, _) in self
       .values
       .clone()
-      .iter()
+      .iter_values()
       .enumerate()
       .filter(|(_, v)| v.is_none())
     {
@@ -94,7 +96,7 @@ impl<T: Element> Generation<T> {
       }
     }
 
-    if diff.iter().any(|value| value.is_some()) {
+    if diff.iter_values().any(|value| value.is_some()) {
       self.domains = OnceCell::new();
     }
 
@@ -105,7 +107,7 @@ impl<T: Element> Generation<T> {
     // a cell is unsolvable if it isn't populated and has an empty domain
     self
       .values
-      .iter()
+      .iter_values()
       .enumerate()
       .filter(|(_, v)| v.is_none())
       .any(|(index, _)| {
@@ -114,14 +116,14 @@ impl<T: Element> Generation<T> {
       })
   }
   pub(crate) fn is_solved(&self) -> bool {
-    self.values.iter().all(|value| value.is_some())
+    self.values.iter_values().all(|value| value.is_some())
   }
 
   pub(crate) fn guess(&mut self) -> Grid<Option<T>> {
     // find the position with the smallest domain
     let mut smallest_domain = usize::MAX;
     let mut smallest_position = None;
-    for (index, domain) in self.domains().iter().enumerate() {
+    for (index, domain) in self.domains().iter_values().enumerate() {
       if domain.len() > 0 && domain.len() < smallest_domain {
         smallest_domain = domain.len();
         smallest_position =
@@ -131,7 +133,7 @@ impl<T: Element> Generation<T> {
     let smallest_position = smallest_position.unwrap();
 
     // make a guess
-    let mut diff = Grid::new_with_default(None, self.values.size());
+    let mut diff = Grid::new_with_fill(None, self.values.size());
     let mut choices = self
       .domains()
       .get(smallest_position)
@@ -194,7 +196,7 @@ mod tests {
 
   #[test]
   fn test_solver() {
-    let mut init_values = Grid::new_with_default(None, Position::new(3, 3, 1));
+    let mut init_values = Grid::new_with_fill(None, Position::new(3, 3, 1));
     init_values.set(Position::new(0, 0, 0), Some(Color::Red));
     init_values.set(Position::new(1, 1, 0), Some(Color::Green));
     init_values.set(Position::new(2, 2, 0), Some(Color::Blue));

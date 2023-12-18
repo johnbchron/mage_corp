@@ -74,6 +74,12 @@ impl Position {
     }
     neighbors
   }
+  /// Returns an iterator over all positions in the grid, assuming that `self`
+  /// is a grid extent.
+  pub fn iter_positions(&self) -> impl Iterator<Item = Self> {
+    let extent = *self;
+    (0..self.grid_count()).map(move |index| Self::from_index(index, &extent))
+  }
   pub fn x(&self) -> u32 { self.x }
   pub fn y(&self) -> u32 { self.y }
   pub fn z(&self) -> u32 { self.z }
