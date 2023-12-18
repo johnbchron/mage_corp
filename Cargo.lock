@@ -4546,6 +4546,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "whave"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "nanorand",
+]
+
+[[package]]
 name = "wide"
 version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
