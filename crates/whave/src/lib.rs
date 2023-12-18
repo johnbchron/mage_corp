@@ -50,13 +50,11 @@ impl<T: Element> Solver<T> {
         return Some(generation.values().clone().unwrap_all());
       }
       if generation.is_unsolvable() {
-        dbg!(self.stack.len());
         return None;
       }
 
       // if we're not done, try to make a guess
       let guess = generation.guess();
-      dbg!("guessed: ", &guess.values());
       self.stack.push((generation, guess));
     }
   }
