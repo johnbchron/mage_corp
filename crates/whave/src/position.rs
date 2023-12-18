@@ -1,3 +1,4 @@
+/// A position within a [`Grid`](crate::Grid).
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Position {
   x: u32,

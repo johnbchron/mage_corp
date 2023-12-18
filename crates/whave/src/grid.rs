@@ -1,5 +1,6 @@
 use super::position::Position;
 
+/// A 3D grid of values.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Grid<T> {
   elements: Vec<T>,
@@ -50,8 +51,8 @@ impl<T> Grid<T> {
   ) -> impl Iterator<Item = (&mut T, Position)> {
     self.elements.iter_mut().zip(self.size.iter_positions())
   }
-  /// Returns a reference to the underlying elements.
-  pub(crate) fn values(&self) -> &Vec<T> { &self.elements }
+  // /// Returns a reference to the underlying elements.
+  // pub(crate) fn values(&self) -> &Vec<T> { &self.elements }
 }
 
 impl<T: Clone> Grid<T> {
