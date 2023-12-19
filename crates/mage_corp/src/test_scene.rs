@@ -78,7 +78,7 @@ fn test_scene(
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
     toon_materials.add(ToonMaterial {
       base:      StandardMaterial {
-        base_color: Color::rgb(0.8, 0.7, 0.6),
+        base_color: Color::hex("#6495ED").unwrap(),
         perceptual_roughness: 0.2,
         reflectance: 0.1,
         ..default()
@@ -103,7 +103,5 @@ fn test_scene(
 pub struct TestScenePlugin;
 
 impl Plugin for TestScenePlugin {
-  fn build(&self, app: &mut App) {
-    app.add_systems(Startup, test_scene);
-  }
+  fn build(&self, app: &mut App) { app.add_systems(Startup, test_scene); }
 }

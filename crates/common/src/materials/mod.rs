@@ -10,11 +10,17 @@ pub struct ToonExtension {
   // do not conflict, so we start from binding slot 100, leaving slots 0-99
   // for the base material.
   #[uniform(100)]
-  pub dark_threshold:      f32,
+  pub dark_two_threshold:  f32,
+  #[uniform(100)]
+  pub normal_threshold:    f32,
   #[uniform(100)]
   pub highlight_threshold: f32,
   #[uniform(100)]
-  pub dark_color:          Color,
+  pub dark_one_color:      Color,
+  #[uniform(100)]
+  pub dark_two_color:      Color,
+  #[uniform(100)]
+  pub normal_color:        Color,
   #[uniform(100)]
   pub highlight_color:     Color,
   #[uniform(100)]
@@ -26,10 +32,13 @@ pub struct ToonExtension {
 impl Default for ToonExtension {
   fn default() -> Self {
     Self {
-      dark_threshold:      0.5,
-      highlight_threshold: 6.0,
-      dark_color:          Color::rgb(0.25, 0.25, 0.25),
-      highlight_color:     Color::rgb(1.5, 1.5, 1.5),
+      dark_two_threshold:  0.2,
+      normal_threshold:    1.0,
+      highlight_threshold: 3.0,
+      dark_one_color:      Color::rgb(0.3, 0.3, 0.3),
+      dark_two_color:      Color::rgb(0.8, 0.8, 0.8),
+      normal_color:        Color::rgb(1.0, 1.0, 1.0),
+      highlight_color:     Color::rgb(1.0, 1.0, 1.0),
       blend_factor:        0.01,
       far_bleed:           0.1,
     }
@@ -37,9 +46,7 @@ impl Default for ToonExtension {
 }
 
 impl MaterialExtension for ToonExtension {
-  fn fragment_shader() -> ShaderRef {
-    "shaders/toon_extension.wgsl".into()
-  }
+  fn fragment_shader() -> ShaderRef { "shaders/toon_extension.wgsl".into() }
 }
 
 pub type ToonMaterial = ExtendedMaterial<StandardMaterial, ToonExtension>;

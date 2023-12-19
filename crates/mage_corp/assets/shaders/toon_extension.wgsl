@@ -11,9 +11,12 @@
 }
 
 struct ToonMaterial {
-  dark_threshold: f32,
+  dark_two_threshold: f32,
+  regular_threshold: f32,
   highlight_threshold: f32,
-  dark_color: vec4<f32>,
+  dark_one_color: vec4<f32>,
+  dark_two_color: vec4<f32>,
+  regular_color: vec4<f32>,
   highlight_color: vec4<f32>,
   blend_factor: f32,
   far_bleed: f32,
@@ -45,11 +48,38 @@ fn fragment(
   var out: FragmentOutput;
   let pbr_lighting = generate_pbr_lighting(pbr_input);
 
+  let direct_light: vec3<f32> = pbr_lighting.direct_light;
+  let indirect_light: vec3<f32> = pbr_lighting.indirect_light;
+  let emissive_light: vec3<f32> = pbr_lighting.emissive_light;
+  let base_color = pbr_input.material.base_color.rgb;
+
+  let direct_light_luminance = luminance(direct_light + indirect_light);
+
+  let blend = toon_material.blend_factor;
+  let dark_two_threshold = toon_material.dark_two_threshold;
+  let regular_threshold = toon_material.regular_threshold;
+  let highlight_threshold = toon_material.highlight_threshold;
+
+  let dark_one_color = toon_material.dark_one_color.rgb;
+  let dark_two_color = toon_material.dark_two_color.rgb;
+  let regular_color = toon_material.regular_color.rgb;
+  let highlight_color = toon_material.highlight_color.rgb;
+
+  let dark_one_intensity = 1.0;
+  let dark_two_intensity = smoothstep(dark_two_threshold, dark_two_threshold + blend, direct_light_luminance);
+  let regular_intensity = smoothstep(regular_threshold, regular_threshold + blend, direct_light_luminance);
+  let highlight_intensity = smoothstep(highlight_threshold, highlight_threshold + blend, direct_light_luminance);
+
+  let dark_one_light = dark_one_color * dark_one_intensity * base_color;
+  let dark_two_light = dark_two_color * dark_two_intensity * base_color;
+  let regular_light = regular_color * regular_intensity * base_color;
+  let highlight_light = highlight_color * highlight_intensity * base_color;
+
+  let toon_light = max(max(dark_one_light, dark_two_light), regular_light) + highlight_light;
+
   out.color = vec4(
-    pbr_lighting.transmitted_light +
-    pbr_lighting.direct_light +
-    pbr_lighting.indirect_light +
-    pbr_lighting.emissive_light,
+    toon_light +
+    emissive_light,
     pbr_lighting.alpha
   );
 

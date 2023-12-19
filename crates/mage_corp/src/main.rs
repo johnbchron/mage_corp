@@ -25,5 +25,9 @@ fn main() {
       magicore::MagicPlugin,
     ))
     .insert_resource(Msaa::Off)
+    .insert_resource(AmbientLight {
+      brightness: 0.20,
+      ..default()
+    })
     .run();
 }
