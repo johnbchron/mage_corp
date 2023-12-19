@@ -1,7 +1,10 @@
 mod panorbit_compat;
 
 use bevy::{
-  core_pipeline::clear_color::ClearColorConfig,
+  core_pipeline::{
+    clear_color::ClearColorConfig,
+    prepass::{DepthPrepass, NormalPrepass},
+  },
   prelude::*,
   render::{
     camera::{RenderTarget, ScalingMode},
@@ -129,6 +132,8 @@ fn rebuild_setup(
     &Projection,
     Entity,
     Option<&Children>,
+    Option<&NormalPrepass>,
+    Option<&DepthPrepass>,
   )>,
   old_sub_cameras: Query<&LowresSubCamera>,
   old_targets: Query<Entity, With<LowresTarget>>,
@@ -139,8 +144,14 @@ fn rebuild_setup(
   // info!("rebuilding lowres cameras");
 
   // exit if there are no lowres cameras
-  let Ok((lowres_camera, lowres_camera_proj, lowres_camera_entity, children)) =
-    lowres_cameras.get_single()
+  let Ok((
+    lowres_camera,
+    lowres_camera_proj,
+    lowres_camera_entity,
+    children,
+    normal_prepass,
+    depth_prepass,
+  )) = lowres_cameras.get_single()
   else {
     return;
   };
@@ -191,7 +202,7 @@ fn rebuild_setup(
       for (i, texture_handle) in texture_handles.iter().enumerate() {
         let texture_handle = texture_handle.clone();
 
-        parent.spawn((
+        let mut sub_cam = parent.spawn((
           Camera3dBundle {
             camera: Camera {
               target: RenderTarget::Image(texture_handle.clone()),
@@ -209,6 +220,14 @@ fn rebuild_setup(
           LowresSubCamera,
           Name::new(format!("lowres_sub_camera_{}", i)),
         ));
+
+        // add prepasses if they exist
+        if normal_prepass.is_some() {
+          sub_cam.insert(NormalPrepass);
+        }
+        if depth_prepass.is_some() {
+          sub_cam.insert(DepthPrepass);
+        }
       }
     });
 
