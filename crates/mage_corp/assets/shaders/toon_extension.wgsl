@@ -19,7 +19,12 @@ struct ToonMaterial {
   regular_color: vec4<f32>,
   highlight_color: vec4<f32>,
   blend_factor: f32,
-  far_bleed: f32,
+  outline_normal_color:     vec4<f32>,
+  outline_depth_color:      vec4<f32>,
+  outline_normal_threshold: f32,
+  outline_depth_threshold:  f32,
+  outline_scale:            f32,
+  far_plane_bleed: f32,
 }
 
 @group(1) @binding(100)
@@ -37,7 +42,7 @@ fn fragment(
 ) -> FragmentOutput {
   let far_half_space = view.frustum[5];
   let in_view_space = view_transformations::position_world_to_view(in.world_position.xyz);
-  if dot(far_half_space, in.world_position) <= toon_material.far_bleed * in_view_space.z {
+  if dot(far_half_space, in.world_position) <= toon_material.far_plane_bleed * in_view_space.z {
     discard;
   }
 
@@ -76,10 +81,24 @@ fn fragment(
   let highlight_light = highlight_color * highlight_intensity * base_color;
 
   let toon_light = max(max(dark_one_light, dark_two_light), regular_light) + highlight_light;
+  let total_light = toon_light + emissive_light;
+
+  let normal_outline = mage_corp::outline::detect_edge_normal(in.position.xy, toon_material.outline_scale);
+  let depth_outline = mage_corp::outline::detect_edge_depth(in.position.xy, toon_material.outline_scale);
+
+  var outline_normal_intensity: f32 = step(toon_material.outline_normal_threshold, normal_outline);
+  let outline_depth_intensity = step(toon_material.outline_depth_threshold, depth_outline);
+  if outline_depth_intensity == 1.0 {
+    outline_normal_intensity = 0.0;
+  }
+
+  let outline_normal_color = mix(vec3(1.0), toon_material.outline_normal_color.rgb, outline_normal_intensity);
+  let outline_depth_color = mix(vec3(1.0), toon_material.outline_depth_color.rgb, outline_depth_intensity);
+
+  let final_color = total_light * outline_normal_color * outline_depth_color;
 
   out.color = vec4(
-    toon_light +
-    emissive_light,
+    final_color,
     pbr_lighting.alpha
   );
 

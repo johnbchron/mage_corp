@@ -67,7 +67,11 @@ impl FromWorld for TerrainMaterial {
         base_color: Color::hex("5DBB63").unwrap(),
         ..default()
       },
-      extension: ToonExtension::default(),
+      extension: ToonExtension {
+        outline_depth_threshold: 10.0,
+        outline_normal_threshold: 10.0,
+        ..default()
+      },
     });
     TerrainMaterial { material }
   }
