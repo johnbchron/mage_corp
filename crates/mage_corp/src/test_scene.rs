@@ -1,6 +1,9 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{
+  core_pipeline::prepass::{DepthPrepass, NormalPrepass},
+  prelude::*,
+};
 use bevy_implicits::prelude::{builder as sb, *};
 use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
@@ -27,9 +30,15 @@ fn test_scene(
         Transform::from_xyz(0.0, 5.0, 10.0)
           .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
       ),
+      projection: Projection::Perspective(PerspectiveProjection {
+        far: 250.0,
+        ..default()
+      }),
       ..default()
     },
     PanOrbitCamera::default(),
+    NormalPrepass,
+    DepthPrepass,
   ));
 
   // spawn a directional light
@@ -78,7 +87,7 @@ fn test_scene(
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
     toon_materials.add(ToonMaterial {
       base:      StandardMaterial {
-        base_color: Color::rgb(0.8, 0.7, 0.6),
+        base_color: Color::hex("#6495ED").unwrap(),
         perceptual_roughness: 0.2,
         reflectance: 0.1,
         ..default()
@@ -103,7 +112,5 @@ fn test_scene(
 pub struct TestScenePlugin;
 
 impl Plugin for TestScenePlugin {
-  fn build(&self, app: &mut App) {
-    app.add_systems(Startup, test_scene);
-  }
+  fn build(&self, app: &mut App) { app.add_systems(Startup, test_scene); }
 }

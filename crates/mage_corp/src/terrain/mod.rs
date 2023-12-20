@@ -20,8 +20,8 @@ pub struct TerrainCurrentShape(#[reflect(ignore)] pub Shape);
 impl Default for TerrainCurrentShape {
   fn default() -> Self {
     TerrainCurrentShape(Shape::new_expr(
-      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((cos(x / \
-       20.0) + cos(y / 20.0) + cos(z / 20.0)) * 4.0)",
+      "(sqrt(square(x) + square(y + 5000) + square(z)) - 5000) + ((sin(x / \
+       20.0) + sin(y / 20.0) + sin(z / 20.0)) * 4.0)",
     ))
   }
 }
@@ -67,7 +67,11 @@ impl FromWorld for TerrainMaterial {
         base_color: Color::hex("5DBB63").unwrap(),
         ..default()
       },
-      extension: ToonExtension::default(),
+      extension: ToonExtension {
+        outline_depth_threshold: 10.0,
+        outline_normal_threshold: 10.0,
+        ..default()
+      },
     });
     TerrainMaterial { material }
   }
