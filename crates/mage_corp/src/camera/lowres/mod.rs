@@ -1,5 +1,8 @@
 mod panorbit_compat;
 
+pub const LOWRES_TARGET_LAYER: u8 = 1;
+pub const LOWRES_FURTHEST_ONLY_LAYER: u8 = 2;
+
 use bevy::{
   core_pipeline::{
     clear_color::ClearColorConfig,
@@ -134,6 +137,7 @@ fn rebuild_setup(
     Option<&Children>,
     Option<&NormalPrepass>,
     Option<&DepthPrepass>,
+    Option<&FogSettings>,
   )>,
   old_sub_cameras: Query<&LowresSubCamera>,
   old_targets: Query<Entity, With<LowresTarget>>,
@@ -151,6 +155,7 @@ fn rebuild_setup(
     children,
     normal_prepass,
     depth_prepass,
+    fog_settings,
   )) = lowres_cameras.get_single()
   else {
     return;
@@ -221,6 +226,13 @@ fn rebuild_setup(
           Name::new(format!("lowres_sub_camera_{}", i)),
         ));
 
+        if i as u8 == lowres_camera.n_cameras - 1 {
+          sub_cam.insert(RenderLayers::from_layers(&[
+            0,
+            LOWRES_FURTHEST_ONLY_LAYER,
+          ]));
+        }
+
         // add prepasses if they exist
         if normal_prepass.is_some() {
           sub_cam.insert(NormalPrepass);
@@ -228,11 +240,13 @@ fn rebuild_setup(
         if depth_prepass.is_some() {
           sub_cam.insert(DepthPrepass);
         }
+        if let Some(fog_settings) = fog_settings {
+          sub_cam.insert(fog_settings.clone());
+        }
       }
     });
 
   // spawn target quads
-  let second_pass_layer = RenderLayers::layer(1);
   for (i, handle) in texture_handles.iter().enumerate() {
     commands.spawn((
       SpriteBundle {
@@ -245,7 +259,7 @@ fn rebuild_setup(
         ..default()
       },
       LowresTarget,
-      second_pass_layer,
+      RenderLayers::layer(LOWRES_TARGET_LAYER),
       Name::new(format!("lowres_target_{}", i)),
     ));
   }
@@ -273,7 +287,7 @@ fn rebuild_setup(
       },
       ..default()
     },
-    second_pass_layer,
+    RenderLayers::layer(LOWRES_TARGET_LAYER),
     Name::new("lowres_output_camera"),
     LowresTargetCamera,
   ));
