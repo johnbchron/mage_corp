@@ -127,6 +127,7 @@ fn trigger_rebuild(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::type_complexity)]
 fn rebuild_setup(
   mut commands: Commands,
   mut event_reader: EventReader<RebuildEvent>,
