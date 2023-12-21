@@ -4,19 +4,11 @@ pub fn expr(expr: impl Into<String>) -> Shape {
   Shape::Expression { expr: expr.into() }
 }
 
-pub fn x() -> Shape {
-  Shape::XNode
-}
-pub fn y() -> Shape {
-  Shape::YNode
-}
-pub fn z() -> Shape {
-  Shape::ZNode
-}
+pub fn x() -> Shape { Shape::XNode }
+pub fn y() -> Shape { Shape::YNode }
+pub fn z() -> Shape { Shape::ZNode }
 
-pub fn constant(a: f64) -> Shape {
-  Shape::Constant(a)
-}
+pub fn constant(a: f64) -> Shape { Shape::Constant(a) }
 
 pub fn add(lhs: impl Into<Shape>, rhs: impl Into<Shape>) -> Shape {
   Shape::Add(Box::new(lhs.into()), Box::new(rhs.into()))
@@ -37,27 +29,13 @@ pub fn max(lhs: impl Into<Shape>, rhs: impl Into<Shape>) -> Shape {
   Shape::Max(Box::new(lhs.into()), Box::new(rhs.into()))
 }
 
-pub fn neg(a: impl Into<Shape>) -> Shape {
-  Shape::Neg(Box::new(a.into()))
-}
-pub fn exp(a: impl Into<Shape>) -> Shape {
-  Shape::Exp(Box::new(a.into()))
-}
-pub fn sin(a: impl Into<Shape>) -> Shape {
-  Shape::Sin(Box::new(a.into()))
-}
-pub fn cos(a: impl Into<Shape>) -> Shape {
-  Shape::Cos(Box::new(a.into()))
-}
-pub fn recip(a: impl Into<Shape>) -> Shape {
-  Shape::Recip(Box::new(a.into()))
-}
-pub fn abs(a: impl Into<Shape>) -> Shape {
-  Shape::Abs(Box::new(a.into()))
-}
-pub fn sqrt(a: impl Into<Shape>) -> Shape {
-  Shape::Sqrt(Box::new(a.into()))
-}
+pub fn neg(a: impl Into<Shape>) -> Shape { Shape::Neg(Box::new(a.into())) }
+pub fn exp(a: impl Into<Shape>) -> Shape { Shape::Exp(Box::new(a.into())) }
+pub fn sin(a: impl Into<Shape>) -> Shape { Shape::Sin(Box::new(a.into())) }
+pub fn cos(a: impl Into<Shape>) -> Shape { Shape::Cos(Box::new(a.into())) }
+pub fn recip(a: impl Into<Shape>) -> Shape { Shape::Recip(Box::new(a.into())) }
+pub fn abs(a: impl Into<Shape>) -> Shape { Shape::Abs(Box::new(a.into())) }
+pub fn sqrt(a: impl Into<Shape>) -> Shape { Shape::Sqrt(Box::new(a.into())) }
 pub fn square(a: impl Into<Shape>) -> Shape {
   Shape::Square(Box::new(a.into()))
 }
@@ -106,6 +84,17 @@ pub fn cylinder(r: impl Into<Shape>, h: impl Into<Shape>) -> Shape {
   Shape::Extra(compound::Compound::Cylinder {
     height: Box::new(h.into()),
     radius: Box::new(r.into()),
+  })
+}
+pub fn cuboid(
+  x: impl Into<Shape>,
+  y: impl Into<Shape>,
+  z: impl Into<Shape>,
+) -> Shape {
+  Shape::Extra(compound::Compound::Cuboid {
+    x: Box::new(x.into()),
+    y: Box::new(y.into()),
+    z: Box::new(z.into()),
   })
 }
 pub fn smooth_min_cubic(

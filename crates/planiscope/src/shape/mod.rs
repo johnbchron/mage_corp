@@ -51,15 +51,15 @@ pub enum Shape {
 }
 
 impl Default for Shape {
-  fn default() -> Self {
-    Self::Constant(1.0_f64)
-  }
+  fn default() -> Self { Self::Constant(1.0_f64) }
 }
 
 impl From<f64> for Shape {
-  fn from(value: f64) -> Self {
-    Shape::Constant(value)
-  }
+  fn from(value: f64) -> Self { Shape::Constant(value) }
+}
+
+impl From<f32> for Shape {
+  fn from(value: f32) -> Self { Shape::Constant(value.into()) }
 }
 
 impl Add<Shape> for Shape {
@@ -93,9 +93,7 @@ impl Div<Shape> for Shape {
 impl Neg for Shape {
   type Output = Shape;
 
-  fn neg(self) -> Self::Output {
-    Shape::Neg(Box::new(self))
-  }
+  fn neg(self) -> Self::Output { Shape::Neg(Box::new(self)) }
 }
 
 impl Shape {
