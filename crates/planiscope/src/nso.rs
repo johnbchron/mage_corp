@@ -51,7 +51,7 @@ pub mod volumes {
 
     let max_dim = ctx.max(length, width)?;
     let max_dim = ctx.max(max_dim, height)?;
-    let tolerance = ctx.constant(0.0);
+    let tolerance = ctx.constant(0.01);
     let radius = ctx.mul(max_dim, tolerance)?;
     let length = ctx.sub(length, radius)?;
     let width = ctx.sub(width, radius)?;
