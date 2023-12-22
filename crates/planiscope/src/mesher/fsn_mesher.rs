@@ -9,6 +9,7 @@ use crate::{
     fidget_normals, FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs,
   },
   nso,
+  shape::CachedIntoNode,
 };
 
 impl Mesher for FastSurfaceNetsMesher {
@@ -20,7 +21,7 @@ impl Mesher for FastSurfaceNetsMesher {
   ) -> Result<FullMesh, fidget::Error> {
     // get a node for the composition
     let mut ctx = Context::new();
-    let node = inputs.shape.into_node(&mut ctx)?;
+    let node = inputs.shape.eval_root_cached(&mut ctx)?;
 
     // we need to normalize the target region into -1..1
     let normalized_node = nso::regions::nso_normalize_region(
@@ -101,6 +102,7 @@ impl Mesher for FastSurfaceNetsMesher {
       normals,
     };
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
+    mesh.simplify();
 
     Ok(mesh)
   }

@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::{
   core_pipeline::prepass::{DepthPrepass, NormalPrepass},
+  pbr::wireframe::Wireframe,
   prelude::*,
 };
 use bevy_implicits::prelude::{builder as sb, *};
@@ -17,6 +18,7 @@ fn test_scene(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
+  mut std_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // spawn the camera
   commands.spawn((
@@ -24,6 +26,7 @@ fn test_scene(
       lowres_camera: LowresCamera {
         min_pixel_scale: 2,
         final_far: Some(10000.0),
+        n_cameras: 1,
         ..default()
       },
       spatial_bundle: SpatialBundle::from_transform(
@@ -75,7 +78,7 @@ fn test_scene(
       extension: ToonExtension::default(),
     }),
     crate::terrain::TerrainDetailTarget,
-    RigidBody::Dynamic,
+    // RigidBody::Dynamic,
     Collider::ball(0.5),
     Name::new("sphere"),
     crate::markers::Player,
@@ -84,10 +87,10 @@ fn test_scene(
 
   // spawn a test for the implicits plugin
   commands.spawn((
-    SpatialBundle::from_transform(Transform::from_xyz(0.0, 0.0, 0.0)),
+    SpatialBundle::from_transform(Transform::from_xyz(0.0, 1.0, 0.0)),
     toon_materials.add(ToonMaterial {
       base:      StandardMaterial {
-        base_color: Color::hex("#6495ED").unwrap(),
+        base_color: Color::hex("#b5651d").unwrap(),
         perceptual_roughness: 0.2,
         reflectance: 0.1,
         ..default()
@@ -95,16 +98,17 @@ fn test_scene(
       extension: ToonExtension::default(),
     }),
     ImplicitInputs(MesherInputs {
-      shape:        sb::sphere(1.0),
+      shape:        framix::brick_array(5, 10),
       region:       MesherRegion {
-        position: Vec3::ZERO.into(),
-        scale:    Vec3::splat(2.0).into(),
-        detail:   MesherDetail::Subdivs(5),
+        position: Vec3::new(1.0, 1.0, 0.0).into(),
+        scale:    Vec3::new(1.5, 1.0, 0.2).into(),
+        detail:   MesherDetail::Resolution(200.0),
         prune:    false,
       },
       gen_collider: true,
     }),
     SyncImplicits,
+    Wireframe,
     Name::new("implicits_test"),
   ));
 }

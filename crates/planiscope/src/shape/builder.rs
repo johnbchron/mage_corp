@@ -73,6 +73,26 @@ pub fn translate(root: impl Into<Shape>, x: f64, y: f64, z: f64) -> Shape {
     }),
   }
 }
+pub fn scale(root: impl Into<Shape>, x: f64, y: f64, z: f64) -> Shape {
+  Shape::Remap {
+    root:  Box::new(root.into()),
+    new_x: Box::new(if x == 1.0 {
+      self::x()
+    } else {
+      div(self::x(), x)
+    }),
+    new_y: Box::new(if y == 1.0 {
+      self::y()
+    } else {
+      div(self::y(), y)
+    }),
+    new_z: Box::new(if z == 1.0 {
+      self::z()
+    } else {
+      div(self::z(), z)
+    }),
+  }
+}
 
 // extra
 pub fn sphere(r: impl Into<Shape>) -> Shape {
