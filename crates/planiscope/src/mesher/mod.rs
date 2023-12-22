@@ -1,5 +1,4 @@
 pub mod fsn_mesher;
-pub mod simplify;
 
 use std::hash::{Hash, Hasher};
 

@@ -102,7 +102,6 @@ impl Mesher for FastSurfaceNetsMesher {
       normals,
     };
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
-    mesh.simplify();
 
     Ok(mesh)
   }

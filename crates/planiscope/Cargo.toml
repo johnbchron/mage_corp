@@ -5,10 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy_reflect = "0.12"
-chull = "0.2.4"
 decorum = "0.3.1"
-delaunator = "1.0.2"
-earcutr = "0.4.3"
 educe = { version = "0.4.23", default-features = false, features = ["Hash"] }
 fast-surface-nets = "0.2.0"
 fidget = { git = "https://github.com/johnbchron/fidget", tag = "0.3", default-features = false, features = ["mesh", "rhai"] }
