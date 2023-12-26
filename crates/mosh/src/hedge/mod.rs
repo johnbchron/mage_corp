@@ -62,17 +62,13 @@ pub struct Mesh<D: VertexData> {
 
 impl<D: VertexData> Mesh<D> {
   pub fn prune_unused_vertices(&mut self) {
-    let mut used_vertices = HashSet::new();
-    for edge in self.edges.iter() {
-      used_vertices.insert(edge.origin_vertex);
-      used_vertices.insert(edge.target_vertex);
-    }
+    let used_vertices = self
+      .edges
+      .iter()
+      .map(|edge| edge.origin_vertex)
+      .collect::<HashSet<_>>();
 
-    for vertex_key in self.vertices.iter_keys() {
-      if !used_vertices.contains(&vertex_key) {
-        self.vertices.remove(vertex_key);
-      }
-    }
+    self.vertices.retain(|k, _| used_vertices.contains(k));
   }
 
   pub fn dedup_equal_vertices(&mut self) {
