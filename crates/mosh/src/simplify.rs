@@ -3,6 +3,7 @@ use crate::{
   mesh::{FullMesh, FullVertex},
 };
 
+/// Simplifies a mesh by merging coplanar faces.
 pub fn simplify_mesh(mesh: FullMesh) -> FullMesh {
   let triangles = mesh
     .triangles

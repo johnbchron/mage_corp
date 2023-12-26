@@ -3,11 +3,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{hash::hash_vec3a, hedge::VertexData};
 
-/// A generated mesh.
+/// An index-buffer mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FullMesh {
+  /// The vertex positions of the mesh.
   pub vertices:  Vec<glam::Vec3A>,
+  /// The triangle indices of the mesh.
   pub triangles: Vec<glam::UVec3>,
+  /// The normals attached to the vertices of the mesh.
   pub normals:   Vec<glam::Vec3A>,
 }
 
@@ -46,12 +49,15 @@ impl FullMesh {
   }
 }
 
-/// A vertex with position and normal.
+/// A vertex with position and normal. Used as the vertex data for the
+/// `FullMesh` when converting to a half-edge mesh.
 #[derive(Clone, Copy, PartialEq, Educe, Debug, Serialize, Deserialize)]
 #[educe(Hash, Eq)]
 pub struct FullVertex {
+  /// The position of the vertex.
   #[educe(Hash(method = "hash_vec3a"))]
   pub position: glam::Vec3A,
+  /// The normal of the vertex.
   #[educe(Hash(method = "hash_vec3a"))]
   pub normal:   glam::Vec3A,
 }

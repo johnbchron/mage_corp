@@ -1,6 +1,7 @@
 use super::*;
 
 impl<D: VertexData> Mesh<D> {
+  /// Builds a mesh from a list of triangles and vertices.
   pub fn from_buffers(
     triangles: &[(usize, usize, usize)],
     vertices: &[D],
@@ -111,6 +112,10 @@ impl<D: VertexData> Mesh<D> {
     }
   }
 
+  /// Converts a mesh to a list of triangles and vertices.
+  ///
+  /// # Invariants
+  /// The arity of the mesh must be exactly 3.
   pub fn to_buffers(&self) -> (Vec<(usize, usize, usize)>, Vec<D>) {
     assert_eq!(
       self.arity(),

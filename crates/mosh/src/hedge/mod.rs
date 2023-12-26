@@ -1,7 +1,7 @@
 //! An implementation of an N-dimensional Half-Edge Mesh.
 
 mod buffers;
-pub mod keys;
+mod keys;
 mod storage;
 
 use std::hash::Hash;
@@ -9,11 +9,12 @@ use std::hash::Hash;
 use hashbrown::{HashMap, HashSet};
 use rayon::prelude::*;
 
-use self::{
+pub use self::{
   keys::{EdgeKey, FaceKey, OpaqueKey, VertexKey},
   storage::{Storable, Storage},
 };
 
+/// A half-edge within a half-edge mesh.
 #[derive(Clone, Debug, PartialEq)]
 pub struct HalfEdge {
   pub(crate) id:            EdgeKey,
@@ -29,6 +30,7 @@ impl Storable for HalfEdge {
   type Key = EdgeKey;
 }
 
+/// A face within a half-edge mesh.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Face {
   pub(crate) id:    FaceKey,
@@ -39,10 +41,22 @@ impl Storable for Face {
   type Key = FaceKey;
 }
 
+/// Vertex data that can be stored in a half-edge mesh.
+///
+/// The vertex data contains all the data for a given vertex, aside from
+/// connections to other vertices. Position is required, but other data is
+/// optional. The half-edge mesh will deduplicate vertices that have the same
+/// data, thus the data must be `Clone`, `PartialEq`, and `Eq`. Additionally,
+/// the half-edge mesh uses parallel iteration where possible, so the vertex
+/// data must also be `Sync`.
 pub trait VertexData: Clone + PartialEq + Eq + Hash + Sync {
+  /// Returns the position of the vertex.
   fn pos(&self) -> glam::Vec3A;
 }
 
+/// A vertex within a half-edge mesh.
+///
+/// Vertex data is stored with the vertex for fast access.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vertex<D: VertexData> {
   pub(crate) id:   VertexKey,
@@ -53,6 +67,7 @@ impl<D: VertexData> Storable for Vertex<D> {
   type Key = VertexKey;
 }
 
+/// A half-edge mesh.
 #[derive(Debug)]
 pub struct Mesh<D: VertexData> {
   vertices: Storage<VertexKey, Vertex<D>>,
@@ -112,6 +127,10 @@ impl<D: VertexData> Mesh<D> {
   }
 
   /// Calculates the normal of a face.
+  ///
+  /// # Notes
+  /// The normal is calculated only with the position of the vertices, and does
+  /// not take into account any other vertex data.
   pub fn face_normal(&self, face: FaceKey) -> Option<glam::Vec3A> {
     let face = self.faces.get(face)?;
     let mut vertex_iter = face.edges.iter().map(|edge| {
@@ -133,6 +152,7 @@ impl<D: VertexData> Mesh<D> {
     Some(normal.normalize())
   }
 
+  /// Returns the neighbors of a face.
   pub fn face_neighbors(&self, face: FaceKey) -> Vec<FaceKey> {
     let face = self.faces.get(face).unwrap();
     let mut neighbors = Vec::new();
@@ -192,6 +212,7 @@ impl<D: VertexData> Mesh<D> {
     coplanar_face_groups
   }
 
+  /// Removes a face from the mesh.
   pub fn remove_face(&mut self, face_key: FaceKey) -> Option<FaceKey> {
     let face = self.faces.get(face_key)?;
     for edge_key in face.edges.iter() {
@@ -211,6 +232,11 @@ impl<D: VertexData> Mesh<D> {
     Some(face_key)
   }
 
+  /// Merges a set of faces into a single face.
+  ///
+  /// # Notes
+  /// This operation increases the arity of the mesh, and may make it
+  /// impossible to convert back to buffers.
   pub fn merge_faces(&mut self, faces: &[FaceKey]) -> Option<FaceKey> {
     let mut face_keys = faces.to_vec();
     face_keys.sort();
@@ -234,35 +260,6 @@ impl<D: VertexData> Mesh<D> {
 
     Some(*master_face_key)
   }
-
-  // /// Returns whether or not the mesh can be traversed from one face to
-  // another pub fn faces_are_connected(
-  //   &self,
-  //   face_key: FaceKey,
-  //   neighbor_face_key: FaceKey,
-  // ) -> bool {
-  //   let mut visited_faces = HashSet::new();
-  //   let mut stack = vec![face_key];
-
-  //   while let Some(face_key) = stack.pop() {
-  //     if visited_faces.contains(&face_key) {
-  //       continue;
-  //     }
-  //     visited_faces.insert(face_key);
-
-  //     if face_key == neighbor_face_key {
-  //       return true;
-  //     }
-
-  //     for neighbor_face_key in self.face_neighbors(face_key) {
-  //       if visited_faces.contains(&neighbor_face_key) {
-  //         continue;
-  //       }
-  //       stack.push(neighbor_face_key);
-  //     }
-  //   }
-  //   false
-  // }
 
   /// Counts the maxiumum arity of the total mesh.
   pub fn arity(&self) -> usize {
