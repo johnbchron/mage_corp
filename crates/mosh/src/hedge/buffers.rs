@@ -30,46 +30,46 @@ impl<D: VertexData> HedgeMesh<D> {
       .iter()
       .map(|v| {
         vertex_storage.add(Vertex {
-          id:   VertexKey::new(0),
+          id:   VertexKey::INVALID,
           data: v.clone(),
         })
       })
       .collect::<Vec<_>>();
 
     triangles.iter().for_each(|(a, b, c)| {
-      let face = face_storage.add(Face {
-        id:    FaceKey::new(0),
+      let face_key = face_storage.add(Face {
+        id:    FaceKey::INVALID,
         edges: Vec::new(),
       });
 
       let ab = edge_storage.add(Edge {
-        id: EdgeKey::new(0),
+        id:            EdgeKey::INVALID,
         origin_vertex: vertex_keys[*a],
         target_vertex: vertex_keys[*b],
-        face,
-        next_edge: EdgeKey::new(0),
-        prev_edge: EdgeKey::new(0),
-        twin_edge: None,
+        face:          face_key,
+        next_edge:     EdgeKey::INVALID,
+        prev_edge:     EdgeKey::INVALID,
+        twin_edge:     None,
       });
 
       let bc = edge_storage.add(Edge {
-        id: EdgeKey::new(0),
+        id:            EdgeKey::INVALID,
         origin_vertex: vertex_keys[*b],
         target_vertex: vertex_keys[*c],
-        face,
-        next_edge: EdgeKey::new(0),
-        prev_edge: EdgeKey::new(0),
-        twin_edge: None,
+        face:          face_key,
+        next_edge:     EdgeKey::INVALID,
+        prev_edge:     EdgeKey::INVALID,
+        twin_edge:     None,
       });
 
       let ca = edge_storage.add(Edge {
-        id: EdgeKey::new(0),
+        id:            EdgeKey::INVALID,
         origin_vertex: vertex_keys[*c],
         target_vertex: vertex_keys[*a],
-        face,
-        next_edge: EdgeKey::new(0),
-        prev_edge: EdgeKey::new(0),
-        twin_edge: None,
+        face:          face_key,
+        next_edge:     EdgeKey::INVALID,
+        prev_edge:     EdgeKey::INVALID,
+        twin_edge:     None,
       });
 
       let edge_mut_ab = edge_storage.get_mut(ab).unwrap();
@@ -86,30 +86,19 @@ impl<D: VertexData> HedgeMesh<D> {
       edge_mut_ca.prev_edge = bc;
 
       face_storage
-        .get_mut(face)
+        .get_mut(face_key)
         .unwrap()
         .edges
         .extend([ab, bc, ca].iter());
     });
 
-    // fill in the twin edges
-    let mut vertex_pair_to_edge = HashMap::new();
-    for edge in edge_storage.iter() {
-      let target_vertex = edge.target_vertex;
-      let origin_vertex = edge.origin_vertex;
-      vertex_pair_to_edge.insert((origin_vertex, target_vertex), edge.id);
-    }
-    for edge in edge_storage.iter_mut() {
-      let twin_edge_key =
-        vertex_pair_to_edge.get(&(edge.target_vertex, edge.origin_vertex));
-      edge.twin_edge = twin_edge_key.cloned();
-    }
-
-    Self {
+    let mut hedge_mesh = Self {
       vertices: vertex_storage,
       edges:    edge_storage,
       faces:    face_storage,
-    }
+    };
+    hedge_mesh.fix_edge_twin_keys();
+    hedge_mesh
   }
 
   /// Converts a mesh to a list of triangles and vertices.
@@ -117,6 +106,10 @@ impl<D: VertexData> HedgeMesh<D> {
   /// # Invariants
   /// The arity of the mesh must be exactly 3.
   pub fn to_buffers(&self) -> (Vec<(usize, usize, usize)>, Vec<D>) {
+    if self.faces.len() == 0 {
+      return (vec![], vec![]);
+    }
+
     assert_eq!(
       self.arity(),
       3,

@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 decorum = "0.3.1"
+earcutr = "0.4.3"
 educe = { version = "0.5.9", features = ["Eq", "Hash"] }
 glam = { version = "0.24.2", features = ["serde", "core-simd"] }
 hashbrown = { version = "0.14.3", features = ["rayon"] }
-plexus = "0.0.11"
 rayon = "1.8.0"
 serde = { version = "1.0.193", features = ["derive"] }

@@ -23,8 +23,10 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
   // simplification goes here
   let coplanar_face_groups = hedge.find_coplanar_face_groups();
   for group in coplanar_face_groups {
-    let _ =
-      hedge.merge_faces(group.iter().copied().collect::<Vec<_>>().as_slice());
+    let face = hedge
+      .merge_faces(group.iter().copied().collect::<Vec<_>>().as_slice())
+      .unwrap();
+    hedge.triangulate(face);
   }
   hedge.dedup_equal_vertices();
   hedge.prune_unused_vertices();

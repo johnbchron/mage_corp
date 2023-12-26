@@ -4,6 +4,9 @@ use std::{fmt::Debug, hash::Hash};
 pub trait OpaqueKey:
   Copy + PartialEq + Eq + Hash + PartialOrd + Ord + Debug + Clone
 {
+  /// A key that is guaranteed to be invalid.
+  const INVALID: Self;
+
   /// Creates a new key with the given ID.
   fn new(id: u64) -> Self;
 }
@@ -13,6 +16,7 @@ pub trait OpaqueKey:
 pub struct VertexKey(u64);
 
 impl OpaqueKey for VertexKey {
+  const INVALID: Self = VertexKey(u64::MAX);
   fn new(id: u64) -> Self { VertexKey(id) }
 }
 
@@ -21,6 +25,7 @@ impl OpaqueKey for VertexKey {
 pub struct EdgeKey(u64);
 
 impl OpaqueKey for EdgeKey {
+  const INVALID: Self = EdgeKey(u64::MAX);
   fn new(id: u64) -> Self { EdgeKey(id) }
 }
 
@@ -29,5 +34,6 @@ impl OpaqueKey for EdgeKey {
 pub struct FaceKey(u64);
 
 impl OpaqueKey for FaceKey {
+  const INVALID: Self = FaceKey(u64::MAX);
   fn new(id: u64) -> Self { FaceKey(id) }
 }
