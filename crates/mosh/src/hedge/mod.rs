@@ -8,6 +8,7 @@ use std::hash::Hash;
 
 use hashbrown::{HashMap, HashSet};
 use rayon::prelude::*;
+use thiserror::Error;
 
 pub use self::{
   keys::{EdgeKey, FaceKey, OpaqueKey, VertexKey},
@@ -75,7 +76,33 @@ pub struct HedgeMesh<D: VertexData> {
   faces:    Storage<FaceKey, Face>,
 }
 
+/// Represents the ways that a face can be invalid.
+#[derive(Debug, Error)]
+pub enum InvalidFaceError {
+  /// The face has less than 3 edges.
+  #[error("face has less than 3 edges: {0} edges")]
+  TooFewEdges(usize),
+  /// One or more edges in the face don't exist.
+  #[error("one or more edges in the face don't exist")]
+  EdgeDoesNotExist(EdgeKey),
+  /// An edge has the wrong parent face.
+  #[error("an edge has the wrong parent face")]
+  EdgeHasWrongParentFace(EdgeKey, FaceKey),
+  /// An edge cycles too early.
+  #[error("an edge cycles too early")]
+  EdgeCycledTooEarly(EdgeKey),
+  /// An edge cycles too late.
+  #[error("an edge cycles too late")]
+  EdgeCycledTooLate(EdgeKey),
+  /// The face does not contain the next edge.
+  #[error("face does not contain the next edge")]
+  FaceDoesNotContainNextEdge(EdgeKey),
+}
+
 impl<D: VertexData> HedgeMesh<D> {
+  /// Returns an iterator over the faces of the mesh.
+  pub fn faces(&self) -> Vec<FaceKey> { self.faces.iter_keys().collect() }
+
   /// Prunes vertices that are not used by any edges.
   pub fn prune_unused_vertices(&mut self) {
     let used_vertices = self
@@ -176,6 +203,52 @@ impl<D: VertexData> HedgeMesh<D> {
     neighbors
   }
 
+  /// Determines whether a face is valid.
+  ///
+  /// # Criteria
+  /// A face is valid if:
+  /// - It has at least 3 edges.
+  /// - When traversing the edges through the `next_edge` key, the set of edges
+  ///   traversed is equal to the set of edges in the face.
+  /// - The `face` key of each edge is equal to the face's key.
+  pub fn is_valid_face(&self, face: FaceKey) -> Result<(), InvalidFaceError> {
+    let face = self.faces.get(face).unwrap();
+    if face.edges.len() < 3 {
+      return Err(InvalidFaceError::TooFewEdges(face.edges.len()));
+    }
+    let mut visited_edges = HashSet::new();
+    let mut next_edge_key = face.edges[0];
+    for _ in 0..face.edges.len() {
+      let Some(edge) = self.edges.get(next_edge_key).cloned() else {
+        return Err(InvalidFaceError::EdgeDoesNotExist(next_edge_key));
+      };
+      if edge.face != face.id {
+        return Err(InvalidFaceError::EdgeHasWrongParentFace(
+          next_edge_key,
+          face.id,
+        ));
+      }
+      if visited_edges.contains(&next_edge_key)
+        && next_edge_key != face.edges[0]
+      {
+        return Err(InvalidFaceError::EdgeCycledTooEarly(next_edge_key));
+      }
+      if !face.edges.contains(&next_edge_key) {
+        return Err(InvalidFaceError::FaceDoesNotContainNextEdge(
+          next_edge_key,
+        ));
+      }
+
+      visited_edges.insert(next_edge_key);
+      next_edge_key = edge.next_edge;
+    }
+    if visited_edges.len() != face.edges.len() {
+      return Err(InvalidFaceError::EdgeCycledTooLate(next_edge_key));
+    }
+
+    Ok(())
+  }
+
   /// Identifies groups of adjacent and coplanar faces.
   pub fn find_coplanar_face_groups(&self) -> Vec<HashSet<FaceKey>> {
     let mut coplanar_face_groups = Vec::new();
@@ -245,84 +318,226 @@ impl<D: VertexData> HedgeMesh<D> {
     Some(face_key)
   }
 
-  /// Merges a set of faces into a single face.
-  ///
-  /// # Notes
-  /// This operation increases the arity of the mesh, and may make it
-  /// impossible to convert back to buffers.
-  pub fn merge_faces(&mut self, faces: &[FaceKey]) -> Option<FaceKey> {
-    let mut face_keys = faces.to_vec();
-    face_keys.sort();
-    let faces = face_keys
-      .iter()
-      .skip(1)
-      .map(|f| self.faces.get(*f).unwrap().clone())
-      .collect::<Vec<_>>();
+  // fn add_edge(&mut self, origin: VertexKey, target: VertexKey) -> EdgeKey {
+  //   let edge = Edge {
+  //     id:            EdgeKey::INVALID,
+  //     origin_vertex: origin,
+  //     target_vertex: target,
+  //     face:          FaceKey::INVALID,
+  //     next_edge:     EdgeKey::INVALID,
+  //     prev_edge:     EdgeKey::INVALID,
+  //     twin_edge:     None,
+  //   };
+  //   let key = self.edges.add(edge);
+  //   let edge = self.edges.get_mut(key).unwrap();
 
-    let master_face_key = face_keys.first()?;
-    let master_face = self.faces.get_mut(*master_face_key)?;
+  //   edge.id = key;
+  //   key
+  // }
 
-    for face in faces {
-      let mut face_edges = face.edges.clone();
-      face_edges.reverse();
-      master_face.edges.extend(face_edges);
-    }
-    for face_key in face_keys.iter().skip(1) {
-      self.faces.remove(*face_key);
-    }
+  // fn add_or_get_edge(
+  //   &mut self,
+  //   origin: VertexKey,
+  //   target: VertexKey,
+  // ) -> EdgeKey {
+  //   for (key, edge) in self.edges.inner().iter() {
+  //     if edge.origin_vertex == origin && edge.target_vertex == target {
+  //       return *key;
+  //     }
+  //   }
+  //   self.add_edge(origin, target)
+  // }
 
-    Some(*master_face_key)
-  }
+  // fn add_face(&mut self, a: VertexKey, b: VertexKey, c: VertexKey) -> FaceKey
+  // {   let a_to_b = self.add_or_get_edge(a, b);
+  //   let b_to_c = self.add_or_get_edge(b, c);
+  //   let c_to_a = self.add_or_get_edge(c, a);
 
-  fn add_edge(&mut self, origin: VertexKey, target: VertexKey) -> EdgeKey {
-    let edge = Edge {
-      id:            EdgeKey::INVALID,
-      origin_vertex: origin,
-      target_vertex: target,
-      face:          FaceKey::INVALID,
-      next_edge:     EdgeKey::INVALID,
-      prev_edge:     EdgeKey::INVALID,
-      twin_edge:     None,
-    };
-    self.edges.add(edge)
-  }
+  //   let face = Face {
+  //     id:    FaceKey::INVALID,
+  //     edges: vec![a_to_b, b_to_c, c_to_a],
+  //   };
+  //   let face_key = self.faces.add(face);
 
-  fn add_or_get_edge(
-    &mut self,
-    origin: VertexKey,
-    target: VertexKey,
-  ) -> EdgeKey {
-    for (key, edge) in self.edges.inner().iter() {
-      if edge.origin_vertex == origin && edge.target_vertex == target {
-        return *key;
+  //   self.edges.get_mut(a_to_b).unwrap().face = face_key;
+  //   self.edges.get_mut(b_to_c).unwrap().face = face_key;
+  //   self.edges.get_mut(c_to_a).unwrap().face = face_key;
+
+  //   face_key
+  // }
+
+  /// Returns the set of edges on one face that are bordering another.
+  pub fn bordering_edges(&self, a: FaceKey, b: FaceKey) -> HashSet<EdgeKey> {
+    let mut bordering_edges = HashSet::new();
+    let a_edges = self.faces.get(a).unwrap().edges.clone();
+    let b_edges = self.faces.get(b).unwrap().edges.clone();
+    for edge_key in a_edges.iter() {
+      let edge = self.edges.get(*edge_key).unwrap();
+      if let Some(twin_edge_key) = edge.twin_edge {
+        if b_edges.contains(&twin_edge_key) {
+          bordering_edges.insert(*edge_key);
+        }
       }
     }
-    self.add_edge(origin, target)
+    bordering_edges
   }
 
-  fn add_face(&mut self, a: VertexKey, b: VertexKey, c: VertexKey) -> FaceKey {
-    let a_to_b = self.add_or_get_edge(a, b);
-    let b_to_c = self.add_or_get_edge(b, c);
-    let c_to_a = self.add_or_get_edge(c, a);
+  fn faces_share_contiguous_border(&self, a: FaceKey, b: FaceKey) -> bool {
+    let a_bordering_edges = self.bordering_edges(a, b);
+    let mut disconnected_edges = 0;
+    for edge_key in a_bordering_edges.iter() {
+      let edge = self.edges.get(*edge_key).unwrap();
+      if !a_bordering_edges.contains(&edge.next_edge) {
+        disconnected_edges += 1;
+      }
+      if !a_bordering_edges.contains(&edge.prev_edge) {
+        disconnected_edges += 1;
+      }
+    }
+    disconnected_edges == 2
+  }
 
-    let face = Face {
+  /// Merges two adjacent faces.
+  ///
+  /// # Invariants
+  /// - The faces must be adjacent.
+  /// - The faces must be coplanar.
+  /// - Both faces must be valid according to `is_valid_face`.
+  /// - The faces must share a contiguous border, i.e. if not triangular, they
+  ///   can't have more than one bordering section, because merging them would
+  ///   produce a hole.
+  pub fn merge_faces(&mut self, a: FaceKey, b: FaceKey) -> FaceKey {
+    assert!(a != b, "cannot merge a face with itself");
+    assert!(
+      self.faces.contains(a) && self.faces.contains(b),
+      "one or more faces do not exist"
+    );
+    assert!(self.is_valid_face(a).is_ok(), "face a is invalid");
+    assert!(self.is_valid_face(b).is_ok(), "face b is invalid");
+    assert!(
+      self.face_neighbors(a).contains(&b),
+      "faces are not adjacent"
+    );
+    assert!(
+      self
+        .face_normal(a)
+        .unwrap()
+        .dot(self.face_normal(b).unwrap())
+        .abs()
+        > 0.9999,
+      "faces are not coplanar"
+    );
+    assert!(
+      self.faces_share_contiguous_border(a, b),
+      "bordering edges are not contiguous"
+    );
+
+    // in this case, a `*_pre_border_edge` is an edge that preceeds the border
+    let a_bordering_edges = self.bordering_edges(a, b);
+    let a_pre_border_edge = a_bordering_edges
+      .iter()
+      .find_map(|edge_key| {
+        let edge = self.edges.get(*edge_key).unwrap();
+        if !a_bordering_edges.contains(&edge.prev_edge) {
+          return Some(edge.prev_edge);
+        }
+        None
+      })
+      .unwrap();
+    let a_post_border_edge = a_bordering_edges
+      .iter()
+      .find_map(|edge_key| {
+        let edge = self.edges.get(*edge_key).unwrap();
+        if !a_bordering_edges.contains(&edge.next_edge) {
+          return Some(edge.next_edge);
+        }
+        None
+      })
+      .unwrap();
+    let b_bordering_edges = self.bordering_edges(b, a);
+    let b_pre_border_edge = b_bordering_edges
+      .iter()
+      .find_map(|edge_key| {
+        let edge = self.edges.get(*edge_key).unwrap();
+        if !b_bordering_edges.contains(&edge.prev_edge) {
+          return Some(edge.prev_edge);
+        }
+        None
+      })
+      .unwrap();
+    let b_post_border_edge = b_bordering_edges
+      .iter()
+      .find_map(|edge_key| {
+        let edge = self.edges.get(*edge_key).unwrap();
+        if !b_bordering_edges.contains(&edge.next_edge) {
+          return Some(edge.next_edge);
+        }
+        None
+      })
+      .unwrap();
+
+    // here we're getting the edges from the post-border edge to the pre-border
+    // edge by following the next edge
+    let mut a_other_edges = Vec::new();
+    let mut edge_key = a_post_border_edge;
+    while edge_key != a_pre_border_edge {
+      let edge = self.edges.get(edge_key).unwrap();
+      a_other_edges.push(edge.id);
+      edge_key = edge.next_edge;
+    }
+
+    let mut b_other_edges = Vec::new();
+    let mut edge_key = b_post_border_edge;
+    while edge_key != b_pre_border_edge {
+      let edge = self.edges.get(edge_key).unwrap();
+      b_other_edges.push(edge.id);
+      edge_key = edge.next_edge;
+    }
+
+    // now we have the entire edge order. it will be:
+    // a_post_border_edge -> a_other_edges -> a_pre_border_edge ->
+    // b_post_border_edge -> b_other_edges -> b_pre_border_edge we need to
+    // remove the bordering edges from the mesh, and then add a new face with
+    // the new edge order
+    let edge_order = [a_post_border_edge]
+      .iter()
+      .chain(a_other_edges.iter())
+      .chain([a_pre_border_edge, b_post_border_edge].iter())
+      .chain(b_other_edges.iter())
+      .chain([b_pre_border_edge].iter())
+      .cloned()
+      .collect::<Vec<_>>();
+
+    let new_face_key = self.faces.add(Face {
       id:    FaceKey::INVALID,
-      edges: vec![a_to_b, b_to_c, c_to_a],
-    };
-    let face_key = self.faces.add(face);
+      edges: edge_order.clone(),
+    });
+    let new_face = self.faces.get_mut(new_face_key).unwrap();
+    new_face.id = new_face_key;
 
-    self.edges.get_mut(a_to_b).unwrap().face = face_key;
-    self.edges.get_mut(b_to_c).unwrap().face = face_key;
-    self.edges.get_mut(c_to_a).unwrap().face = face_key;
+    // remove the old faces
+    self.faces.remove(a);
+    self.faces.remove(b);
 
-    face_key
+    // fix the edges
+    for (i, edge_key) in edge_order.iter().enumerate() {
+      let edge = self.edges.get_mut(*edge_key).unwrap();
+      edge.face = new_face_key;
+      edge.next_edge = edge_order[(i + 1) % edge_order.len()];
+      edge.prev_edge =
+        edge_order[(i + edge_order.len() - 1) % edge_order.len()];
+    }
+
+    assert!(self.is_valid_face(new_face_key).is_ok());
+
+    new_face_key
   }
 
   /// Regenerates invalid keys.
   ///
   /// # Invariants
   /// Requires that faces have valid and consistently edge keys.
-  fn regenerate_invalid_keys(&mut self) {
+  pub fn regenerate_invalid_keys(&mut self) {
     // start with `self.id` keys
     let vertices_with_invalid_self_keys = self
       .vertices
@@ -404,6 +619,7 @@ impl<D: VertexData> HedgeMesh<D> {
       }
     }
 
+    self.fix_edge_parent_keys();
     self.fix_edge_twin_keys();
     self.fix_edge_next_prev_keys();
   }
@@ -457,77 +673,42 @@ impl<D: VertexData> HedgeMesh<D> {
     }
   }
 
-  /// Triangulates a face.
+  /// Fixes edge parent keys.
   ///
   /// # Invariants
-  /// The face must not have holes. The arity of the face must be `>= 3`.
-  pub fn triangulate(&mut self, face_key: FaceKey) {
-    let face = self.faces.get(face_key).unwrap();
-    let face_normal = self.face_normal(face_key).unwrap();
-    // get edges by next edge
-    let mut face_edges = Vec::new();
-    let mut next_edge_key = face.edges[0];
-    for _ in 0..face.edges.len() {
-      let edge = self.edges.get(next_edge_key).unwrap();
-      face_edges.push(edge.clone());
-      next_edge_key = edge.next_edge;
+  /// The `face` keys of each edge must be correct.
+  fn fix_edge_parent_keys(&mut self) {
+    let mut edge_to_face_map = HashMap::new();
+    for face in self.faces.iter() {
+      for edge_key in face.edges.iter() {
+        edge_to_face_map.insert(*edge_key, face.id);
+      }
     }
-
-    // get the positions of the vertices
-    let (position_index_to_vertex_key, vertex_positions): (
-      Vec<VertexKey>,
-      Vec<glam::Vec3A>,
-    ) = face_edges
-      .iter()
-      .map(|edge| {
-        (
-          edge.origin_vertex,
-          self.vertices.get(edge.origin_vertex).unwrap().data.pos(),
-        )
-      })
-      .unzip();
-
-    // project the positions onto the face's plane
-    let projected_positions = vertex_positions
-      .iter()
-      .map(|v| v.project_onto_normalized(face_normal).truncate())
-      .collect::<Vec<_>>();
-    // flatten the projected positions into a single array
-    let flattened_positions = projected_positions
-      .iter()
-      .flat_map(|v| vec![v.x, v.y])
-      .collect::<Vec<_>>();
-    // indices of the position triplets that form the triangles
-    let indices = earcutr::earcut(&flattened_positions, &[], 2).unwrap();
-
-    // convert the indices into vertex keys
-    let triangles: Vec<(VertexKey, VertexKey, VertexKey)> = indices
-      .iter()
-      .map_windows(|chunk: &[&usize; 3]| {
-        (
-          position_index_to_vertex_key[*chunk[0]],
-          position_index_to_vertex_key[*chunk[1]],
-          position_index_to_vertex_key[*chunk[2]],
-        )
-      })
-      .collect::<Vec<_>>();
-
-    // remove the face
-    let old_face = self.faces.remove(face_key).unwrap();
-    // invalidate the face keys of the old face's edges
-    for edge_key in old_face.edges.iter() {
-      let edge = self.edges.get_mut(*edge_key).unwrap();
-      edge.face = FaceKey::INVALID;
+    for edge_key in self.edges.iter_keys() {
+      let edge = self.edges.get_mut(edge_key).unwrap();
+      // edge.face = *edge_to_face_map.get(&edge_key).unwrap();
+      if let Some(face_key) = edge_to_face_map.get(&edge_key) {
+        edge.face = *face_key;
+      }
     }
-
-    // add the new faces
-    for (a, b, c) in triangles {
-      self.add_face(a, b, c);
-    }
-
-    // fix everything
-    self.regenerate_invalid_keys();
   }
+
+  // /// Fixes the order of edges in each face so they follow the order of
+  // /// `next_edge`.
+  // ///
+  // /// # Invariants
+  // /// - The face must be considered valid by `is_valid_face`.
+  // fn reorder_edges_in_face(&mut self, face_key: FaceKey) {
+  //   let face = self.faces.get(face_key).unwrap();
+  //   let mut edge_key = face.edges[0];
+  //   let mut edge_keys = Vec::new();
+  //   for _ in 0..face.edges.len() {
+  //     let edge = self.edges.get(edge_key).unwrap();
+  //     edge_keys.push(edge.id);
+  //     edge_key = edge.next_edge;
+  //   }
+  //   self.faces.get_mut(face_key).unwrap().edges = edge_keys;
+  // }
 
   /// Counts the maxiumum arity of the total mesh.
   pub fn arity(&self) -> usize {

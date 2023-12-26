@@ -53,10 +53,14 @@ impl<T: OpaqueKey, S: Clone> Storage<T, S> {
   pub fn retain<F: FnMut(&T, &mut S) -> bool>(&mut self, f: F) {
     self.map.retain(f);
   }
+  /// Returns whether the storage container contains the given key.
+  pub fn contains(&self, key: T) -> bool { self.map.contains_key(&key) }
   /// Returns a reference to the inner [`HashMap`].
   pub fn inner(&self) -> &HashMap<T, S> { &self.map }
   /// Returns the number of elements in the storage container.
   pub fn len(&self) -> usize { self.map.len() }
+  /// Returns whether the storage container is empty.
+  pub fn is_empty(&self) -> bool { self.map.is_empty() }
 }
 
 impl<T: OpaqueKey + Sync, S: Clone + Sync> Storage<T, S> {

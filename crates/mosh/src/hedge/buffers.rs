@@ -106,7 +106,7 @@ impl<D: VertexData> HedgeMesh<D> {
   /// # Invariants
   /// The arity of the mesh must be exactly 3.
   pub fn to_buffers(&self) -> (Vec<(usize, usize, usize)>, Vec<D>) {
-    if self.faces.len() == 0 {
+    if self.faces.is_empty() {
       return (vec![], vec![]);
     }
 

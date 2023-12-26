@@ -21,15 +21,12 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
     HedgeMesh::from_buffers(triangles.as_slice(), vertices.as_slice());
 
   // simplification goes here
-  let coplanar_face_groups = hedge.find_coplanar_face_groups();
-  for group in coplanar_face_groups {
-    let face = hedge
-      .merge_faces(group.iter().copied().collect::<Vec<_>>().as_slice())
-      .unwrap();
-    hedge.triangulate(face);
-  }
-  hedge.dedup_equal_vertices();
+  hedge.regenerate_invalid_keys();
   hedge.prune_unused_vertices();
+  hedge.dedup_equal_vertices();
+  for face in hedge.faces() {
+    hedge.is_valid_face(face).unwrap();
+  }
 
   let hedge_buffers = hedge.to_buffers();
   let triangles = hedge_buffers
@@ -54,59 +51,3 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
     normals,
   }
 }
-
-// /// Merges a coplanar group of faces into a single face.
-// fn merge_coplanar_group(
-//   mesh_graph: &mut MeshGraph<FullVertex>,
-//   coplanar_group: &Vec<FaceKey>,
-// ) -> Result<FaceKey, GraphError> {
-//   let mut master_face_key = coplanar_group[0];
-//   let mut merged_faces = vec![master_face_key];
-
-//   loop {
-//     let master_face = mesh_graph.face_mut(master_face_key).unwrap();
-//     let neighbors = master_face
-//       .neighboring_faces()
-//       .filter(|f| {
-//         coplanar_group.contains(&f.key()) && !merged_faces.contains(&f.key())
-//       })
-//       .collect::<Vec<_>>();
-//     if neighbors.len() == 0 {
-//       break;
-//     }
-
-//     let neighbor_key = neighbors[0].key();
-//     let new_master_face =
-//       master_face.merge(plexus::prelude::Selector::ByKey(neighbor_key))?;
-//     master_face_key = new_master_face.key();
-//     merged_faces.push(neighbor_key);
-//   }
-
-//   mesh_graph.face_mut(master_face_key).unwrap().triangulate();
-
-//   Ok(master_face_key)
-// }
-
-// fn fullmesh_from_mesh_graph(
-//   mesh_graph: &MeshGraph<FullVertex>,
-// ) -> Result<FullMesh, GraphError> {
-//   let mesh_buffer = mesh_graph
-//     .to_mesh_buffer_by_vertex::<U3, u32, FullVertex>()
-//     .unwrap();
-//   let (triangles, vertices): (Vec<u32>, Vec<FullVertex>) =
-//     mesh_buffer.into_raw_buffers();
-
-//   let triangles = triangles
-//     .into_iter()
-//     .map_windows(|i: &[u32; 3]| glam::UVec3::from_slice(i))
-//     .collect::<Vec<_>>();
-//   let (vertices, normals): (Vec<_>, Vec<_>) = vertices
-//     .into_iter()
-//     .map(|v: FullVertex| (v.position, v.normal))
-//     .unzip();
-//   Ok(FullMesh {
-//     vertices,
-//     normals,
-//     triangles,
-//   })
-// }
