@@ -42,7 +42,7 @@ impl<D: VertexData> HedgeMesh<D> {
         edges: Vec::new(),
       });
 
-      let ab = edge_storage.add(HalfEdge {
+      let ab = edge_storage.add(Edge {
         id: EdgeKey::new(0),
         origin_vertex: vertex_keys[*a],
         target_vertex: vertex_keys[*b],
@@ -52,7 +52,7 @@ impl<D: VertexData> HedgeMesh<D> {
         twin_edge: None,
       });
 
-      let bc = edge_storage.add(HalfEdge {
+      let bc = edge_storage.add(Edge {
         id: EdgeKey::new(0),
         origin_vertex: vertex_keys[*b],
         target_vertex: vertex_keys[*c],
@@ -62,7 +62,7 @@ impl<D: VertexData> HedgeMesh<D> {
         twin_edge: None,
       });
 
-      let ca = edge_storage.add(HalfEdge {
+      let ca = edge_storage.add(Edge {
         id: EdgeKey::new(0),
         origin_vertex: vertex_keys[*c],
         target_vertex: vertex_keys[*a],

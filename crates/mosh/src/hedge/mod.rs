@@ -16,7 +16,7 @@ pub use self::{
 
 /// A half-edge within a half-edge mesh.
 #[derive(Clone, Debug, PartialEq)]
-pub struct HalfEdge {
+pub struct Edge {
   pub(crate) id:            EdgeKey,
   pub(crate) origin_vertex: VertexKey,
   pub(crate) target_vertex: VertexKey,
@@ -26,7 +26,7 @@ pub struct HalfEdge {
   pub(crate) twin_edge:     Option<EdgeKey>,
 }
 
-impl Storable for HalfEdge {
+impl Storable for Edge {
   type Key = EdgeKey;
 }
 
@@ -71,7 +71,7 @@ impl<D: VertexData> Storable for Vertex<D> {
 #[derive(Debug)]
 pub struct HedgeMesh<D: VertexData> {
   vertices: Storage<VertexKey, Vertex<D>>,
-  edges:    Storage<EdgeKey, HalfEdge>,
+  edges:    Storage<EdgeKey, Edge>,
   faces:    Storage<FaceKey, Face>,
 }
 
