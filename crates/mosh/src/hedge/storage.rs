@@ -62,3 +62,7 @@ impl<T: OpaqueKey + Sync, S: Clone + Sync> Storage<T, S> {
   /// The elements must be `Sync`.
   pub fn par_iter_keys(&self) -> ParKeys<T, S> { self.map.par_keys() }
 }
+
+impl<T: OpaqueKey, S: Clone> Default for Storage<T, S> {
+  fn default() -> Self { Self::new() }
+}
