@@ -1,15 +1,15 @@
 use bevy::prelude::*;
-use planiscope::mesher::FullMesh;
+use planiscope::mesher::BufMesh;
 
 /// Converts a `planiscope::mesher::FullMesh` to a `bevy::render::mesh::Mesh`.
-pub fn bevy_mesh_from_pls_mesh(mesh: FullMesh) -> Mesh {
+pub fn bevy_mesh_from_pls_mesh(mesh: BufMesh) -> Mesh {
   let mut bevy_mesh =
     Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList);
 
   bevy_mesh.insert_attribute(
     Mesh::ATTRIBUTE_POSITION,
     mesh
-      .vertices
+      .positions
       .into_iter()
       .map(|v| v.to_array())
       .collect::<Vec<_>>(),

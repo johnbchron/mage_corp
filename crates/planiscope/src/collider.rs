@@ -1,4 +1,4 @@
-use mosh::FullMesh;
+use mosh::BufMesh;
 use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ pub enum ColliderSettings {
 }
 
 pub fn generate_collider(
-  full_mesh: FullMesh,
+  full_mesh: BufMesh,
   settings: &ColliderSettings,
 ) -> Option<SharedShape> {
   if full_mesh.triangles.is_empty() {
@@ -21,7 +21,7 @@ pub fn generate_collider(
     ColliderSettings::ConvexDecomposition => {
       Some(SharedShape::convex_decomposition(
         full_mesh
-          .vertices
+          .positions
           .into_iter()
           .map(|v| v.to_array().into())
           .collect::<Vec<_>>()
@@ -36,7 +36,7 @@ pub fn generate_collider(
     }
     ColliderSettings::TriMesh => Some(SharedShape::trimesh(
       full_mesh
-        .vertices
+        .positions
         .into_iter()
         .map(|v| v.to_array().into())
         .collect::<Vec<_>>(),

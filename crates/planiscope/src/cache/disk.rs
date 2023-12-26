@@ -41,7 +41,7 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
   fn get_mesh(
     &self,
     inputs: &MesherInputs,
-  ) -> Result<crate::mesher::FullMesh, fidget::Error> {
+  ) -> Result<crate::mesher::BufMesh, fidget::Error> {
     // get the hash and resulting path
     let inputs_hash = hash_single(inputs);
     let path = format!("{}{}", self.mesh_path, inputs_hash);
@@ -95,7 +95,7 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     &self,
     inputs: &MesherInputs,
   ) -> (
-    Result<crate::mesher::FullMesh, fidget::Error>,
+    Result<crate::mesher::BufMesh, fidget::Error>,
     Option<parry3d::shape::SharedShape>,
   ) {
     let mesh = self.get_mesh(inputs);

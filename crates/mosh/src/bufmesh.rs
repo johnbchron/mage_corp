@@ -5,21 +5,21 @@ use crate::{hash::hash_vec3a, hedge::VertexData};
 
 /// An index-buffer mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct FullMesh {
-  /// The vertex positions of the mesh.
-  pub vertices:  Vec<glam::Vec3A>,
-  /// The triangle indices of the mesh.
-  pub triangles: Vec<glam::UVec3>,
+pub struct BufMesh {
   /// The normals attached to the vertices of the mesh.
   pub normals:   Vec<glam::Vec3A>,
+  /// The vertex positions of the mesh.
+  pub positions: Vec<glam::Vec3A>,
+  /// The triangle indices of the mesh.
+  pub triangles: Vec<glam::UVec3>,
 }
 
-impl FullMesh {
+impl BufMesh {
   /// Transforms the mesh to the desired translation and scale.
   ///
   /// `mesh_new()` produces a mesh only between -1 and 1 on all axes.
   pub fn transform(&mut self, translation: glam::Vec3A, scale: glam::Vec3A) {
-    self.vertices.iter_mut().for_each(|v| {
+    self.positions.iter_mut().for_each(|v| {
       *v = v.mul_add(scale, translation);
     });
   }
@@ -30,7 +30,7 @@ impl FullMesh {
     // prune triangles outside of the -1 to 1 range on any axis
     const MESH_BLEED: [f32; 3] = [1.0, 1.0, 1.0];
     let violating_verts = self
-      .vertices
+      .positions
       .iter()
       // attach an index to each vertex: (usize, Vec3A)
       .enumerate()

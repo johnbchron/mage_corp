@@ -3,7 +3,7 @@ use fast_surface_nets::{
   surface_nets, SurfaceNetsBuffer,
 };
 use fidget::{eval::Tape, Context};
-use mosh::FullMesh;
+use mosh::BufMesh;
 
 use crate::{
   mesher::{fidget_normals, FastSurfaceNetsMesher, Mesher, MesherInputs},
@@ -17,7 +17,7 @@ impl Mesher for FastSurfaceNetsMesher {
   fn build_mesh(
     &self,
     inputs: &MesherInputs,
-  ) -> Result<FullMesh, fidget::Error> {
+  ) -> Result<BufMesh, fidget::Error> {
     // get a node for the composition
     let mut ctx = Context::new();
     let node = inputs.shape.eval_root_cached(&mut ctx)?;
@@ -95,8 +95,8 @@ impl Mesher for FastSurfaceNetsMesher {
     // get the normals
     let normals: Vec<glam::Vec3A> = fidget_normals(&vertices, &tape)?;
 
-    let mut mesh = FullMesh {
-      vertices,
+    let mut mesh = BufMesh {
+      positions: vertices,
       triangles,
       normals,
     };

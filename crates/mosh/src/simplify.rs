@@ -1,18 +1,18 @@
 use crate::{
+  bufmesh::{BufMesh, FullVertex},
   hedge::Mesh,
-  mesh::{FullMesh, FullVertex},
 };
 
 /// Simplifies a mesh by merging coplanar faces.
-pub fn simplify_mesh(mesh: FullMesh) -> FullMesh {
+pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
   let triangles = mesh
     .triangles
     .iter()
     .map(|t| (t.x as usize, t.y as usize, t.z as usize))
     .collect::<Vec<_>>();
-  let vertices = (0..mesh.vertices.len())
+  let vertices = (0..mesh.positions.len())
     .map(|i| FullVertex {
-      position: mesh.vertices[i],
+      position: mesh.positions[i],
       normal:   mesh.normals[i],
     })
     .collect::<Vec<_>>();
@@ -45,9 +45,9 @@ pub fn simplify_mesh(mesh: FullMesh) -> FullMesh {
     .map(|v| v.normal)
     .collect::<Vec<_>>();
 
-  FullMesh {
+  BufMesh {
     triangles,
-    vertices,
+    positions: vertices,
     normals,
   }
 }

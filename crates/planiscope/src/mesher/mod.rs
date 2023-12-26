@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use bevy_reflect::Reflect;
 use educe::Educe;
 use fidget::eval::Tape;
-pub use mosh::{FullMesh, FullVertex};
+pub use mosh::{BufMesh, FullVertex};
 use serde::{Deserialize, Serialize};
 
 use crate::shape::Shape;
@@ -71,10 +71,8 @@ pub struct FastSurfaceNetsMesher;
 pub trait Mesher {
   type EvalFamily: fidget::eval::Family;
 
-  fn build_mesh(
-    &self,
-    inputs: &MesherInputs,
-  ) -> Result<FullMesh, fidget::Error>;
+  fn build_mesh(&self, inputs: &MesherInputs)
+    -> Result<BufMesh, fidget::Error>;
 }
 
 pub fn fidget_normals<F: fidget::eval::Family>(
