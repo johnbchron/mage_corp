@@ -35,6 +35,9 @@ impl<T: OpaqueKey, S: Clone> Storage<T, S> {
   pub fn get(&self, key: T) -> Option<&S> { self.map.get(&key) }
   pub fn get_mut(&mut self, key: T) -> Option<&mut S> { self.map.get_mut(&key) }
   pub fn remove(&mut self, key: T) -> Option<S> { self.map.remove(&key) }
+  pub fn retain<F: FnMut(&T, &mut S) -> bool>(&mut self, f: F) {
+    self.map.retain(f);
+  }
 }
 
 impl<T: OpaqueKey + Sync, S: Clone + Sync> Storage<T, S> {
