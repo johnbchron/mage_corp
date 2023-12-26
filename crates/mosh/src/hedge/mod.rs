@@ -61,6 +61,7 @@ pub struct Mesh<D: VertexData> {
 }
 
 impl<D: VertexData> Mesh<D> {
+  /// Prunes vertices that are not used by any edges.
   pub fn prune_unused_vertices(&mut self) {
     let used_vertices = self
       .edges
@@ -71,27 +72,46 @@ impl<D: VertexData> Mesh<D> {
     self.vertices.retain(|k, _| used_vertices.contains(k));
   }
 
+  /// Deduplicates vertices that have the same data.
   pub fn dedup_equal_vertices(&mut self) {
-    let mut vertex_map = HashMap::new();
-    for vertex_key in self.vertices.iter_keys() {
-      let vertex = self.vertices.get(vertex_key).unwrap();
-      if let Some(duplicate_vertex_key) = vertex_map.get(&vertex.data) {
-        for edge_key in self.edges.iter_keys() {
-          let edge = self.edges.get_mut(edge_key).unwrap();
-          if edge.origin_vertex == vertex_key {
-            edge.origin_vertex = *duplicate_vertex_key;
-          }
-          if edge.target_vertex == vertex_key {
-            edge.target_vertex = *duplicate_vertex_key;
-          }
-        }
-        self.vertices.remove(vertex_key);
+    // a map from vertex data to the vertex keys that have that data
+    let mut vertex_map: HashMap<D, HashSet<VertexKey>> = HashMap::new();
+
+    for vertex in self.vertices.iter() {
+      if vertex_map.contains_key(&vertex.data) {
+        vertex_map.get_mut(&vertex.data).unwrap().insert(vertex.id);
       } else {
-        vertex_map.insert(vertex.data.clone(), vertex_key);
+        vertex_map
+          .insert(vertex.data.clone(), [vertex.id].iter().cloned().collect());
+      }
+    }
+
+    for (_, keys) in vertex_map.iter().filter(|(_, v)| v.len() > 1) {
+      let master_vertex_key = keys.iter().max().unwrap();
+      for vertex_key in keys.iter().filter(|k| **k != *master_vertex_key) {
+        self.replace_vertex(*vertex_key, *master_vertex_key);
       }
     }
   }
 
+  /// Replaces a vertex with another vertex, by key.
+  pub fn replace_vertex(
+    &mut self,
+    to_replace: VertexKey,
+    replacement: VertexKey,
+  ) {
+    for edge in self.edges.iter_mut() {
+      if edge.origin_vertex == to_replace {
+        edge.origin_vertex = replacement;
+      }
+      if edge.target_vertex == to_replace {
+        edge.target_vertex = replacement;
+      }
+    }
+    self.vertices.remove(to_replace);
+  }
+
+  /// Calculates the normal of a face.
   pub fn face_normal(&self, face: FaceKey) -> Option<glam::Vec3A> {
     let face = self.faces.get(face)?;
     let mut vertex_iter = face.edges.iter().map(|edge| {
