@@ -1,6 +1,6 @@
 use crate::{
   bufmesh::{BufMesh, FullVertex},
-  hedge::Mesh,
+  hedge::HedgeMesh,
 };
 
 /// Simplifies a mesh by merging coplanar faces.
@@ -17,7 +17,8 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
     })
     .collect::<Vec<_>>();
 
-  let mut hedge = Mesh::from_buffers(triangles.as_slice(), vertices.as_slice());
+  let mut hedge =
+    HedgeMesh::from_buffers(triangles.as_slice(), vertices.as_slice());
 
   // simplification goes here
   let coplanar_face_groups = hedge.find_coplanar_face_groups();

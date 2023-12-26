@@ -1,6 +1,6 @@
 use super::*;
 
-impl<D: VertexData> Mesh<D> {
+impl<D: VertexData> HedgeMesh<D> {
   /// Builds a mesh from a list of triangles and vertices.
   pub fn from_buffers(
     triangles: &[(usize, usize, usize)],

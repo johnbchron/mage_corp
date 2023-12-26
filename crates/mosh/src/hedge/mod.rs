@@ -69,13 +69,13 @@ impl<D: VertexData> Storable for Vertex<D> {
 
 /// A half-edge mesh.
 #[derive(Debug)]
-pub struct Mesh<D: VertexData> {
+pub struct HedgeMesh<D: VertexData> {
   vertices: Storage<VertexKey, Vertex<D>>,
   edges:    Storage<EdgeKey, HalfEdge>,
   faces:    Storage<FaceKey, Face>,
 }
 
-impl<D: VertexData> Mesh<D> {
+impl<D: VertexData> HedgeMesh<D> {
   /// Prunes vertices that are not used by any edges.
   pub fn prune_unused_vertices(&mut self) {
     let used_vertices = self
