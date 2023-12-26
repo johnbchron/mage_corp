@@ -56,13 +56,12 @@ impl From<Primitives> for Shape {
             sb::translate(hole.clone(), (dimensions.x * 0.55).into(), 0.0, 0.0),
           ),
         );
-        let brick = sb::scale(
+        sb::scale(
           sb::max(outer_box, -all_holes),
           scale.x.into(),
           scale.y.into(),
           scale.z.into(),
-        );
-        brick
+        )
       }
     }
   }
@@ -97,9 +96,5 @@ pub fn brick_array(x: usize, y: usize) -> Shape {
     }
   }
 
-  let bricks = accumulator
-    .into_iter()
-    .reduce(|a, b| sb::min(a, b))
-    .unwrap();
-  bricks
+  accumulator.into_iter().reduce(sb::min).unwrap()
 }

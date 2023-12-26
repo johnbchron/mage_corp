@@ -1,7 +1,6 @@
+use mosh::FullMesh;
 use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
-
-use crate::mesher::FullMesh;
 
 #[derive(Clone, Debug, Default, Hash, Serialize, Deserialize)]
 pub enum ColliderSettings {

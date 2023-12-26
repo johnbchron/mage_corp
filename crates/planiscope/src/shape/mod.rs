@@ -39,11 +39,11 @@ impl CachedIntoNode for Shape {
     self.hash(&mut hasher);
     let hash = hasher.finish();
     if let Some(node) = cache.get(&hash) {
-      return Ok(node.clone());
+      return Ok(*node);
     }
 
     let node = self.into_node(ctx)?;
-    cache.insert(hash, node.clone());
+    cache.insert(hash, node);
     Ok(node)
   }
 }

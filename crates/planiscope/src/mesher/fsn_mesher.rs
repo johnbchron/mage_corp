@@ -2,12 +2,11 @@ use fast_surface_nets::{
   ndshape::{RuntimeShape, Shape},
   surface_nets, SurfaceNetsBuffer,
 };
-use fidget::{context::IntoNode, eval::Tape, Context};
+use fidget::{eval::Tape, Context};
+use mosh::FullMesh;
 
 use crate::{
-  mesher::{
-    fidget_normals, FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs,
-  },
+  mesher::{fidget_normals, FastSurfaceNetsMesher, Mesher, MesherInputs},
   nso,
   shape::CachedIntoNode,
 };
@@ -101,7 +100,9 @@ impl Mesher for FastSurfaceNetsMesher {
       triangles,
       normals,
     };
+
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
+    let mesh = mosh::simplify_mesh(mesh);
 
     Ok(mesh)
   }

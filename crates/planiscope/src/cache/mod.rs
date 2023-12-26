@@ -1,8 +1,9 @@
 pub mod disk;
 
+use mosh::FullMesh;
 use parry3d::shape::SharedShape;
 
-use crate::mesher::{FullMesh, Mesher, MesherInputs};
+use crate::mesher::{Mesher, MesherInputs};
 
 pub struct DiskCacheProvider<M: Mesher> {
   /// The mesher to use.

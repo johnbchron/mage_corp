@@ -1,12 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize { left + right }
+#![feature(iter_map_windows)]
 
-#[cfg(test)]
-mod tests {
-  use super::*;
+mod hash;
+mod hedge;
+mod mesh;
+mod simplify;
 
-  #[test]
-  fn it_works() {
-    let result = add(2, 2);
-    assert_eq!(result, 4);
-  }
-}
+pub use mesh::{FullMesh, FullVertex};
+pub use simplify::simplify_mesh;

@@ -5,7 +5,7 @@ use bevy::{
   pbr::wireframe::Wireframe,
   prelude::*,
 };
-use bevy_implicits::prelude::{builder as sb, *};
+use bevy_implicits::prelude::*;
 use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
 
@@ -18,16 +18,14 @@ fn test_scene(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
-  mut std_materials: ResMut<Assets<StandardMaterial>>,
 ) {
   // spawn the camera
   commands.spawn((
     LowresCameraBundle {
       lowres_camera: LowresCamera {
         min_pixel_scale: 2,
-        final_far: Some(10000.0),
-        n_cameras: 1,
-        ..default()
+        final_far:       Some(10000.0),
+        n_cameras:       4,
       },
       spatial_bundle: SpatialBundle::from_transform(
         Transform::from_xyz(0.0, 5.0, 10.0)
