@@ -229,7 +229,7 @@ impl<D: VertexData> HedgeMesh<D> {
         ));
       }
       if visited_edges.contains(&next_edge_key)
-        && next_edge_key != face.edges[0]
+        && visited_edges.len() != face.edges.len() - 1
       {
         return Err(InvalidFaceError::EdgeCycledTooEarly(next_edge_key));
       }
@@ -406,7 +406,7 @@ impl<D: VertexData> HedgeMesh<D> {
   /// - The faces must share a contiguous border, i.e. if not triangular, they
   ///   can't have more than one bordering section, because merging them would
   ///   produce a hole.
-  pub fn merge_faces(&mut self, a: FaceKey, b: FaceKey) -> FaceKey {
+  pub fn merge_face_pair(&mut self, a: FaceKey, b: FaceKey) -> FaceKey {
     assert!(a != b, "cannot merge a face with itself");
     assert!(
       self.faces.contains(a) && self.faces.contains(b),
@@ -432,8 +432,36 @@ impl<D: VertexData> HedgeMesh<D> {
       "bordering edges are not contiguous"
     );
 
-    // in this case, a `*_pre_border_edge` is an edge that preceeds the border
+    let a_face = self.faces.get(a).unwrap();
+    let b_face = self.faces.get(b).unwrap();
+
+    // check to see if the triangles are the same, but just reversed. if so,
+    // we'll just remove one of the faces and return the other.
+    let reversed_triangles = a_face
+      .edges
+      .iter()
+      .filter_map(|edge_key| self.edges.get(*edge_key).unwrap().twin_edge)
+      .all(|e| b_face.edges.contains(&e));
+    if reversed_triangles {
+      self.remove_face_and_edges(b);
+      return a;
+    }
+
     let a_bordering_edges = self.bordering_edges(a, b);
+    let b_bordering_edges = self.bordering_edges(b, a);
+
+    // check to see if, due to other merging, either triangle is degenerate.
+    // if so, we'll just remove the degenerate triangle and return the other.
+
+    if a_bordering_edges.len() == a_face.edges.len() {
+      self.remove_face_and_edges(a);
+      return b;
+    } else if b_bordering_edges.len() == b_face.edges.len() {
+      self.remove_face_and_edges(b);
+      return a;
+    }
+
+    // in this case, a `*_pre_border_edge` is an edge that preceeds the border
     let a_pre_border_edge = a_bordering_edges
       .iter()
       .find_map(|edge_key| {
@@ -454,7 +482,6 @@ impl<D: VertexData> HedgeMesh<D> {
         None
       })
       .unwrap();
-    let b_bordering_edges = self.bordering_edges(b, a);
     let b_pre_border_edge = b_bordering_edges
       .iter()
       .find_map(|edge_key| {
@@ -480,18 +507,24 @@ impl<D: VertexData> HedgeMesh<D> {
     // edge by following the next edge
     let mut a_other_edges = Vec::new();
     let mut edge_key = a_post_border_edge;
-    while edge_key != a_pre_border_edge {
+    loop {
       let edge = self.edges.get(edge_key).unwrap();
-      a_other_edges.push(edge.id);
+      if edge.next_edge == a_pre_border_edge {
+        break;
+      }
       edge_key = edge.next_edge;
+      a_other_edges.push(edge_key);
     }
 
     let mut b_other_edges = Vec::new();
     let mut edge_key = b_post_border_edge;
-    while edge_key != b_pre_border_edge {
+    loop {
       let edge = self.edges.get(edge_key).unwrap();
-      b_other_edges.push(edge.id);
+      if edge.next_edge == b_pre_border_edge {
+        break;
+      }
       edge_key = edge.next_edge;
+      b_other_edges.push(edge_key);
     }
 
     // now we have the entire edge order. it will be:
@@ -499,14 +532,33 @@ impl<D: VertexData> HedgeMesh<D> {
     // b_post_border_edge -> b_other_edges -> b_pre_border_edge we need to
     // remove the bordering edges from the mesh, and then add a new face with
     // the new edge order
-    let edge_order = [a_post_border_edge]
-      .iter()
-      .chain(a_other_edges.iter())
-      .chain([a_pre_border_edge, b_post_border_edge].iter())
-      .chain(b_other_edges.iter())
-      .chain([b_pre_border_edge].iter())
-      .cloned()
-      .collect::<Vec<_>>();
+
+    // in the case that either triangle shares all but one edge, we need to
+    // handle that case specially.
+    let edge_order = if a_pre_border_edge == a_post_border_edge {
+      [a_pre_border_edge, b_post_border_edge]
+        .iter()
+        .chain(b_other_edges.iter())
+        .chain([b_pre_border_edge].iter())
+        .cloned()
+        .collect::<Vec<_>>()
+    } else if b_pre_border_edge == b_post_border_edge {
+      [a_post_border_edge]
+        .iter()
+        .chain(a_other_edges.iter())
+        .chain([a_pre_border_edge, b_pre_border_edge].iter())
+        .cloned()
+        .collect::<Vec<_>>()
+    } else {
+      [a_post_border_edge]
+        .iter()
+        .chain(a_other_edges.iter())
+        .chain([a_pre_border_edge, b_post_border_edge].iter())
+        .chain(b_other_edges.iter())
+        .chain([b_pre_border_edge].iter())
+        .cloned()
+        .collect::<Vec<_>>()
+    };
 
     let new_face_key = self.faces.add(Face {
       id:    FaceKey::INVALID,
@@ -516,8 +568,8 @@ impl<D: VertexData> HedgeMesh<D> {
     new_face.id = new_face_key;
 
     // remove the old faces
-    self.faces.remove(a);
-    self.faces.remove(b);
+    let a_face = self.faces.remove(a).unwrap();
+    let b_face = self.faces.remove(b).unwrap();
 
     // fix the edges
     for (i, edge_key) in edge_order.iter().enumerate() {
@@ -528,9 +580,70 @@ impl<D: VertexData> HedgeMesh<D> {
         edge_order[(i + edge_order.len() - 1) % edge_order.len()];
     }
 
-    assert!(self.is_valid_face(new_face_key).is_ok());
+    let is_valid_face = self.is_valid_face(new_face_key);
+    if is_valid_face.is_err() {
+      println!("a: {:?}", a_face);
+      println!("b: {:?}", b_face);
+      println!("new face key: {:?}", new_face_key);
+      println!("edge order: {:?}", edge_order);
+      for edge_key in edge_order.iter() {
+        println!(
+          "edge: {:?}, face: {:?}, next: {:?}, prev: {:?}, twin: {:?}",
+          edge_key,
+          self.edges.get(*edge_key).unwrap().face,
+          self.edges.get(*edge_key).unwrap().next_edge,
+          self.edges.get(*edge_key).unwrap().prev_edge,
+          self.edges.get(*edge_key).unwrap().twin_edge,
+        );
+      }
+      panic!("new face is invalid: {}", is_valid_face.unwrap_err());
+    }
 
     new_face_key
+  }
+
+  /// Merges a group of faces.
+  ///
+  /// # Invariants
+  /// - The faces must form a contiguous group.
+  /// - The faces must be coplanar.
+  /// - All faces must be valid according to `is_valid_face`.
+  /// - Adjacent must share a contiguous border, i.e. if not triangular, they
+  ///   can't have more than one bordering section, because merging them would
+  ///   produce a hole.
+  pub fn merge_face_group(&mut self, face_group: HashSet<FaceKey>) -> FaceKey {
+    let mut all_faces = face_group.iter().cloned().collect::<HashSet<_>>();
+    loop {
+      let mut mergeable_faces = all_faces.clone();
+      loop {
+        let Some(face) = mergeable_faces.clone().into_iter().next() else {
+          break;
+        };
+        let neighbors = self
+          .face_neighbors(face)
+          .into_iter()
+          .filter(|f| {
+            mergeable_faces.contains(f)
+              && self.faces_share_contiguous_border(face, *f)
+          })
+          .collect::<Vec<_>>();
+        if neighbors.is_empty() {
+          break;
+        }
+        let neighbor = neighbors[0];
+        let new_face = self.merge_face_pair(face, neighbor);
+        mergeable_faces.remove(&face);
+        mergeable_faces.remove(&neighbor);
+        all_faces.remove(&face);
+        all_faces.remove(&neighbor);
+        all_faces.insert(new_face);
+      }
+      if all_faces.len() == 1 {
+        break;
+      }
+    }
+    println!("merged face group with {} faces", face_group.len());
+    *all_faces.iter().next().unwrap()
   }
 
   /// Regenerates invalid keys.
