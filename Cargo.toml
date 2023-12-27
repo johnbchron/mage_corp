@@ -58,5 +58,3 @@ bevy_ui = { git = "https://github.com/johnbchron/bevy.git", branch = "split-pbr-
 bevy_utils = { git = "https://github.com/johnbchron/bevy.git", branch = "split-pbr-lighting-outputs" }
 bevy_window = { git = "https://github.com/johnbchron/bevy.git", branch = "split-pbr-lighting-outputs" }
 bevy_winit = { git = "https://github.com/johnbchron/bevy.git", branch = "split-pbr-lighting-outputs" }
-
-meshopt2 = { git = "https://github.com/Uriopass/meshopt2.git" }
