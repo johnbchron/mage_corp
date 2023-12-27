@@ -1,8 +1,9 @@
 pub mod disk;
 
+use mosh::BufMesh;
 use parry3d::shape::SharedShape;
 
-use crate::mesher::{FullMesh, Mesher, MesherInputs};
+use crate::mesher::{Mesher, MesherInputs};
 
 pub struct DiskCacheProvider<M: Mesher> {
   /// The mesher to use.
@@ -24,12 +25,12 @@ impl<M: Mesher + Default> Default for DiskCacheProvider<M> {
 }
 
 pub trait CacheProvider {
-  fn get_mesh(&self, inputs: &MesherInputs) -> Result<FullMesh, fidget::Error>;
+  fn get_mesh(&self, inputs: &MesherInputs) -> Result<BufMesh, fidget::Error>;
 
   fn get_collider(&self, inputs: &MesherInputs) -> Option<SharedShape>;
 
   fn get_mesh_and_collider(
     &self,
     inputs: &MesherInputs,
-  ) -> (Result<FullMesh, fidget::Error>, Option<SharedShape>);
+  ) -> (Result<BufMesh, fidget::Error>, Option<SharedShape>);
 }

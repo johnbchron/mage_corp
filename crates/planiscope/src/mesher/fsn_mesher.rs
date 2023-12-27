@@ -2,13 +2,14 @@ use fast_surface_nets::{
   ndshape::{RuntimeShape, Shape},
   surface_nets, SurfaceNetsBuffer,
 };
-use fidget::{context::IntoNode, eval::Tape, Context};
+use fidget::{eval::Tape, Context};
+use mosh::BufMesh;
+use tracing::info_span;
 
 use crate::{
-  mesher::{
-    fidget_normals, FastSurfaceNetsMesher, FullMesh, Mesher, MesherInputs,
-  },
+  mesher::{fidget_normals, FastSurfaceNetsMesher, Mesher, MesherInputs},
   nso,
+  shape::CachedIntoNode,
 };
 
 impl Mesher for FastSurfaceNetsMesher {
@@ -17,10 +18,13 @@ impl Mesher for FastSurfaceNetsMesher {
   fn build_mesh(
     &self,
     inputs: &MesherInputs,
-  ) -> Result<FullMesh, fidget::Error> {
+  ) -> Result<BufMesh, fidget::Error> {
+    let _span =
+      info_span!("plansicope::FastSurfaceNetsMesher::build_mesh").entered();
+
     // get a node for the composition
     let mut ctx = Context::new();
-    let node = inputs.shape.into_node(&mut ctx)?;
+    let node = inputs.shape.eval_root_cached(&mut ctx)?;
 
     // we need to normalize the target region into -1..1
     let normalized_node = nso::regions::nso_normalize_region(
@@ -52,6 +56,7 @@ impl Mesher for FastSurfaceNetsMesher {
       })
       .collect::<Vec<glam::Vec3A>>();
 
+    let eval_span = info_span!("fidget_point_eval").entered();
     // evaluate the fidget tape on all of the points
     let evaluator = fidget::eval::FloatSliceEval::new(&tape);
     let values = evaluator.eval(
@@ -60,7 +65,9 @@ impl Mesher for FastSurfaceNetsMesher {
       &points.iter().map(|v| v.z).collect::<Vec<_>>(),
       &[],
     )?;
+    drop(eval_span);
 
+    let surface_nets_span = info_span!("surface_nets").entered();
     // create a buffer for holding the surface_nets result
     let mut buffer = SurfaceNetsBuffer::default();
     surface_nets(
@@ -70,6 +77,7 @@ impl Mesher for FastSurfaceNetsMesher {
       (glam::UVec3::from_array(shape_length) - 1).to_array(),
       &mut buffer,
     );
+    drop(surface_nets_span);
 
     // convert vertices and triangles into something we can use (what full_mesh
     // is expecting), and scale them back up for the normal calc.
@@ -95,12 +103,14 @@ impl Mesher for FastSurfaceNetsMesher {
     // get the normals
     let normals: Vec<glam::Vec3A> = fidget_normals(&vertices, &tape)?;
 
-    let mut mesh = FullMesh {
-      vertices,
+    let mut mesh = BufMesh {
+      positions: vertices,
       triangles,
       normals,
     };
+
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
+    let mesh = mosh::simplify_mesh(mesh);
 
     Ok(mesh)
   }

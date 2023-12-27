@@ -35,6 +35,7 @@ impl LowresCamera {
     let frac_far = (2_u32.pow((i + 1) as u32) - 1) as f32 / total_max as f32;
     let near =
       overall_proj.near + frac_near * (overall_proj.far - overall_proj.near);
+    // let near = overall_proj.near;
     let mut far =
       overall_proj.near + frac_far * (overall_proj.far - overall_proj.near);
     if let Some(final_far) = self.final_far {

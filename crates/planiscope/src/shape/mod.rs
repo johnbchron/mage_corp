@@ -1,7 +1,11 @@
 pub mod builder;
 pub mod compound;
 
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::{
+  collections::{hash_map::DefaultHasher, HashMap},
+  hash::{Hash, Hasher},
+  ops::{Add, Div, Mul, Neg, Sub},
+};
 
 use bevy_reflect::Reflect;
 use decorum::hash::FloatHash;
@@ -12,6 +16,37 @@ use fidget::{
   Context,
 };
 use serde::{Deserialize, Serialize};
+
+pub trait CachedIntoNode: Clone + Hash {
+  fn cached_into_node(
+    &self,
+    ctx: &mut Context,
+    cache: &mut HashMap<u64, Node>,
+  ) -> Result<Node, fidget::Error>;
+  fn eval_root_cached(&self, ctx: &mut Context) -> Result<Node, fidget::Error> {
+    let mut cache = HashMap::new();
+    self.cached_into_node(ctx, &mut cache)
+  }
+}
+
+impl CachedIntoNode for Shape {
+  fn cached_into_node(
+    &self,
+    ctx: &mut Context,
+    cache: &mut HashMap<u64, Node>,
+  ) -> Result<Node, fidget::Error> {
+    let mut hasher = DefaultHasher::new();
+    self.hash(&mut hasher);
+    let hash = hasher.finish();
+    if let Some(node) = cache.get(&hash) {
+      return Ok(*node);
+    }
+
+    let node = self.into_node(ctx)?;
+    cache.insert(hash, node);
+    Ok(node)
+  }
+}
 
 #[derive(Educe, Clone, Debug, Serialize, Deserialize, Reflect)]
 #[educe(Hash)]
@@ -51,15 +86,15 @@ pub enum Shape {
 }
 
 impl Default for Shape {
-  fn default() -> Self {
-    Self::Constant(1.0_f64)
-  }
+  fn default() -> Self { Self::Constant(1.0_f64) }
 }
 
 impl From<f64> for Shape {
-  fn from(value: f64) -> Self {
-    Shape::Constant(value)
-  }
+  fn from(value: f64) -> Self { Shape::Constant(value) }
+}
+
+impl From<f32> for Shape {
+  fn from(value: f32) -> Self { Shape::Constant(value.into()) }
 }
 
 impl Add<Shape> for Shape {
@@ -93,9 +128,7 @@ impl Div<Shape> for Shape {
 impl Neg for Shape {
   type Output = Shape;
 
-  fn neg(self) -> Self::Output {
-    Shape::Neg(Box::new(self))
-  }
+  fn neg(self) -> Self::Output { Shape::Neg(Box::new(self)) }
 }
 
 impl Shape {

@@ -1,7 +1,7 @@
+use mosh::BufMesh;
 use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
-
-use crate::mesher::FullMesh;
+use tracing::info_span;
 
 #[derive(Clone, Debug, Default, Hash, Serialize, Deserialize)]
 pub enum ColliderSettings {
@@ -11,9 +11,11 @@ pub enum ColliderSettings {
 }
 
 pub fn generate_collider(
-  full_mesh: FullMesh,
+  full_mesh: BufMesh,
   settings: &ColliderSettings,
 ) -> Option<SharedShape> {
+  let _span = info_span!("planiscope::generate_collider").entered();
+
   if full_mesh.triangles.is_empty() {
     return None;
   }
@@ -22,7 +24,7 @@ pub fn generate_collider(
     ColliderSettings::ConvexDecomposition => {
       Some(SharedShape::convex_decomposition(
         full_mesh
-          .vertices
+          .positions
           .into_iter()
           .map(|v| v.to_array().into())
           .collect::<Vec<_>>()
@@ -37,7 +39,7 @@ pub fn generate_collider(
     }
     ColliderSettings::TriMesh => Some(SharedShape::trimesh(
       full_mesh
-        .vertices
+        .positions
         .into_iter()
         .map(|v| v.to_array().into())
         .collect::<Vec<_>>(),

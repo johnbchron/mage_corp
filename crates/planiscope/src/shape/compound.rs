@@ -24,6 +24,14 @@ pub enum Compound {
     #[reflect(ignore)]
     radius: Box<Shape>,
   },
+  Cuboid {
+    #[reflect(ignore)]
+    x: Box<Shape>,
+    #[reflect(ignore)]
+    y: Box<Shape>,
+    #[reflect(ignore)]
+    z: Box<Shape>,
+  },
   SmoothMinCubic {
     #[reflect(ignore)]
     lhs: Box<Shape>,
@@ -79,6 +87,16 @@ impl IntoNode for &Compound {
         let height = height.into_node(ctx)?;
         let radius = radius.into_node(ctx)?;
         crate::nso::volumes::nso_cylinder(height, radius, ctx)
+      }
+      Compound::Cuboid {
+        x: length,
+        y: width,
+        z: height,
+      } => {
+        let length = length.into_node(ctx)?;
+        let width = width.into_node(ctx)?;
+        let height = height.into_node(ctx)?;
+        crate::nso::volumes::nso_cuboid(length, width, height, ctx)
       }
       Compound::SmoothMinCubic { lhs, rhs, k } => {
         let lhs = lhs.into_node(ctx)?;

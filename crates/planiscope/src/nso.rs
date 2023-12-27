@@ -39,34 +39,44 @@ pub mod volumes {
     ctx.neg(f)
   }
 
-  pub fn nso_cylinder_precise(
+  pub fn nso_cuboid(
+    length: Node,
+    width: Node,
     height: Node,
-    radius: Node,
     ctx: &mut Context,
   ) -> Result<Node, fidget::Error> {
     let x = ctx.x();
     let y = ctx.y();
     let z = ctx.z();
-    // this formula was derived with height being height from origin, not
-    // total height, so we're halving it to get total height.
-    let height = ctx.div(height, 2.0)?;
 
-    let vx = super::vectors::nso_magnitude_2d([x, z], ctx)?;
-    let vy = y;
-    let wx = radius;
-    let wy = height;
-    let vx = ctx.abs(vx)?;
-    let vy = ctx.abs(vy)?;
-    let dx = ctx.sub(vx, wx)?;
-    let dy = ctx.sub(vy, wy)?;
+    let max_dim = ctx.max(length, width)?;
+    let max_dim = ctx.max(max_dim, height)?;
+    let tolerance = ctx.constant(0.01);
+    let radius = ctx.mul(max_dim, tolerance)?;
+    let length = ctx.sub(length, radius)?;
+    let width = ctx.sub(width, radius)?;
+    let height = ctx.sub(height, radius)?;
 
-    let f1 = ctx.max(dx, dy)?;
-    let f1 = ctx.min(f1, 0.0)?;
-    let f2a = ctx.max(dx, 0.0)?;
-    let f2b = ctx.max(dy, 0.0)?;
-    let f2 = super::vectors::nso_magnitude_2d([f2a, f2b], ctx)?;
+    let abs_x = ctx.abs(x)?;
+    let abs_y = ctx.abs(y)?;
+    let abs_z = ctx.abs(z)?;
 
-    ctx.add(f1, f2)
+    let q_x = ctx.sub(abs_x, length)?;
+    let q_y = ctx.sub(abs_y, width)?;
+    let q_z = ctx.sub(abs_z, height)?;
+
+    let max_q_x_0 = ctx.max(q_x, 0.0)?;
+    let max_q_y_0 = ctx.max(q_y, 0.0)?;
+    let max_q_z_0 = ctx.max(q_z, 0.0)?;
+
+    let length_max_q_0 =
+      super::vectors::nso_magnitude_3d([max_q_x_0, max_q_y_0, max_q_z_0], ctx)?;
+
+    let a = ctx.max(q_y, q_z)?;
+    let b = ctx.max(q_x, a)?;
+    let c = ctx.min(0.0, b)?;
+    let d = ctx.add(length_max_q_0, c)?;
+    ctx.sub(d, radius)
   }
 }
 
