@@ -8,6 +8,7 @@ use std::{
 
 use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
+use tracing::info_span;
 
 use super::{CacheProvider, DiskCacheProvider};
 use crate::{
@@ -22,6 +23,8 @@ fn hash_single<H: Hash>(value: &H) -> u64 {
 }
 
 fn serialize_to_file<V: Serialize>(path: &str, value: &V) -> Option<String> {
+  let _span = info_span!("planiscope::serialize_to_file").entered();
+
   std::fs::create_dir_all(PathBuf::from(path).parent()?).ok()?;
   let file = File::create(path).ok()?;
   let mut writer = BufWriter::new(file);
@@ -32,6 +35,8 @@ fn serialize_to_file<V: Serialize>(path: &str, value: &V) -> Option<String> {
 fn deserialize_from_file<V: for<'de> Deserialize<'de>>(
   path: &str,
 ) -> Option<V> {
+  let _span = info_span!("planiscope::deserialize_from_file").entered();
+
   let file = File::open(path).ok()?;
   let mut reader = BufReader::new(file);
   rmp_serde::decode::from_read(&mut reader).ok()
@@ -42,6 +47,8 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     &self,
     inputs: &MesherInputs,
   ) -> Result<crate::mesher::BufMesh, fidget::Error> {
+    let _span = info_span!("planiscope::get_mesh").entered();
+
     // get the hash and resulting path
     let inputs_hash = hash_single(inputs);
     let path = format!("{}{}", self.mesh_path, inputs_hash);
@@ -67,6 +74,8 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     &self,
     inputs: &MesherInputs,
   ) -> Option<parry3d::shape::SharedShape> {
+    let _span = info_span!("planiscope::get_collider").entered();
+
     if !inputs.gen_collider {
       return None;
     }
@@ -98,6 +107,8 @@ impl<M: Mesher> CacheProvider for DiskCacheProvider<M> {
     Result<crate::mesher::BufMesh, fidget::Error>,
     Option<parry3d::shape::SharedShape>,
   ) {
+    let _span = info_span!("planiscope::get_mesh_and_collider").entered();
+
     let mesh = self.get_mesh(inputs);
 
     let inputs_hash = hash_single(inputs);

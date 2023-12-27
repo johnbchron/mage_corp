@@ -1,6 +1,7 @@
 use mosh::BufMesh;
 use parry3d::shape::SharedShape;
 use serde::{Deserialize, Serialize};
+use tracing::info_span;
 
 #[derive(Clone, Debug, Default, Hash, Serialize, Deserialize)]
 pub enum ColliderSettings {
@@ -13,6 +14,8 @@ pub fn generate_collider(
   full_mesh: BufMesh,
   settings: &ColliderSettings,
 ) -> Option<SharedShape> {
+  let _span = info_span!("planiscope::generate_collider").entered();
+
   if full_mesh.triangles.is_empty() {
     return None;
   }

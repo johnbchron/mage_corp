@@ -7,6 +7,7 @@ use educe::Educe;
 use fidget::eval::Tape;
 pub use mosh::{BufMesh, FullVertex};
 use serde::{Deserialize, Serialize};
+use tracing::info_span;
 
 use crate::shape::Shape;
 
@@ -79,6 +80,8 @@ pub fn fidget_normals<F: fidget::eval::Family>(
   vertices: &[glam::Vec3A],
   tape: &Tape<F>,
 ) -> Result<Vec<glam::Vec3A>, fidget::Error> {
+  let _span = info_span!("planiscope::fidget_normals").entered();
+
   Ok(
     tape
       .new_grad_slice_evaluator()

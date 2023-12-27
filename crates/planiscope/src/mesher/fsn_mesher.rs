@@ -4,6 +4,7 @@ use fast_surface_nets::{
 };
 use fidget::{eval::Tape, Context};
 use mosh::BufMesh;
+use tracing::info_span;
 
 use crate::{
   mesher::{fidget_normals, FastSurfaceNetsMesher, Mesher, MesherInputs},
@@ -18,6 +19,9 @@ impl Mesher for FastSurfaceNetsMesher {
     &self,
     inputs: &MesherInputs,
   ) -> Result<BufMesh, fidget::Error> {
+    let _span =
+      info_span!("plansicope::FastSurfaceNetsMesher::build_mesh").entered();
+
     // get a node for the composition
     let mut ctx = Context::new();
     let node = inputs.shape.eval_root_cached(&mut ctx)?;
@@ -52,6 +56,7 @@ impl Mesher for FastSurfaceNetsMesher {
       })
       .collect::<Vec<glam::Vec3A>>();
 
+    let eval_span = info_span!("fidget_point_eval").entered();
     // evaluate the fidget tape on all of the points
     let evaluator = fidget::eval::FloatSliceEval::new(&tape);
     let values = evaluator.eval(
@@ -60,7 +65,9 @@ impl Mesher for FastSurfaceNetsMesher {
       &points.iter().map(|v| v.z).collect::<Vec<_>>(),
       &[],
     )?;
+    drop(eval_span);
 
+    let surface_nets_span = info_span!("surface_nets").entered();
     // create a buffer for holding the surface_nets result
     let mut buffer = SurfaceNetsBuffer::default();
     surface_nets(
@@ -70,6 +77,7 @@ impl Mesher for FastSurfaceNetsMesher {
       (glam::UVec3::from_array(shape_length) - 1).to_array(),
       &mut buffer,
     );
+    drop(surface_nets_span);
 
     // convert vertices and triangles into something we can use (what full_mesh
     // is expecting), and scale them back up for the normal calc.

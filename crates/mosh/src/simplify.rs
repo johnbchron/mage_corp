@@ -1,64 +1,49 @@
-use crate::{
-  bufmesh::{BufMesh, FullVertex},
-  hedge::HedgeMesh,
+use meshopt2::{
+  packing::DecodePosition,
+  simplify::{simplify_decoder},
+  simplify::SimplifyOptions
 };
+
+use crate::bufmesh::BufMesh;
+
+struct Position(glam::Vec3A);
+
+impl DecodePosition for Position {
+  fn decode_position(&self) -> [f32; 3] { self.0.to_array() }
+}
 
 /// Simplifies a mesh by merging coplanar faces.
 pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
-  let triangles = mesh
+  let original_triangle_count = mesh.triangles.len();
+  let vertices = mesh.positions.into_iter().map(Position).collect::<Vec<_>>();
+  let indices = mesh
     .triangles
-    .iter()
-    .map(|t| (t.x as usize, t.y as usize, t.z as usize))
-    .collect::<Vec<_>>();
-  let vertices = (0..mesh.positions.len())
-    .map(|i| FullVertex {
-      position: mesh.positions[i],
-      normal:   mesh.normals[i],
-    })
-    .collect::<Vec<_>>();
-
-  let mut hedge =
-    HedgeMesh::from_buffers(triangles.as_slice(), vertices.as_slice());
-
-  // simplification goes here
-  hedge.regenerate_invalid_keys();
-  hedge.prune_unused_vertices();
-  hedge.dedup_equal_vertices();
-  for face in hedge.faces() {
-    hedge.is_valid_face(face).unwrap();
-  }
-  let mut merged_faces = Vec::new();
-  for group in hedge
-    .find_coplanar_face_groups()
     .into_iter()
-    .filter(|g| g.len() > 1)
-  {
-    merged_faces.push(hedge.merge_face_group(group));
-  }
-  for face in merged_faces {
-    hedge.remove_face_and_edges(face);
-  }
+    .flat_map(|i| [i.x as u32, i.y as u32, i.z as u32])
+    .collect::<Vec<_>>();
+  let normals = mesh.normals;
+  // .into_iter()
+  // .map(|v| v.to_array())
+  // .collect::<Vec<_>>();
 
-  let hedge_buffers = hedge.to_buffers();
-  let triangles = hedge_buffers
-    .0
-    .into_iter()
-    .map(|t| glam::UVec3::new(t.0 as u32, t.1 as u32, t.2 as u32))
-    .collect::<Vec<_>>();
-  let vertices = hedge_buffers
-    .1
-    .iter()
-    .map(|v| v.position)
-    .collect::<Vec<_>>();
-  let normals = hedge_buffers
-    .1
-    .into_iter()
-    .map(|v| v.normal)
-    .collect::<Vec<_>>();
+  let target_count = (original_triangle_count as f32 * 0.2) as usize;
+  let new_indices = simplify_decoder(
+    &indices,
+    &vertices,
+    target_count,
+    0.001,
+    SimplifyOptions::None,
+    None,
+  );
 
+  let triangles = new_indices
+    .into_iter()
+    .map_windows(|i: &[u32; 3]| glam::UVec3::from_array(*i))
+    .collect::<Vec<_>>();
+  let positions = vertices.into_iter().map(|v| v.0).collect::<Vec<_>>();
   BufMesh {
-    triangles,
-    positions: vertices,
     normals,
+    positions,
+    triangles,
   }
 }
