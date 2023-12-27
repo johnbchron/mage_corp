@@ -3056,7 +3056,6 @@ dependencies = [
  "educe 0.5.9",
  "glam 0.24.2",
  "hashbrown 0.14.3",
- "rayon",
  "serde",
  "thiserror",
  "tracing",

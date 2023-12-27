@@ -7,7 +7,6 @@ mod storage;
 use std::hash::Hash;
 
 use hashbrown::{HashMap, HashSet};
-use rayon::prelude::*;
 use thiserror::Error;
 use tracing::info_span;
 
