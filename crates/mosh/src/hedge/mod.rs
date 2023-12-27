@@ -9,6 +9,7 @@ use std::hash::Hash;
 use hashbrown::{HashMap, HashSet};
 use rayon::prelude::*;
 use thiserror::Error;
+use tracing::info_span;
 
 pub use self::{
   keys::{EdgeKey, FaceKey, OpaqueKey, VertexKey},
@@ -105,6 +106,8 @@ impl<D: VertexData> HedgeMesh<D> {
 
   /// Prunes vertices that are not used by any edges.
   pub fn prune_unused_vertices(&mut self) {
+    let _span = info_span!("prune_unused_vertices").entered();
+
     let used_vertices = self
       .edges
       .iter()
@@ -116,6 +119,8 @@ impl<D: VertexData> HedgeMesh<D> {
 
   /// Deduplicates vertices that have the same data.
   pub fn dedup_equal_vertices(&mut self) {
+    let _span = info_span!("dedup_equal_vertices").entered();
+
     // a map from vertex data to the vertex keys that have that data
     let mut vertex_map: HashMap<D, HashSet<VertexKey>> = HashMap::new();
 
@@ -142,6 +147,8 @@ impl<D: VertexData> HedgeMesh<D> {
     to_replace: VertexKey,
     replacement: VertexKey,
   ) {
+    let _span = info_span!("replace_vertex").entered();
+
     for edge in self.edges.iter_mut() {
       if edge.origin_vertex == to_replace {
         edge.origin_vertex = replacement;
@@ -191,16 +198,31 @@ impl<D: VertexData> HedgeMesh<D> {
 
   /// Returns the neighbors of a face.
   pub fn face_neighbors(&self, face: FaceKey) -> Vec<FaceKey> {
-    let face = self.faces.get(face).unwrap();
-    let mut neighbors = Vec::new();
-    for edge_key in face.edges.iter() {
-      let edge = self.edges.get(*edge_key).unwrap();
-      if let Some(twin_edge_key) = edge.twin_edge {
-        let twin_edge = self.edges.get(twin_edge_key).unwrap();
-        neighbors.push(twin_edge.face);
-      }
-    }
-    neighbors
+    let _span = info_span!("face_neighbors").entered();
+
+    // let face = self.faces.get(face).unwrap();
+    // let mut neighbors = Vec::new();
+    // for edge_key in face.edges.iter() {
+    //   let edge = self.edges.get(*edge_key).unwrap();
+    //   if let Some(twin_edge_key) = edge.twin_edge {
+    //     let twin_edge = self.edges.get(twin_edge_key).unwrap();
+    //     neighbors.push(twin_edge.face);
+    //   }
+    // }
+    // neighbors
+    self
+      .faces
+      .get(face)
+      .unwrap()
+      .edges
+      .iter()
+      .filter_map(|edge_key| {
+        let edge = self.edges.get(*edge_key).unwrap();
+        edge
+          .twin_edge
+          .map(|twin_edge_key| self.edges.get(twin_edge_key).unwrap().face)
+      })
+      .collect()
   }
 
   /// Determines whether a face is valid.
@@ -251,6 +273,8 @@ impl<D: VertexData> HedgeMesh<D> {
 
   /// Identifies groups of adjacent and coplanar faces.
   pub fn find_coplanar_face_groups(&self) -> Vec<HashSet<FaceKey>> {
+    let _span = info_span!("find_coplanar_face_groups").entered();
+
     let mut coplanar_face_groups = Vec::new();
     let mut visited_faces = HashSet::new();
 
@@ -368,6 +392,8 @@ impl<D: VertexData> HedgeMesh<D> {
 
   /// Returns the set of edges on one face that are bordering another.
   pub fn bordering_edges(&self, a: FaceKey, b: FaceKey) -> HashSet<EdgeKey> {
+    let _span = info_span!("bordering_edges").entered();
+
     let mut bordering_edges = HashSet::new();
     let a_edges = self.faces.get(a).unwrap().edges.clone();
     let b_edges = self.faces.get(b).unwrap().edges.clone();
@@ -383,6 +409,8 @@ impl<D: VertexData> HedgeMesh<D> {
   }
 
   fn faces_share_contiguous_border(&self, a: FaceKey, b: FaceKey) -> bool {
+    let _span = info_span!("faces_share_contiguous_border").entered();
+
     let a_bordering_edges = self.bordering_edges(a, b);
     let mut disconnected_edges = 0;
     for edge_key in a_bordering_edges.iter() {
@@ -407,6 +435,8 @@ impl<D: VertexData> HedgeMesh<D> {
   ///   can't have more than one bordering section, because merging them would
   ///   produce a hole.
   pub fn merge_face_pair(&mut self, a: FaceKey, b: FaceKey) -> FaceKey {
+    let _span = info_span!("merge_face_pair").entered();
+
     assert!(a != b, "cannot merge a face with itself");
     assert!(
       self.faces.contains(a) && self.faces.contains(b),
@@ -612,6 +642,8 @@ impl<D: VertexData> HedgeMesh<D> {
   ///   can't have more than one bordering section, because merging them would
   ///   produce a hole.
   pub fn merge_face_group(&mut self, face_group: HashSet<FaceKey>) -> FaceKey {
+    let _span = info_span!("merge_face_group").entered();
+
     let mut all_faces = face_group.iter().cloned().collect::<HashSet<_>>();
     loop {
       let mut mergeable_faces = all_faces.clone();
@@ -651,6 +683,8 @@ impl<D: VertexData> HedgeMesh<D> {
   /// # Invariants
   /// Requires that faces have valid and consistently edge keys.
   pub fn regenerate_invalid_keys(&mut self) {
+    let _span = info_span!("regenerate_invalid_keys").entered();
+
     // start with `self.id` keys
     let vertices_with_invalid_self_keys = self
       .vertices
@@ -738,6 +772,8 @@ impl<D: VertexData> HedgeMesh<D> {
   }
 
   fn fix_edge_twin_keys(&mut self) {
+    let _span = info_span!("fix_edge_twin_keys").entered();
+
     let mut vertex_pair_to_edge = HashMap::new();
     for edge in self.edges.iter() {
       let target_vertex = edge.target_vertex;
@@ -756,6 +792,8 @@ impl<D: VertexData> HedgeMesh<D> {
   /// # Invariants
   /// The `face` keys of each edge must be correct.
   fn fix_edge_next_prev_keys(&mut self) {
+    let _span = info_span!("fix_edge_next_prev_keys").entered();
+
     let mut vertex_to_edge_by_face: HashMap<
       FaceKey,
       HashMap<VertexKey, EdgeKey>,
@@ -791,6 +829,8 @@ impl<D: VertexData> HedgeMesh<D> {
   /// # Invariants
   /// The `face` keys of each edge must be correct.
   fn fix_edge_parent_keys(&mut self) {
+    let _span = info_span!("fix_edge_parent_keys").entered();
+
     let mut edge_to_face_map = HashMap::new();
     for face in self.faces.iter() {
       for edge_key in face.edges.iter() {
