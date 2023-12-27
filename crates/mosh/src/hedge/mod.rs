@@ -225,6 +225,23 @@ impl<D: VertexData> HedgeMesh<D> {
       .collect()
   }
 
+  /// Determines whether two faces are neighbors.
+  pub fn is_neighbors(&self, a: FaceKey, b: FaceKey) -> bool {
+    let _span = info_span!("is_neighbors").entered();
+
+    let a_face = self.faces.get(a).unwrap();
+    let b_face = self.faces.get(b).unwrap();
+    for edge_key in a_face.edges.iter() {
+      let edge = self.edges.get(*edge_key).unwrap();
+      if let Some(twin_edge_key) = edge.twin_edge {
+        if b_face.edges.contains(&twin_edge_key) {
+          return true;
+        }
+      }
+    }
+    false
+  }
+
   /// Determines whether a face is valid.
   ///
   /// # Criteria
@@ -278,44 +295,34 @@ impl<D: VertexData> HedgeMesh<D> {
     let mut coplanar_face_groups = Vec::new();
     let mut visited_faces = HashSet::new();
 
-    let normals = self
-      .faces
-      .par_iter_keys()
-      .map(|face_key| (face_key, self.face_normal(*face_key).unwrap()))
-      .collect::<HashMap<_, _>>();
-
-    let mut face_keys = self.faces.iter_keys().collect::<Vec<_>>();
-    face_keys.sort();
-
-    for face_key in face_keys {
-      if visited_faces.contains(&face_key) {
+    for start_face_key in self.faces.iter_keys() {
+      if visited_faces.contains(&start_face_key) {
         continue;
       }
-      let mut coplanar_face_group = HashSet::new();
-      let mut stack = vec![face_key];
+      visited_faces.insert(start_face_key);
+      let mut coplanar_faces = HashSet::new();
+      coplanar_faces.insert(start_face_key);
+      let face_normal = self.face_normal(start_face_key).unwrap();
 
-      while let Some(face_key) = stack.pop() {
-        if coplanar_face_group.contains(&face_key) {
-          continue;
-        }
-        coplanar_face_group.insert(face_key);
-        visited_faces.insert(face_key);
-        let face_normal = normals.get(&face_key).unwrap();
-
-        for neighbor_face_key in self.face_neighbors(face_key) {
-          if visited_faces.contains(&neighbor_face_key) {
-            continue;
-          }
-          let neighbor_face_normal = normals.get(&neighbor_face_key).unwrap();
-          if (*face_normal - *neighbor_face_normal).length() < 0.0001 {
-            stack.push(neighbor_face_key);
+      let mut faces_to_visit = vec![start_face_key];
+      while let Some(face_key) = faces_to_visit.pop() {
+        for neighbor in self.face_neighbors(face_key) {
+          if !visited_faces.contains(&neighbor) {
+            let neighbor_normal = self.face_normal(neighbor).unwrap();
+            if neighbor_normal.dot(face_normal).abs() > 0.9999 {
+              visited_faces.insert(neighbor);
+              coplanar_faces.insert(neighbor);
+              faces_to_visit.push(neighbor);
+            }
           }
         }
       }
-      if coplanar_face_group.len() > 1 {
-        coplanar_face_groups.push(coplanar_face_group);
-      }
+      coplanar_face_groups.push(coplanar_faces);
     }
+    // we're throwing out groups of 2 because they won't yield any benefit if
+    // merged and retriangulated.
+    coplanar_face_groups.retain(|group| group.len() > 2);
+
     coplanar_face_groups
   }
 
@@ -444,10 +451,7 @@ impl<D: VertexData> HedgeMesh<D> {
     );
     assert!(self.is_valid_face(a).is_ok(), "face a is invalid");
     assert!(self.is_valid_face(b).is_ok(), "face b is invalid");
-    assert!(
-      self.face_neighbors(a).contains(&b),
-      "faces are not adjacent"
-    );
+    assert!(self.is_neighbors(a, b), "faces are not adjacent");
     assert!(
       self
         .face_normal(a)
@@ -642,39 +646,29 @@ impl<D: VertexData> HedgeMesh<D> {
   ///   can't have more than one bordering section, because merging them would
   ///   produce a hole.
   pub fn merge_face_group(&mut self, face_group: HashSet<FaceKey>) -> FaceKey {
-    let _span = info_span!("merge_face_group").entered();
+    let _span =
+      info_span!("merge_face_group", count = face_group.len()).entered();
 
     let mut all_faces = face_group.iter().cloned().collect::<HashSet<_>>();
-    loop {
-      let mut mergeable_faces = all_faces.clone();
-      loop {
-        let Some(face) = mergeable_faces.clone().into_iter().next() else {
-          break;
-        };
-        let neighbors = self
-          .face_neighbors(face)
+    while let Some((face, neighbor)) =
+      all_faces.clone().into_iter().find_map(|f| {
+        self
+          .face_neighbors(f)
           .into_iter()
-          .filter(|f| {
-            mergeable_faces.contains(f)
-              && self.faces_share_contiguous_border(face, *f)
+          .find(|n| {
+            all_faces.contains(n) && self.faces_share_contiguous_border(f, *n)
           })
-          .collect::<Vec<_>>();
-        if neighbors.is_empty() {
-          break;
-        }
-        let neighbor = neighbors[0];
-        let new_face = self.merge_face_pair(face, neighbor);
-        mergeable_faces.remove(&face);
-        mergeable_faces.remove(&neighbor);
-        all_faces.remove(&face);
-        all_faces.remove(&neighbor);
-        all_faces.insert(new_face);
-      }
-      if all_faces.len() == 1 {
-        break;
-      }
+          .map(|n| (f, n))
+      })
+    {
+      let new_face = self.merge_face_pair(face, neighbor);
+      all_faces.remove(&face);
+      all_faces.remove(&neighbor);
+      all_faces.insert(new_face);
     }
-    println!("merged face group with {} faces", face_group.len());
+    assert_eq!(all_faces.len(), 1);
+
+    // println!("merged face group with {} faces", face_group.len());
     *all_faces.iter().next().unwrap()
   }
 
@@ -697,7 +691,7 @@ impl<D: VertexData> HedgeMesh<D> {
           None
         }
       })
-      .cloned()
+      .copied()
       .collect::<Vec<_>>();
     let edges_with_invalid_self_keys = self
       .edges
@@ -710,7 +704,7 @@ impl<D: VertexData> HedgeMesh<D> {
           None
         }
       })
-      .cloned()
+      .copied()
       .collect::<Vec<_>>();
     let faces_with_invalid_self_keys = self
       .faces
@@ -723,7 +717,7 @@ impl<D: VertexData> HedgeMesh<D> {
           None
         }
       })
-      .cloned()
+      .copied()
       .collect::<Vec<_>>();
 
     for vertex_key in vertices_with_invalid_self_keys {
@@ -748,7 +742,7 @@ impl<D: VertexData> HedgeMesh<D> {
           None
         }
       })
-      .cloned()
+      .copied()
       .collect::<Vec<_>>();
     if !edges_with_invalid_face_keys.is_empty() {
       let mut edge_to_face_map = HashMap::new();

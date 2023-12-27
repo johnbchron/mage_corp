@@ -27,12 +27,16 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
   for face in hedge.faces() {
     hedge.is_valid_face(face).unwrap();
   }
+  let mut merged_faces = Vec::new();
   for group in hedge
     .find_coplanar_face_groups()
     .into_iter()
     .filter(|g| g.len() > 1)
   {
-    hedge.merge_face_group(group);
+    merged_faces.push(hedge.merge_face_group(group));
+  }
+  for face in merged_faces {
+    hedge.remove_face_and_edges(face);
   }
 
   let hedge_buffers = hedge.to_buffers();

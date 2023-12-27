@@ -3060,6 +3060,7 @@ dependencies = [
  "serde",
  "thiserror",
  "tracing",
+ "vec_map",
 ]
 
 [[package]]
