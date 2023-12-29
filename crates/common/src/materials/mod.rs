@@ -46,17 +46,19 @@ pub struct ToonExtension {
 
 impl Default for ToonExtension {
   fn default() -> Self {
+    let warm_color = Color::rgb(1.0, 0.9, 0.8);
+    let cool_color = Color::rgb(0.8, 0.9, 1.0);
     Self {
       dark_two_threshold:       0.2,
       normal_threshold:         1.0,
       highlight_threshold:      3.0,
-      dark_one_color:           Color::rgb(0.3, 0.3, 0.3),
-      dark_two_color:           Color::rgb(0.8, 0.8, 0.8),
+      dark_one_color:           cool_color * 0.5,
+      dark_two_color:           warm_color * 0.75,
       normal_color:             Color::rgb(1.0, 1.0, 1.0),
-      highlight_color:          Color::rgb(1.0, 1.0, 1.0),
+      highlight_color:          warm_color,
       blend_factor:             0.01,
-      outline_normal_color:     Color::rgb(1.2, 1.2, 1.2),
-      outline_depth_color:      Color::rgb(0.2, 0.2, 0.2),
+      outline_normal_color:     warm_color * 1.2,
+      outline_depth_color:      cool_color * 0.5,
       outline_normal_threshold: 0.1,
       outline_depth_threshold:  0.05,
       outline_scale:            1.0,
