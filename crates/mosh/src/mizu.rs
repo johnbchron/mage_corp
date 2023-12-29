@@ -8,6 +8,7 @@ use std::sync::OnceLock;
 
 use hashbrown::HashMap;
 use rayon::prelude::*;
+use tracing::info_span;
 
 pub use self::{
   face::Face,
@@ -24,6 +25,8 @@ pub struct MizuMesh<D: VertexData> {
 impl<D: VertexData> MizuMesh<D> {
   /// Creates a new `MizuMesh` from the given vertices and faces.
   pub fn from_buffers(vertices: &[D], faces: &[glam::UVec3]) -> Self {
+    let _span = info_span!("mosh::MizuMesh::from_buffers").entered();
+
     let mut mesh = Self {
       vertices:  vertices.iter().map(|v| Vertex::new(v.clone())).collect(),
       faces:     Vec::with_capacity(faces.len()),
@@ -43,6 +46,8 @@ impl<D: VertexData> MizuMesh<D> {
   }
   /// Builds buffers from the mesh.
   pub fn to_buffers(&self) -> (Vec<D>, Vec<glam::UVec3>) {
+    let _span = info_span!("mosh::MizuMesh::to_buffers").entered();
+
     let vertices = self.vertices.iter().map(|v| v.data().clone()).collect();
     let faces = self.faces.iter().map(|f| *f.vertices()).collect();
     (vertices, faces)
@@ -67,6 +72,8 @@ impl<D: VertexData> MizuMesh<D> {
   }
 
   fn build_opposites(&self) -> Vec<[Option<u32>; 3]> {
+    let _span = info_span!("mosh::MizuMesh::build_opposites").entered();
+
     let arc_to_face_map = self
       .faces
       .par_iter()
