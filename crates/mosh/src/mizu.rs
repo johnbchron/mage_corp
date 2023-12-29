@@ -1,6 +1,7 @@
 //! # Mizu
 //! Mizu is an intelligent mesh data structure built for mesh simplification.
 
+mod face;
 mod vertex;
 
 use std::sync::OnceLock;
@@ -8,24 +9,10 @@ use std::sync::OnceLock;
 use hashbrown::HashMap;
 use rayon::prelude::*;
 
-pub use self::vertex::{Vertex, VertexData};
-
-/// A face in a [`MizuMesh`].
-pub struct Face {
-  vertices: glam::UVec3,
-  normal:   glam::Vec3A,
-}
-
-impl Face {
-  /// Returns the pairs of vertices that make up the edges of this face.
-  pub fn pairs(&self) -> [(u32, u32); 3] {
-    [
-      (self.vertices.x, self.vertices.y),
-      (self.vertices.y, self.vertices.z),
-      (self.vertices.z, self.vertices.x),
-    ]
-  }
-}
+pub use self::{
+  face::Face,
+  vertex::{Vertex, VertexData},
+};
 
 /// A mesh data structure for mesh simplification.
 pub struct MizuMesh<D: VertexData> {
@@ -46,10 +33,7 @@ impl<D: VertexData> MizuMesh<D> {
       .par_iter()
       .map(|f| {
         let normal = mesh.compute_normal(f);
-        Face {
-          vertices: *f,
-          normal,
-        }
+        Face::new(*f, normal)
       })
       .collect::<Vec<_>>();
     mesh.faces = faces;
