@@ -6,7 +6,7 @@
 
 mod bufmesh;
 mod hash;
-pub mod hedge;
+pub mod mizu;
 mod simplify;
 
 pub use bufmesh::{BufMesh, FullVertex};

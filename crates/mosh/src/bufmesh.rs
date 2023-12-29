@@ -1,7 +1,7 @@
 use educe::Educe;
 use serde::{Deserialize, Serialize};
 
-use crate::{hash::hash_vec3a, hedge::VertexData};
+use crate::hash::hash_vec3a;
 
 /// An index-buffer mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -60,8 +60,4 @@ pub struct FullVertex {
   /// The normal of the vertex.
   #[educe(Hash(method = "hash_vec3a"))]
   pub normal:   glam::Vec3A,
-}
-
-impl VertexData for FullVertex {
-  fn pos(&self) -> glam::Vec3A { self.position }
 }
