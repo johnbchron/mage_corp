@@ -1,4 +1,5 @@
 use super::*;
+use crate::{BufMesh, FullVertex};
 
 impl<D: VertexData> HedgeMesh<D> {
   /// Builds a mesh from a list of triangles and vertices.
@@ -145,5 +146,42 @@ impl<D: VertexData> HedgeMesh<D> {
     }
 
     (triangles, vertices)
+  }
+}
+
+impl HedgeMesh<FullVertex> {
+  pub fn from_bufmesh(mesh: BufMesh) -> Self {
+    let triangles = mesh
+      .triangles
+      .into_iter()
+      .map(|t| (t.x as usize, t.y as usize, t.z as usize))
+      .collect::<Vec<_>>();
+    let vertices = mesh
+      .positions
+      .into_iter()
+      .zip(mesh.normals)
+      .map(|(p, n)| FullVertex {
+        position: p,
+        normal:   n,
+      })
+      .collect::<Vec<_>>();
+
+    Self::from_buffers(&triangles, vertices.as_slice())
+  }
+
+  pub fn to_bufmesh(&self) -> BufMesh {
+    let (triangles, vertices) = self.to_buffers();
+
+    let positions = vertices.iter().map(|v| v.position).collect::<Vec<_>>();
+    let normals = vertices.iter().map(|v| v.normal).collect::<Vec<_>>();
+
+    BufMesh {
+      positions,
+      normals,
+      triangles: triangles
+        .iter()
+        .map(|(a, b, c)| glam::UVec3::new(*a as u32, *b as u32, *c as u32))
+        .collect::<Vec<_>>(),
+    }
   }
 }
