@@ -96,11 +96,11 @@ fn test_scene(
       extension: ToonExtension::default(),
     }),
     ImplicitInputs(MesherInputs {
-      shape:        framix::brick_array(5, 10),
+      shape:        framix::brick_array(1, 1),
       region:       MesherRegion {
-        position: Vec3::new(1.0, 1.0, 0.0).into(),
-        scale:    Vec3::new(1.5, 1.0, 0.2).into(),
-        detail:   MesherDetail::Resolution(209.0),
+        position: Vec3::splat(0.0).into(),
+        scale:    Vec3::splat(0.25).into(),
+        detail:   MesherDetail::Resolution(200.0),
         prune:    false,
       },
       gen_collider: true,

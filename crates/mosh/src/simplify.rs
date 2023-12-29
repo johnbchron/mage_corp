@@ -23,6 +23,7 @@ pub fn simplify_mesh(mesh: BufMesh) -> BufMesh {
   drop(_span);
   let _span = info_span!("mosh::simplify_mesh::simplify").entered();
   // simplification goes here
+  mizu.simplify();
 
   drop(_span);
   let _span = info_span!("mosh::simplify_mesh::to_buffers").entered();

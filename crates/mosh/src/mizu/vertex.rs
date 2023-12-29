@@ -10,6 +10,7 @@ pub trait VertexData: Clone + Sync {
 }
 
 /// A vertex in a [`MizuMesh`](super::MizuMesh).
+#[derive(Clone)]
 pub struct Vertex<D: VertexData> {
   data: D,
 }
