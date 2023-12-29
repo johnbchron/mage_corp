@@ -5,6 +5,7 @@ mod vertex;
 
 use std::sync::OnceLock;
 
+use hashbrown::HashMap;
 use rayon::prelude::*;
 
 pub use self::vertex::{Vertex, VertexData};
@@ -13,6 +14,17 @@ pub use self::vertex::{Vertex, VertexData};
 pub struct Face {
   vertices: glam::UVec3,
   normal:   glam::Vec3A,
+}
+
+impl Face {
+  /// Returns the pairs of vertices that make up the edges of this face.
+  pub fn pairs(&self) -> [(u32, u32); 3] {
+    [
+      (self.vertices.x, self.vertices.y),
+      (self.vertices.y, self.vertices.z),
+      (self.vertices.z, self.vertices.x),
+    ]
+  }
 }
 
 /// A mesh data structure for mesh simplification.
@@ -41,11 +53,11 @@ impl<D: VertexData> MizuMesh<D> {
       })
       .collect::<Vec<_>>();
     mesh.faces = faces;
+    mesh.opposites.set(mesh.build_opposites()).unwrap();
+
     mesh
   }
 
-  /// Returns the number of vertices in the mesh.
-  pub fn vertex_count(&self) -> u32 { self.vertices.len() as u32 }
   /// Returns a reference to the vertex at the given index.
   pub fn vertex(&self, index: u32) -> &Vertex<D> {
     &self.vertices[index as usize]
@@ -57,5 +69,38 @@ impl<D: VertexData> MizuMesh<D> {
     let b = self.vertex(indices.y).pos();
     let c = self.vertex(indices.z).pos();
     (b - a).cross(c - a).normalize()
+  }
+
+  fn build_opposites(&self) -> Vec<[Option<u32>; 3]> {
+    let arc_to_face_map = self
+      .faces
+      .par_iter()
+      .enumerate()
+      .flat_map(|(i, face)| {
+        face
+          .pairs()
+          .into_par_iter()
+          .map(move |(a, b)| ((a, b), i as u32))
+      })
+      .collect::<HashMap<_, _>>();
+
+    let opposites = self
+      .faces
+      .par_iter()
+      .map(|face| {
+        face
+          .pairs()
+          .into_par_iter()
+          .map(|(a, b)| {
+            let arc = (b, a);
+            arc_to_face_map.get(&arc).copied()
+          })
+          .collect::<Vec<_>>()
+          .try_into()
+          .unwrap()
+      })
+      .collect::<Vec<_>>();
+
+    opposites
   }
 }
