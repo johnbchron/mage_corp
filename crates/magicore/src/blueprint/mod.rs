@@ -94,9 +94,7 @@ enum BlueprintState {
 }
 
 impl Default for BlueprintState {
-  fn default() -> Self {
-    Self::Initialized { stored: 0.0 }
-  }
+  fn default() -> Self { Self::Initialized { stored: 0.0 } }
 }
 
 #[derive(Bundle)]

@@ -61,7 +61,5 @@ impl AssetLoader for ImplicitMeshAssetLoader {
     })
   }
 
-  fn extensions(&self) -> &[&str] {
-    &["implicit"]
-  }
+  fn extensions(&self) -> &[&str] { &["implicit"] }
 }
