@@ -158,6 +158,7 @@ impl<D: VertexData> MizuMesh<D> {
     self.opposites.take();
   }
 
+  /// Simplifies the mesh.
   pub fn simplify(&mut self) {
     let _span = info_span!("mosh::MizuMesh::simplify").entered();
 

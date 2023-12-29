@@ -5,7 +5,6 @@
 //! ## A **M**esh **O**ptimization **S**uite using **H**alf-edge meshes.
 
 mod bufmesh;
-mod hash;
 pub mod mizu;
 mod simplify;
 

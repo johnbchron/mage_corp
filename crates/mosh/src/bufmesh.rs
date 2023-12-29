@@ -1,7 +1,6 @@
-use educe::Educe;
 use serde::{Deserialize, Serialize};
 
-use crate::{hash::hash_vec3a, mizu::VertexData};
+use crate::mizu::VertexData;
 
 /// An index-buffer mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
