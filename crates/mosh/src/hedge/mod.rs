@@ -195,6 +195,15 @@ impl<D: VertexData> HedgeMesh<D> {
     Some(normal.normalize())
   }
 
+  /// Determines whether a face is coplanar with another face.
+  pub fn is_coplanar_with_face(&self, face: FaceKey, other: FaceKey) -> bool {
+    let _span = info_span!("is_coplanar_with_face").entered();
+
+    let face_normal = self.face_normal(face).unwrap();
+    let other_normal = self.face_normal(other).unwrap();
+    face_normal.dot(other_normal).abs() > 0.9999
+  }
+
   /// Returns the neighbors of a face.
   pub fn face_neighbors(&self, face: FaceKey) -> Vec<FaceKey> {
     let _span = info_span!("face_neighbors").entered();
@@ -287,42 +296,37 @@ impl<D: VertexData> HedgeMesh<D> {
     Ok(())
   }
 
-  /// Identifies groups of adjacent and coplanar faces.
-  pub fn find_coplanar_face_groups(&self) -> Vec<HashSet<FaceKey>> {
-    let _span = info_span!("find_coplanar_face_groups").entered();
+  /// Merges groups of adjacent and coplanar faces.
+  pub fn merge_coplanar_faces(&mut self, percent_to_merge: f32) {
+    let _span = info_span!("merge_coplanar_face_groups").entered();
 
-    let mut coplanar_face_groups = Vec::new();
-    let mut visited_faces = HashSet::new();
+    let original_count = self.faces.len();
+    let mut merged_count = 0;
+    let mut merged_faces = HashSet::new();
 
-    for start_face_key in self.faces.iter_keys() {
-      if visited_faces.contains(&start_face_key) {
-        continue;
-      }
-      visited_faces.insert(start_face_key);
-      let mut coplanar_faces = HashSet::new();
-      coplanar_faces.insert(start_face_key);
-      let face_normal = self.face_normal(start_face_key).unwrap();
-
-      let mut faces_to_visit = vec![start_face_key];
-      while let Some(face_key) = faces_to_visit.pop() {
-        for neighbor in self.face_neighbors(face_key) {
-          if !visited_faces.contains(&neighbor) {
-            let neighbor_normal = self.face_normal(neighbor).unwrap();
-            if neighbor_normal.dot(face_normal).abs() > 0.9999 {
-              visited_faces.insert(neighbor);
-              coplanar_faces.insert(neighbor);
-              faces_to_visit.push(neighbor);
-            }
-          }
+    while (merged_count as f32 / original_count as f32) < percent_to_merge {
+      let mut merged_any_this_round = false;
+      for face in merged_faces.clone().into_iter().chain(self.faces()) {
+        let neighbors = self
+          .face_neighbors(face)
+          .into_iter()
+          .filter(|f| self.is_coplanar_with_face(face, *f))
+          .find(|f| self.faces_share_contiguous_border(face, *f));
+        if let Some(neighbor) = neighbors {
+          let new_face = self.merge_face_pair(face, neighbor);
+          merged_faces.insert(new_face);
+          merged_faces.remove(&neighbor);
+          merged_faces.remove(&face);
+          merged_count += 1;
+          merged_any_this_round = true;
+          break;
         }
       }
-      coplanar_face_groups.push(coplanar_faces);
-    }
-    // we're throwing out groups of 2 because they won't yield any benefit if
-    // merged and retriangulated.
-    coplanar_face_groups.retain(|group| group.len() > 2);
 
-    coplanar_face_groups
+      if !merged_any_this_round {
+        break;
+      }
+    }
   }
 
   /// Removes a face and its connnected edges from the mesh.
@@ -347,54 +351,6 @@ impl<D: VertexData> HedgeMesh<D> {
     self.faces.remove(face_key);
     Some(face_key)
   }
-
-  // fn add_edge(&mut self, origin: VertexKey, target: VertexKey) -> EdgeKey {
-  //   let edge = Edge {
-  //     id:            EdgeKey::INVALID,
-  //     origin_vertex: origin,
-  //     target_vertex: target,
-  //     face:          FaceKey::INVALID,
-  //     next_edge:     EdgeKey::INVALID,
-  //     prev_edge:     EdgeKey::INVALID,
-  //     twin_edge:     None,
-  //   };
-  //   let key = self.edges.add(edge);
-  //   let edge = self.edges.get_mut(key).unwrap();
-
-  //   edge.id = key;
-  //   key
-  // }
-
-  // fn add_or_get_edge(
-  //   &mut self,
-  //   origin: VertexKey,
-  //   target: VertexKey,
-  // ) -> EdgeKey {
-  //   for (key, edge) in self.edges.inner().iter() {
-  //     if edge.origin_vertex == origin && edge.target_vertex == target {
-  //       return *key;
-  //     }
-  //   }
-  //   self.add_edge(origin, target)
-  // }
-
-  // fn add_face(&mut self, a: VertexKey, b: VertexKey, c: VertexKey) -> FaceKey
-  // {   let a_to_b = self.add_or_get_edge(a, b);
-  //   let b_to_c = self.add_or_get_edge(b, c);
-  //   let c_to_a = self.add_or_get_edge(c, a);
-
-  //   let face = Face {
-  //     id:    FaceKey::INVALID,
-  //     edges: vec![a_to_b, b_to_c, c_to_a],
-  //   };
-  //   let face_key = self.faces.add(face);
-
-  //   self.edges.get_mut(a_to_b).unwrap().face = face_key;
-  //   self.edges.get_mut(b_to_c).unwrap().face = face_key;
-  //   self.edges.get_mut(c_to_a).unwrap().face = face_key;
-
-  //   face_key
-  // }
 
   /// Returns the set of edges on one face that are bordering another.
   pub fn bordering_edges(&self, a: FaceKey, b: FaceKey) -> HashSet<EdgeKey> {
@@ -448,18 +404,18 @@ impl<D: VertexData> HedgeMesh<D> {
       self.faces.contains(a) && self.faces.contains(b),
       "one or more faces do not exist"
     );
-    assert!(self.is_valid_face(a).is_ok(), "face a is invalid");
-    assert!(self.is_valid_face(b).is_ok(), "face b is invalid");
-    assert!(self.is_neighbors(a, b), "faces are not adjacent");
     assert!(
-      self
-        .face_normal(a)
-        .unwrap()
-        .dot(self.face_normal(b).unwrap())
-        .abs()
-        > 0.9999,
-      "faces are not coplanar"
+      self.is_valid_face(a).is_ok(),
+      "face a is invalid: {:?}",
+      self.is_valid_face(a)
     );
+    assert!(
+      self.is_valid_face(b).is_ok(),
+      "face b is invalid: {:?}",
+      self.is_valid_face(b)
+    );
+    assert!(self.is_neighbors(a, b), "faces are not adjacent");
+    assert!(self.is_coplanar_with_face(a, b), "faces are not coplanar");
     assert!(
       self.faces_share_contiguous_border(a, b),
       "bordering edges are not contiguous"

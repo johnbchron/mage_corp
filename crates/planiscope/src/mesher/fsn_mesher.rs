@@ -56,7 +56,8 @@ impl Mesher for FastSurfaceNetsMesher {
       })
       .collect::<Vec<glam::Vec3A>>();
 
-    let eval_span = info_span!("fidget_point_eval").entered();
+    let eval_span =
+      info_span!("fidget_point_eval", points = points.len()).entered();
     // evaluate the fidget tape on all of the points
     let evaluator = fidget::eval::FloatSliceEval::new(&tape);
     let values = evaluator.eval(
@@ -81,7 +82,7 @@ impl Mesher for FastSurfaceNetsMesher {
 
     // convert vertices and triangles into something we can use (what full_mesh
     // is expecting), and scale them back up for the normal calc.
-    let vertices = buffer
+    let positions = buffer
       .positions
       .iter()
       // this is to convert from linearized integer coords back to -1..1
@@ -101,10 +102,10 @@ impl Mesher for FastSurfaceNetsMesher {
       .collect::<Vec<glam::UVec3>>();
 
     // get the normals
-    let normals: Vec<glam::Vec3A> = fidget_normals(&vertices, &tape)?;
+    let normals: Vec<glam::Vec3A> = fidget_normals(&positions, &tape)?;
 
     let mut mesh = BufMesh {
-      positions: vertices,
+      positions,
       triangles,
       normals,
     };

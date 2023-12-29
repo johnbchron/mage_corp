@@ -11,6 +11,7 @@ earcutr = "0.4.3"
 educe = { version = "0.5.9", features = ["Eq", "Hash"] }
 glam = { version = "0.24", features = ["serde"] }
 hashbrown = { version = "0.14.3", features = ["rayon"] }
+rayon = "1.8.0"
 serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.52"
 tracing = "0.1.40"

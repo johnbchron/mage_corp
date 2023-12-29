@@ -339,12 +339,8 @@ impl ActiveSpell {
     }
   }
 
-  pub fn descriptor(&self) -> &SpellDescriptor {
-    &self.descriptor
-  }
-  pub fn source(&self) -> Entity {
-    self.source
-  }
+  pub fn descriptor(&self) -> &SpellDescriptor { &self.descriptor }
+  pub fn source(&self) -> Entity { self.source }
 
   pub fn update_triggers(&mut self, bluep_q: &Query<&ActiveBlueprint>) {
     let block_ids = self.descriptor.sorted_block_ids();

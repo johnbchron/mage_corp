@@ -1,10 +1,10 @@
 
 # run the project
 run:
-	cargo run --package mage_corp
+	MTL_HUD_ENABLED=1 cargo run --package mage_corp
 
 run-release:
-	cargo run --release --package mage_corp
+	MTL_HUD_ENABLED=1 cargo run --release --package mage_corp
 
 test:
 	cargo nextest run

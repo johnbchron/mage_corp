@@ -25,11 +25,11 @@ fn test_scene(
       lowres_camera: LowresCamera {
         min_pixel_scale: 2,
         final_far:       Some(10000.0),
-        n_cameras:       4,
+        n_cameras:       1,
       },
       spatial_bundle: SpatialBundle::from_transform(
-        Transform::from_xyz(0.0, 5.0, 10.0)
-          .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 1.0, 2.0)
+          .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
       ),
       projection: Projection::Perspective(PerspectiveProjection {
         far: 250.0,
@@ -96,11 +96,11 @@ fn test_scene(
       extension: ToonExtension::default(),
     }),
     ImplicitInputs(MesherInputs {
-      shape:        framix::brick_array(5, 10),
+      shape:        framix::brick_array(1, 1),
       region:       MesherRegion {
-        position: Vec3::new(1.0, 1.0, 0.0).into(),
-        scale:    Vec3::new(1.5, 1.0, 0.2).into(),
-        detail:   MesherDetail::Resolution(209.0),
+        position: Vec3::splat(0.0).into(),
+        scale:    Vec3::splat(0.25).into(),
+        detail:   MesherDetail::Resolution(200.0),
         prune:    false,
       },
       gen_collider: true,

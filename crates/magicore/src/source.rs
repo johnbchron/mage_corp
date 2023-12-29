@@ -10,9 +10,7 @@ pub struct Source {
 }
 
 impl Default for Source {
-  fn default() -> Self {
-    Self::new(100.0, 5.0)
-  }
+  fn default() -> Self { Self::new(100.0, 5.0) }
 }
 
 impl Source {
@@ -25,14 +23,10 @@ impl Source {
   }
 
   #[allow(dead_code)]
-  pub fn max_flow(&self) -> f32 {
-    self.max_chr_flow
-  }
+  pub fn max_flow(&self) -> f32 { self.max_chr_flow }
 
   #[allow(dead_code)]
-  pub fn max_capacity(&self) -> f32 {
-    self.max_chr_capacity
-  }
+  pub fn max_capacity(&self) -> f32 { self.max_chr_capacity }
 
   /// Expend a given amount of choranum. The amount must be positive, and the
   /// total expended is returned. A source cannot expend more than it contains.
@@ -54,7 +48,5 @@ impl Source {
 pub struct SourcePlugin;
 
 impl Plugin for SourcePlugin {
-  fn build(&self, app: &mut App) {
-    app.register_type::<Source>();
-  }
+  fn build(&self, app: &mut App) { app.register_type::<Source>(); }
 }
