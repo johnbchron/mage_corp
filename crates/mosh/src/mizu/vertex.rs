@@ -21,6 +21,9 @@ impl<D: VertexData> Vertex<D> {
   /// Returns the position of the vertex.
   pub fn pos(&self) -> glam::Vec3A { self.data.pos() }
 
+  /// Returns the data of the vertex.
+  pub fn data(&self) -> &D { &self.data }
+
   /// Determines if the given vertices are collinear.
   pub fn are_collinear(a: &Self, b: &Self, c: &Self) -> bool {
     let ab = b.pos() - a.pos();

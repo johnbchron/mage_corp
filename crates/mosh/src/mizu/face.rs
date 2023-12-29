@@ -10,6 +10,11 @@ impl Face {
     Self { vertices, normal }
   }
 
+  /// Returns the indices of the vertices that make up this face.
+  pub fn vertices(&self) -> &glam::UVec3 { &self.vertices }
+  /// Returns the normal of this face.
+  pub fn normal(&self) -> glam::Vec3A { self.normal }
+
   /// Returns the pairs of vertices that make up the edges of this face.
   pub fn pairs(&self) -> [(u32, u32); 3] {
     [

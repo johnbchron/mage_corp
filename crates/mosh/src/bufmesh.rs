@@ -1,7 +1,7 @@
 use educe::Educe;
 use serde::{Deserialize, Serialize};
 
-use crate::hash::hash_vec3a;
+use crate::{hash::hash_vec3a, mizu::VertexData};
 
 /// An index-buffer mesh.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -50,14 +50,15 @@ impl BufMesh {
 }
 
 /// A vertex with position and normal. Used as the vertex data for the
-/// `FullMesh` when converting to a half-edge mesh.
-#[derive(Clone, Copy, PartialEq, Educe, Debug, Serialize, Deserialize)]
-#[educe(Hash, Eq)]
+/// `MizuMesh`.
+#[derive(Clone)]
 pub struct FullVertex {
   /// The position of the vertex.
-  #[educe(Hash(method = "hash_vec3a"))]
   pub position: glam::Vec3A,
   /// The normal of the vertex.
-  #[educe(Hash(method = "hash_vec3a"))]
   pub normal:   glam::Vec3A,
+}
+
+impl VertexData for FullVertex {
+  fn pos(&self) -> glam::Vec3A { self.position }
 }

@@ -41,6 +41,12 @@ impl<D: VertexData> MizuMesh<D> {
 
     mesh
   }
+  /// Builds buffers from the mesh.
+  pub fn to_buffers(&self) -> (Vec<D>, Vec<glam::UVec3>) {
+    let vertices = self.vertices.iter().map(|v| v.data().clone()).collect();
+    let faces = self.faces.iter().map(|f| *f.vertices()).collect();
+    (vertices, faces)
+  }
 
   /// Returns a reference to the vertex at the given index.
   pub fn vertex(&self, index: u32) -> &Vertex<D> {
@@ -53,6 +59,11 @@ impl<D: VertexData> MizuMesh<D> {
     let b = self.vertex(indices.y).pos();
     let c = self.vertex(indices.z).pos();
     (b - a).cross(c - a).normalize()
+  }
+
+  /// Returns a slice of the opposites of each face in the mesh.
+  pub fn opposites(&self) -> &[[Option<u32>; 3]] {
+    self.opposites.get_or_init(|| self.build_opposites())
   }
 
   fn build_opposites(&self) -> Vec<[Option<u32>; 3]> {
