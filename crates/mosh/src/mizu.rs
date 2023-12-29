@@ -17,11 +17,13 @@ pub use self::{
   vertex::{Vertex, VertexData},
 };
 
+type OppositeEntry = Option<(u32, u8)>;
+
 /// A mesh data structure for mesh simplification.
 pub struct MizuMesh<D: VertexData> {
   vertices:  Vec<Vertex<D>>,
   faces:     Vec<Face>,
-  opposites: OnceLock<Vec<[Option<(u32, u8)>; 3]>>,
+  opposites: OnceLock<Vec<[OppositeEntry; 3]>>,
 }
 
 impl<D: VertexData> MizuMesh<D> {
