@@ -27,8 +27,9 @@ impl<D: VertexData> Vertex<D> {
 
   /// Determines if the given vertices are collinear.
   pub fn are_collinear(a: &Self, b: &Self, c: &Self) -> bool {
-    let ab = b.pos() - a.pos();
-    let ac = c.pos() - a.pos();
-    ab.cross(ac).length_squared() < 0.00001
+    glam::Mat3::from_cols(a.pos().into(), b.pos().into(), c.pos().into())
+      .determinant()
+      .abs()
+      < 0.0001
   }
 }

@@ -25,11 +25,11 @@ fn test_scene(
       lowres_camera: LowresCamera {
         min_pixel_scale: 2,
         final_far:       Some(10000.0),
-        n_cameras:       4,
+        n_cameras:       1,
       },
       spatial_bundle: SpatialBundle::from_transform(
-        Transform::from_xyz(0.0, 5.0, 10.0)
-          .looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 1.0, 2.0)
+          .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
       ),
       projection: Projection::Perspective(PerspectiveProjection {
         far: 250.0,

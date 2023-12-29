@@ -66,11 +66,11 @@ impl<D: VertexData> MizuMesh<D> {
 
     let opposites = self
       .faces
-      .iter()
+      .par_iter()
       .map(|face| {
         face
           .pairs()
-          .into_par_iter()
+          .into_iter()
           .map(|(a, b)| {
             let arc = (b, a);
             arc_to_face_map.get(&arc).copied()
