@@ -150,6 +150,7 @@ impl<D: VertexData> HedgeMesh<D> {
 }
 
 impl HedgeMesh<FullVertex> {
+  /// Creates a `HedgeMesh<FullVertex>` from a `BufMesh`.
   pub fn from_bufmesh(mesh: BufMesh) -> Self {
     let triangles = mesh
       .triangles
@@ -169,6 +170,7 @@ impl HedgeMesh<FullVertex> {
     Self::from_buffers(&triangles, vertices.as_slice())
   }
 
+  /// Converts a `HedgeMesh<FullVertex>` to a `BufMesh`.
   pub fn to_bufmesh(&self) -> BufMesh {
     let (triangles, vertices) = self.to_buffers();
 
