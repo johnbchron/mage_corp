@@ -4,9 +4,9 @@ pub mod compound;
 use std::{
   collections::{hash_map::DefaultHasher, HashMap},
   hash::{Hash, Hasher},
-  ops::{Add, Div, Mul, Neg, Sub},
 };
 
+use auto_ops::impl_op_ex;
 use bevy_reflect::Reflect;
 use decorum::hash::FloatHash;
 use educe::Educe;
@@ -97,39 +97,15 @@ impl From<f32> for Shape {
   fn from(value: f32) -> Self { Shape::Constant(value.into()) }
 }
 
-impl Add<Shape> for Shape {
-  type Output = Shape;
-
-  fn add(self, rhs: Shape) -> Self::Output {
-    Shape::Add(Box::new(self), Box::new(rhs))
-  }
-}
-impl Sub<Shape> for Shape {
-  type Output = Shape;
-
-  fn sub(self, rhs: Shape) -> Self::Output {
-    Shape::Sub(Box::new(self), Box::new(rhs))
-  }
-}
-impl Mul<Shape> for Shape {
-  type Output = Shape;
-
-  fn mul(self, rhs: Shape) -> Self::Output {
-    Shape::Mul(Box::new(self), Box::new(rhs))
-  }
-}
-impl Div<Shape> for Shape {
-  type Output = Shape;
-
-  fn div(self, rhs: Shape) -> Self::Output {
-    Shape::Div(Box::new(self), Box::new(rhs))
-  }
-}
-impl Neg for Shape {
-  type Output = Shape;
-
-  fn neg(self) -> Self::Output { Shape::Neg(Box::new(self)) }
-}
+impl_op_ex!(+ |lhs: &Shape, rhs: &Shape| -> Shape { Shape::Add(Box::new(lhs.clone()), Box::new(rhs.clone())) });
+impl_op_ex!(-|lhs: &Shape, rhs: &Shape| -> Shape {
+  Shape::Sub(Box::new(lhs.clone()), Box::new(rhs.clone()))
+});
+impl_op_ex!(*|lhs: &Shape, rhs: &Shape| -> Shape {
+  Shape::Mul(Box::new(lhs.clone()), Box::new(rhs.clone()))
+});
+impl_op_ex!(/ |lhs: &Shape, rhs: &Shape| -> Shape { Shape::Div(Box::new(lhs.clone()), Box::new(rhs.clone())) });
+impl_op_ex!(-|lhs: &Shape| -> Shape { Shape::Neg(Box::new(lhs.clone())) });
 
 impl Shape {
   pub fn new_expr(expr: &str) -> Self {

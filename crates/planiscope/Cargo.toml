@@ -18,3 +18,4 @@ rmp-serde = "1.1.2"
 serde = { version = "1.0.188", features = ["derive"] }
 mosh = { path = "../mosh" }
 tracing = "0.1.40"
+auto_ops = "0.3.0"
