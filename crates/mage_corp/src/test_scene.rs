@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 
 use bevy::{
   core_pipeline::prepass::{DepthPrepass, NormalPrepass},
-  pbr::wireframe::Wireframe,
   prelude::*,
 };
 use bevy_implicits::prelude::*;
@@ -102,6 +101,7 @@ fn test_scene(
         scale:    Vec3::splat(0.25).into(),
         detail:   MesherDetail::Resolution(200.0),
         prune:    false,
+        simplify: true,
       },
       gen_collider: true,
     }),

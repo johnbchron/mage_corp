@@ -125,6 +125,7 @@ mod tests {
         scale:    Vec3::ONE.into(),
         detail:   planiscope::mesher::MesherDetail::Resolution(8.0),
         prune:    true,
+        simplify: true,
       },
       gen_collider: true,
     });

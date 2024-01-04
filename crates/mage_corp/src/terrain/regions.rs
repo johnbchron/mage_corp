@@ -44,6 +44,7 @@ pub fn calculate_regions(
         scale:    Vec3::splat(scale).into(),
         detail:   MesherDetail::Subdivs(config.mesh_subdivs),
         prune:    false,
+        simplify: false,
       }
     })
     .collect()
