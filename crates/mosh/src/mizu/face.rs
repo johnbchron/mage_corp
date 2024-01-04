@@ -48,6 +48,6 @@ impl Face {
 
   /// Returns whether the faces are coplanar.
   pub fn are_coplanar(&self, other: &Self) -> bool {
-    self.normal.dot(other.normal).abs() > 0.9999
+    self.normal.dot(other.normal) > 0.9999
   }
 }

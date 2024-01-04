@@ -26,6 +26,8 @@ pub struct MesherRegion {
   /// Whether to prune the mesh's vertices according to the AABB defined by
   /// `position` and `scale`.
   pub prune:    bool,
+  /// Whether to use [`mosh`] to simplify the mesh.
+  pub simplify: bool,
 }
 
 impl MesherRegion {

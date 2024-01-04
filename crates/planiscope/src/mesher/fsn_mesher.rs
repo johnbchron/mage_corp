@@ -111,7 +111,11 @@ impl Mesher for FastSurfaceNetsMesher {
     };
 
     mesh.transform(glam::Vec3A::ZERO, inputs.region.scale);
-    let mesh = mosh::simplify_mesh(mesh);
+    let mesh = if inputs.region.simplify {
+      mosh::simplify_mesh(mesh)
+    } else {
+      mesh
+    };
 
     Ok(mesh)
   }

@@ -25,11 +25,10 @@ impl<D: VertexData> Vertex<D> {
   /// Returns the data of the vertex.
   pub fn data(&self) -> &D { &self.data }
 
-  /// Determines if the given vertices are collinear.
+  /// Determines if the given vertices are collinear in 3d.
   pub fn are_collinear(a: &Self, b: &Self, c: &Self) -> bool {
-    glam::Mat3::from_cols(a.pos().into(), b.pos().into(), c.pos().into())
-      .determinant()
-      .abs()
-      < 0.0001
+    let ab = (b.pos() - a.pos()).normalize();
+    let ac = (c.pos() - a.pos()).normalize();
+    ab.dot(ac).abs() > 0.9999
   }
 }

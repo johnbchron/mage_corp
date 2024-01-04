@@ -47,6 +47,41 @@ impl<D: VertexData> MizuMesh<D> {
     self.opposites()[index as usize]
   }
 
+  /// Returns true if the face at the given index neighbors the face at the
+  /// given test index.
+  pub fn neighbors_contain(&self, index: u32, test: u32) -> bool {
+    self
+      .neighbors(index)
+      .iter()
+      .any(|n| n.map(|n| n.0) == Some(test))
+  }
+
+  /// Returns true if the face at the given index neighbors any of the faces at
+  /// the test indices.
+  pub fn neighbors_contain_any(
+    &self,
+    index: u32,
+    tested: impl IntoIterator<Item = u32>,
+  ) -> bool {
+    let tested = tested.into_iter().collect::<Vec<_>>();
+    self.neighbors(index).iter().any(|n| {
+      n.map(|n| tested.iter().any(|neighbor| *neighbor == n.0))
+        .unwrap_or(false)
+    })
+  }
+
+  /// Creates a new face using vertex info but does not add it to the mesh.
+  pub fn create_face(
+    &self,
+    vertex_0: u32,
+    vertex_1: u32,
+    vertex_2: u32,
+  ) -> Face {
+    let vertices = glam::UVec3::new(vertex_0, vertex_1, vertex_2);
+    let normal = self.compute_normal(&vertices);
+    Face::new(vertices, normal)
+  }
+
   /// Returns a slice of the opposites of each face in the mesh.
   pub fn opposites(&self) -> &[[Option<(u32, u8)>; 3]] {
     self.opposites.get_or_init(|| self.build_opposites())
