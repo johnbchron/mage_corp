@@ -106,7 +106,6 @@ fn test_scene(
       gen_collider: true,
     }),
     SyncImplicits,
-    Wireframe,
     Name::new("implicits_test"),
   ));
 }
