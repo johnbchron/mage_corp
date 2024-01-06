@@ -2191,8 +2191,9 @@ dependencies = [
 name = "framix"
 version = "0.1.0"
 dependencies = [
+ "bevy",
+ "bevy-implicits",
  "glam 0.24.2",
- "planiscope",
 ]
 
 [[package]]
