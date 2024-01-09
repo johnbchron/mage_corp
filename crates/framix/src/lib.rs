@@ -1,3 +1,2 @@
+pub mod floorplan;
 mod primitive;
-
-enum Module {}

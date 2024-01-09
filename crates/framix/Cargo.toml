@@ -9,3 +9,6 @@ edition = "2021"
 bevy-implicits = { path = "../bevy-implicits" }
 bevy = "0.12"
 glam = "0.24"
+rand = "0.8.5"
+typed-arena = "2.0.2"
+ascii-canvas = "3.0.0"
