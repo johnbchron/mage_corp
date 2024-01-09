@@ -4,7 +4,6 @@ use bevy::{
   core_pipeline::prepass::{DepthPrepass, NormalPrepass},
   prelude::*,
 };
-use bevy_implicits::prelude::*;
 use bevy_panorbit_camera::PanOrbitCamera;
 use bevy_xpbd_3d::prelude::*;
 
@@ -80,33 +79,6 @@ fn test_scene(
     Name::new("sphere"),
     crate::markers::Player,
     magicore::source::Source::default(),
-  ));
-
-  // spawn a test for the implicits plugin
-  commands.spawn((
-    SpatialBundle::from_transform(Transform::from_xyz(0.0, 1.0, 0.0)),
-    toon_materials.add(ToonMaterial {
-      base:      StandardMaterial {
-        base_color: Color::hex("#b5651d").unwrap(),
-        perceptual_roughness: 0.2,
-        reflectance: 0.1,
-        ..default()
-      },
-      extension: ToonExtension::default(),
-    }),
-    ImplicitInputs(MesherInputs {
-      shape:        framix::brick_array(1, 1),
-      region:       MesherRegion {
-        position: Vec3::splat(0.0).into(),
-        scale:    Vec3::splat(0.25).into(),
-        detail:   MesherDetail::Resolution(200.0),
-        prune:    false,
-        simplify: true,
-      },
-      gen_collider: true,
-    }),
-    SyncImplicits,
-    Name::new("implicits_test"),
   ));
 }
 
