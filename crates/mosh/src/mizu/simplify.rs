@@ -122,12 +122,12 @@ impl<D: VertexData> MizuMesh<D> {
         let tri_1_vertices = self.face(tri_1).vertices().to_array();
         let tri_4_vertices = self.face(tri_4).vertices().to_array();
 
-        let vertex_a = tri_1_vertices[((tri_1_start_pair + 2) % 3) as usize];
-        let vertex_b = tri_1_vertices[tri_1_start_pair as usize];
-        let vertex_c = tri_1_vertices[((tri_1_start_pair + 1) % 3) as usize];
-        let vertex_d = tri_4_vertices[((tri_4_start_pair + 1) % 3) as usize];
+        let vertex_a = tri_1_vertices[(tri_1_start_pair + 2) % 3];
+        let vertex_b = tri_1_vertices[tri_1_start_pair];
+        let vertex_c = tri_1_vertices[(tri_1_start_pair + 1) % 3];
+        let vertex_d = tri_4_vertices[(tri_4_start_pair as usize + 1) % 3];
         let vertex_e = tri_4_vertices[tri_4_start_pair as usize];
-        let vertex_f = tri_4_vertices[((tri_4_start_pair + 2) % 3) as usize];
+        let vertex_f = tri_4_vertices[(tri_4_start_pair as usize + 2) % 3];
 
         // make sure A, C, and E are collinear
         // make sure B, D, and F are collinear
@@ -179,10 +179,10 @@ impl<D: VertexData> MizuMesh<D> {
         let face_1_vertices = self.face(tri_1).vertices().to_array();
         let face_2_vertices = self.face(tri_2).vertices().to_array();
 
-        let vertex_a = face_1_vertices[((tri_1_start_pair + 2) % 3) as usize];
-        let vertex_b = face_1_vertices[tri_1_start_pair as usize];
+        let vertex_a = face_1_vertices[(tri_1_start_pair + 2) % 3];
+        let vertex_b = face_1_vertices[tri_1_start_pair];
         let vertex_c = face_2_vertices[tri_2_start_pair as usize];
-        let vertex_d = face_2_vertices[((tri_2_start_pair + 2) % 3) as usize];
+        let vertex_d = face_2_vertices[(tri_2_start_pair as usize + 2) % 3];
 
         assert_ne!(vertex_a, vertex_b);
         assert_ne!(vertex_a, vertex_c);
