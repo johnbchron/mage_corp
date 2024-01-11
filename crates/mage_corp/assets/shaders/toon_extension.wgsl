@@ -1,30 +1,31 @@
-#import bevy_pbr::{
-  pbr_fragment::pbr_input_from_standard_material,
-  pbr_functions::alpha_discard,
-}
 
 #import bevy_pbr::{
   forward_io::{VertexOutput, FragmentOutput},
-  pbr_functions::{PbrLightingOutput, generate_pbr_lighting, main_pass_post_lighting_processing},
+  pbr_fragment::pbr_input_from_standard_material,
+  pbr_functions::{
+    alpha_discard,
+    PbrLightingOutput,
+    generate_pbr_lighting,
+    apply_pbr_lighting,
+    main_pass_post_lighting_processing
+  },
   view_transformations,
   mesh_view_bindings::view,
 }
+#import bevy_core_pipeline::tonemapping::screen_space_dither;
+
+#import mage_corp::colors;
 
 struct ToonMaterial {
-  dark_two_threshold: f32,
-  regular_threshold: f32,
-  highlight_threshold: f32,
-  dark_one_color: vec4<f32>,
-  dark_two_color: vec4<f32>,
-  regular_color: vec4<f32>,
-  highlight_color: vec4<f32>,
-  blend_factor: f32,
+  luminance_bands:          f32,
+  luminance_power:          f32,
+  dither_factor:            f32,
   outline_normal_color:     vec4<f32>,
   outline_depth_color:      vec4<f32>,
   outline_normal_threshold: f32,
   outline_depth_threshold:  f32,
   outline_scale:            f32,
-  far_plane_bleed: f32,
+  far_plane_bleed:          f32,
 }
 
 @group(1) @binding(100)
@@ -33,6 +34,22 @@ var<uniform> toon_material: ToonMaterial;
 // https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
 fn luminance(color: vec3<f32>) -> f32 {
   return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+fn apply_outlines(input_color: vec3<f32>, frag_pos: vec2<f32>) -> vec3<f32> {
+  let normal_outline = mage_corp::outline::detect_edge_normal(frag_pos, toon_material.outline_scale);
+  let depth_outline = mage_corp::outline::detect_edge_depth(frag_pos, toon_material.outline_scale);
+
+  var outline_normal_intensity: f32 = step(toon_material.outline_normal_threshold, normal_outline);
+  let outline_depth_intensity = step(toon_material.outline_depth_threshold, depth_outline);
+  if outline_depth_intensity == 1.0 {
+    outline_normal_intensity = 0.0;
+  }
+
+  let outline_normal_color = mix(vec3(1.0), toon_material.outline_normal_color.rgb, outline_normal_intensity);
+  let outline_depth_color = mix(vec3(1.0), toon_material.outline_depth_color.rgb, outline_depth_intensity);
+  let final_color = input_color * outline_normal_color * outline_depth_color;
+  return final_color;
 }
 
 @fragment
@@ -50,61 +67,36 @@ fn fragment(
   var pbr_input = pbr_input_from_standard_material(in, is_front);
   pbr_input.material.base_color = alpha_discard(pbr_input.material, pbr_input.material.base_color);
 
+  // calculate vanilla pbr lighting
   var out: FragmentOutput;
-  let pbr_lighting = generate_pbr_lighting(pbr_input);
+  let pbr_output_color = apply_pbr_lighting(pbr_input);
+  alpha_discard(pbr_input.material, pbr_output_color);
 
-  let direct_light: vec3<f32> = pbr_lighting.direct_light;
-  let indirect_light: vec3<f32> = pbr_lighting.indirect_light;
-  let emissive_light: vec3<f32> = pbr_lighting.emissive_light;
-  let base_color = pbr_input.material.base_color.rgb;
+  // convert into oklch
+  let oklch = colors::srgb2oklch(pbr_output_color.rgb);
+  var luminance: f32 = oklch.x;
+  var chroma: f32 = oklch.y;
+  var hue: f32 = oklch.z;
 
-  let direct_light_luminance = luminance(direct_light + indirect_light);
+  // apply world space dither to luminance
+  let dither_factor = toon_material.dither_factor;
+  let dither = length(screen_space_dither(in.position.xy)) * dither_factor;
+  luminance += dither;
 
-  let blend = toon_material.blend_factor;
-  let dark_two_threshold = toon_material.dark_two_threshold;
-  let regular_threshold = toon_material.regular_threshold;
-  let highlight_threshold = toon_material.highlight_threshold;
+  // quantize luminance
+  let bands = toon_material.luminance_bands;
+  let power = toon_material.luminance_power;
+  luminance = pow(floor(pow(luminance, 1.0 / power) * bands) / bands, power);
 
-  let dark_one_color = toon_material.dark_one_color.rgb;
-  let dark_two_color = toon_material.dark_two_color.rgb;
-  let regular_color = toon_material.regular_color.rgb;
-  let highlight_color = toon_material.highlight_color.rgb;
-
-  let dark_one_intensity = 1.0;
-  let dark_two_intensity = smoothstep(dark_two_threshold, dark_two_threshold + blend, direct_light_luminance);
-  let regular_intensity = smoothstep(regular_threshold, regular_threshold + blend, direct_light_luminance);
-  let highlight_intensity = smoothstep(highlight_threshold, highlight_threshold + blend, direct_light_luminance);
-
-  let dark_one_light = dark_one_color * dark_one_intensity * base_color;
-  let dark_two_light = dark_two_color * dark_two_intensity * base_color;
-  let regular_light = regular_color * regular_intensity * base_color;
-  let highlight_light = highlight_color * highlight_intensity * base_color;
-
-  let toon_light = max(max(dark_one_light, dark_two_light), regular_light) + highlight_light;
-  let total_light = toon_light + emissive_light;
-
-  let normal_outline = mage_corp::outline::detect_edge_normal(in.position.xy, toon_material.outline_scale);
-  let depth_outline = mage_corp::outline::detect_edge_depth(in.position.xy, toon_material.outline_scale);
-
-  var outline_normal_intensity: f32 = step(toon_material.outline_normal_threshold, normal_outline);
-  let outline_depth_intensity = step(toon_material.outline_depth_threshold, depth_outline);
-  if outline_depth_intensity == 1.0 {
-    outline_normal_intensity = 0.0;
-  }
-
-  let outline_normal_color = mix(vec3(1.0), toon_material.outline_normal_color.rgb, outline_normal_intensity);
-  let outline_depth_color = mix(vec3(1.0), toon_material.outline_depth_color.rgb, outline_depth_intensity);
-
-  let final_color = total_light * outline_normal_color * outline_depth_color;
-
+  // convert back to srgb and apply outlines
+  let out_rgb = colors::oklch2srgb(vec3<f32>(luminance, chroma, hue));
   out.color = vec4(
-    final_color,
-    pbr_lighting.alpha
+    apply_outlines(out_rgb, in.position.xy),
+    pbr_output_color.a
   );
 
   // apply in-shader post processing (fog, alpha-premultiply, and also tonemapping, debanding if the camera is non-hdr)
   // note this does not include fullscreen postprocessing effects like bloom.
   out.color = main_pass_post_lighting_processing(pbr_input, out.color);
-
   return out;
 }

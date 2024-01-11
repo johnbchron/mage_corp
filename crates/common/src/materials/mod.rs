@@ -9,27 +9,33 @@ use bevy::{
 pub const OUTLINE_SHADER_HANDLE: Handle<Shader> =
   Handle::weak_from_u128(12104443487162275386);
 
+#[allow(clippy::unreadable_literal)]
+pub const COLORS_SHADER_HANDLE: Handle<Shader> =
+  Handle::weak_from_u128(12104443487162275387);
+
+// struct ToonMaterial {
+//   luminance_bands:          u32,
+//   luminance_power:          f32,
+//   dither_factor:            f32,
+//   outline_normal_color:     vec4<f32>,
+//   outline_depth_color:      vec4<f32>,
+//   outline_normal_threshold: f32,
+//   outline_depth_threshold:  f32,
+//   outline_scale:            f32,
+//   far_plane_bleed:          f32,
+// }
+
 #[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
 pub struct ToonExtension {
   // We need to ensure that the bindings of the base material and the extension
   // do not conflict, so we start from binding slot 100, leaving slots 0-99
   // for the base material.
   #[uniform(100)]
-  pub dark_two_threshold:       f32,
+  pub luminance_bands:          f32,
   #[uniform(100)]
-  pub normal_threshold:         f32,
+  pub luminance_power:          f32,
   #[uniform(100)]
-  pub highlight_threshold:      f32,
-  #[uniform(100)]
-  pub dark_one_color:           Color,
-  #[uniform(100)]
-  pub dark_two_color:           Color,
-  #[uniform(100)]
-  pub normal_color:             Color,
-  #[uniform(100)]
-  pub highlight_color:          Color,
-  #[uniform(100)]
-  pub blend_factor:             f32,
+  pub dither_factor:            f32,
   #[uniform(100)]
   pub outline_normal_color:     Color,
   #[uniform(100)]
@@ -46,19 +52,12 @@ pub struct ToonExtension {
 
 impl Default for ToonExtension {
   fn default() -> Self {
-    let warm_color = Color::rgb(1.0, 0.9, 0.8);
-    let cool_color = Color::rgb(0.8, 0.9, 1.0);
     Self {
-      dark_two_threshold:       0.2,
-      normal_threshold:         1.0,
-      highlight_threshold:      3.0,
-      dark_one_color:           cool_color * 0.5,
-      dark_two_color:           warm_color * 0.75,
-      normal_color:             Color::rgb(1.0, 1.0, 1.0),
-      highlight_color:          warm_color,
-      blend_factor:             0.01,
-      outline_normal_color:     warm_color * 1.2,
-      outline_depth_color:      cool_color * 0.5,
+      luminance_bands:          8.0,
+      luminance_power:          2.0,
+      dither_factor:            5.0,
+      outline_normal_color:     Color::rgb(1.2, 1.2, 1.2),
+      outline_depth_color:      Color::rgb(0.5, 0.5, 0.5),
       outline_normal_threshold: 0.1,
       outline_depth_threshold:  0.05,
       outline_scale:            1.0,
@@ -81,6 +80,12 @@ impl Plugin for MaterialsPlugin {
       app,
       OUTLINE_SHADER_HANDLE,
       "../../../mage_corp/assets/shaders/outline.wgsl",
+      Shader::from_wgsl
+    );
+    load_internal_asset!(
+      app,
+      COLORS_SHADER_HANDLE,
+      "../../../mage_corp/assets/shaders/colors.wgsl",
       Shader::from_wgsl
     );
 
