@@ -19,7 +19,7 @@ pub trait Primitive {
   /// decomposition to generate the collider.
   fn collider(&self) -> Option<Collider> { None }
   /// The resolution at which to tessellate the primitive.
-  fn resolution(&self) -> f32 { 200.0 }
+  fn resolution(&self) -> f32 { 500.0 }
   /// The [`ToonMaterial`] of the primitive.
   fn material(&self) -> ToonMaterial;
   /// The density of the primitive.
