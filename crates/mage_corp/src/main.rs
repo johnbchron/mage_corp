@@ -31,6 +31,9 @@ fn main() {
       brightness: 0.20,
       ..default()
     })
-    .insert_resource(xpbd::PhysicsDebugConfig::none())
+    .insert_resource(xpbd::PhysicsDebugConfig::joints(
+      Some(Color::RED),
+      Some(Color::BLUE),
+    ))
     .run();
 }

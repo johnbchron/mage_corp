@@ -84,6 +84,7 @@ pub struct TerrainBundle {
   pub mesh:          Handle<Mesh>,
   pub material:      Handle<ToonMaterial>,
   pub rigid_body:    RigidBody,
+  pub restitution:   Restitution,
   pub position:      Position,
 }
 
@@ -254,6 +255,7 @@ fn graduate_generation(
         mesh:          implicit_mesh.mesh.clone(),
         material:      terrain_material.material.clone(),
         rigid_body:    RigidBody::Static,
+        restitution:   Restitution::new(0.2),
         position:      Position(implicit_mesh.inputs.region.position.into()),
       });
 
