@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_implicits::{
   prelude::{ImplicitInputs, MesherDetail, MesherInputs, MesherRegion},
-  SyncImplicits,
+  SyncImplicitsOnce,
 };
 use bevy_xpbd_3d::components::RigidBody;
 use common::materials::ToonMaterial;
@@ -77,7 +77,7 @@ impl RenderedModule {
           },
           gen_collider: collider_attempt.is_none(),
         }),
-        SyncImplicits,
+        SyncImplicitsOnce,
         RigidBody::Static,
         p.primitive.density(),
         p.primitive.friction(),
