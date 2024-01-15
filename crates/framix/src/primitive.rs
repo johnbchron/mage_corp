@@ -27,7 +27,7 @@ pub trait Primitive: Reflect + Send + Sync + 'static {
   /// decomposition to generate the collider.
   fn collider(&self) -> Option<Collider> { None }
   /// The resolution at which to tessellate the primitive, in cells per meter.
-  fn resolution(&self) -> f32 { 500.0 }
+  fn resolution(&self) -> f32 { 200.0 }
   /// The [`ToonMaterial`] of the primitive. This will be deduplicated by
   /// [`RenderedModule::spawn`].
   fn material(&self) -> ToonMaterial;
@@ -113,6 +113,7 @@ impl Primitive for Brick {
       self.scale.z.into(),
     )
   }
+  fn resolution(&self) -> f32 { 1000.0 }
   fn collider(&self) -> Option<Collider> {
     // adjust for the tessellation reducing the size just a bit
     let tess_cell_size = self.resolution().recip();
