@@ -2,6 +2,7 @@
 
 use bevy::{
   pbr::StandardMaterial,
+  reflect::Reflect,
   render::{color::Color, primitives::Aabb},
 };
 use bevy_implicits::prelude::{builder as sb, Shape};
@@ -11,7 +12,7 @@ use bevy_xpbd_3d::components::{
 use common::materials::{ToonExtension, ToonMaterial};
 
 /// A trait for physical definitions of a physical building primitive.
-pub trait Primitive {
+pub trait Primitive: Reflect + Send + Sync + 'static {
   /// The [`AABB`] of the primitive.
   fn aabb(&self) -> Aabb;
   /// The [`Shape`] of the primitive.
@@ -41,6 +42,7 @@ pub trait Primitive {
 /// A plank of wood.
 ///
 /// For now the wood species is assumed to be White American Oak.
+#[derive(Reflect)]
 pub struct Plank {
   /// The dimensions of the plank in meters.
   pub dims:      glam::Vec3,
@@ -79,6 +81,7 @@ const STANDARD_BRICK_HALF_EXTENTS: glam::Vec3 =
 /// A brick.
 ///
 /// For now the brick is assumed to be a red facing brick.
+#[derive(Reflect)]
 pub struct Brick {
   /// The scale of the brick. A standard brick is 10cm x 2.5cm x 5cm. Defaults
   /// to `glam::Vec3::ONE`.

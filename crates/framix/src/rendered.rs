@@ -8,6 +8,7 @@ use common::materials::ToonMaterial;
 
 use crate::PositionedPrimitive;
 
+#[derive(Reflect)]
 pub struct RenderedModule {
   primitives: Vec<PositionedPrimitive>,
 }

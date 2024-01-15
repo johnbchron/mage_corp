@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+#![feature(trivial_bounds)]
 
 //! Framix is a crate for procedurally generating buildings.
 //!
@@ -31,6 +32,7 @@ use bevy::prelude::*;
 use self::primitive::{Brick, Primitive};
 
 /// A [`Primitive`] with a [`Transform`] attached.
+#[derive(Reflect)]
 pub struct PositionedPrimitive {
   primitive: Box<dyn Primitive>,
   transform: Transform,
