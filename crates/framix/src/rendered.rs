@@ -82,6 +82,7 @@ impl RenderedModule {
         p.primitive.density(),
         p.primitive.friction(),
         p.primitive.restitution(),
+        Name::new(format!("building_primitive_{}", i)),
       ));
       if let Some(collider) = collider_attempt {
         entity.insert(collider);
