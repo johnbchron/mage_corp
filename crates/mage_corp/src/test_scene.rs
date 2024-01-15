@@ -64,12 +64,24 @@ fn test_scene(
 
   let rendered_module = framix::BrickWall.render();
   rendered_module.spawn(
-    Vec3::new(0.0, 2.0, 0.0),
+    Transform::from_xyz(0.0, 2.0, 0.0),
     &mut commands,
     &mut toon_materials,
   );
   rendered_module.spawn(
-    Vec3::new(1.0, 2.0, 0.0),
+    Transform::from_xyz(1.0, 2.0, 1.0)
+      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
+    &mut commands,
+    &mut toon_materials,
+  );
+  rendered_module.spawn(
+    Transform::from_xyz(-1.0, 2.0, 1.0)
+      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
+    &mut commands,
+    &mut toon_materials,
+  );
+  rendered_module.spawn(
+    Transform::from_xyz(0.0, 2.0, 2.0),
     &mut commands,
     &mut toon_materials,
   );

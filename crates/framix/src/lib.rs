@@ -26,19 +26,34 @@
 
 pub mod primitive;
 mod rendered;
+pub mod prelude {
+  //! A collection of commonly used types and traits.
+  pub use crate::{primitive::Primitive, Module, RenderedPrimitive};
+}
 
 use bevy::prelude::*;
 
-use self::primitive::{Brick, Primitive};
+use self::{
+  primitive::{Brick, Primitive},
+  rendered::RenderedModule,
+};
 
-/// A [`Primitive`] with a [`Transform`] attached.
+/// A rendered [`Primitive`].
 #[derive(Reflect)]
-pub struct PositionedPrimitive {
+pub struct RenderedPrimitive {
   primitive: Box<dyn Primitive>,
   transform: Transform,
 }
 
-use rendered::RenderedModule;
+impl RenderedPrimitive {
+  /// Create a new [`RenderedPrimitive`].
+  pub fn new(primitive: Box<dyn Primitive>, transform: Transform) -> Self {
+    Self {
+      primitive,
+      transform,
+    }
+  }
+}
 
 /// A trait for semantic definitions of a building chunk.
 ///
@@ -66,13 +81,13 @@ impl Module for BrickWall {
   fn render(&self) -> RenderedModule {
     // we'll fit 5 bricks end to end and 20 stacked. we'll also offset every
     // other brick by one half length.
-    let smudge = 1.01;
+    let smudge = 1.02;
 
     let mut rows = Vec::new();
     for i in 0..20 {
       let mut row = Vec::new();
       for j in 0..5 {
-        row.push(PositionedPrimitive {
+        row.push(RenderedPrimitive {
           primitive: Box::new(Brick {
             scale: glam::Vec3::splat(smudge),
           }),

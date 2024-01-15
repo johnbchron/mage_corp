@@ -6,21 +6,19 @@ use bevy_implicits::{
 use bevy_xpbd_3d::components::RigidBody;
 use common::materials::ToonMaterial;
 
-use crate::PositionedPrimitive;
+use crate::RenderedPrimitive;
 
 #[derive(Reflect)]
 pub struct RenderedModule {
-  primitives: Vec<PositionedPrimitive>,
+  primitives: Vec<RenderedPrimitive>,
 }
 
 impl RenderedModule {
-  pub fn new(primitives: Vec<PositionedPrimitive>) -> Self {
-    Self { primitives }
-  }
+  pub fn new(primitives: Vec<RenderedPrimitive>) -> Self { Self { primitives } }
 
   pub fn spawn(
     &self,
-    translation: glam::Vec3,
+    transform: Transform,
     commands: &mut Commands,
     toon_materials: &mut ResMut<Assets<ToonMaterial>>,
   ) {
@@ -60,8 +58,7 @@ impl RenderedModule {
     self.primitives.iter().enumerate().for_each(|(i, p)| {
       let collider_attempt = p.primitive.collider();
       let aabb = p.primitive.aabb();
-      let mut transform = p.transform;
-      transform.translation += translation;
+      let transform = transform.mul_transform(p.transform);
 
       let mut entity = commands.spawn((
         SpatialBundle::from_transform(transform),
