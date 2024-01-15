@@ -96,7 +96,7 @@ impl IntoNode for &Compound {
         let length = length.into_node(ctx)?;
         let width = width.into_node(ctx)?;
         let height = height.into_node(ctx)?;
-        crate::nso::volumes::nso_cuboid(length, width, height, ctx)
+        crate::nso::volumes::nso_inexact_cuboid(length, width, height, ctx)
       }
       Compound::SmoothMinCubic { lhs, rhs, k } => {
         let lhs = lhs.into_node(ctx)?;
