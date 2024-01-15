@@ -73,16 +73,6 @@ fn test_scene(
     &mut commands,
     &mut toon_materials,
   );
-  rendered_module.spawn(
-    Vec3::new(0.0, 3.0, 0.0),
-    &mut commands,
-    &mut toon_materials,
-  );
-  rendered_module.spawn(
-    Vec3::new(1.0, 3.0, 0.0),
-    &mut commands,
-    &mut toon_materials,
-  );
 }
 
 pub struct TestScenePlugin;
