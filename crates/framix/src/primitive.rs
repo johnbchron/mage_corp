@@ -1,29 +1,37 @@
+//! Physical definitions of building primitives.
+
 use bevy::{
   pbr::StandardMaterial,
   render::{color::Color, primitives::Aabb},
 };
 use bevy_implicits::prelude::{builder as sb, Shape};
-use bevy_xpbd_3d::components::{Collider, Friction, Restitution};
+use bevy_xpbd_3d::components::{
+  Collider, ColliderDensity, Friction, Restitution,
+};
 use common::materials::{ToonExtension, ToonMaterial};
 
+/// A trait for physical definitions of a physical building primitive.
 pub trait Primitive {
   /// The [`AABB`] of the primitive.
   fn aabb(&self) -> Aabb;
   /// The [`Shape`] of the primitive.
   fn shape(&self) -> Shape;
-  /// The [`Shape`] to use for calculating the primitive's [Collider], in case
-  /// `collider_shape` returns `None`.
+  /// The [`Shape`] to use for calculating the primitive's [Collider], in the
+  /// case that `collider_shape` returns `None`. This method is useful if a
+  /// convex decomposition is needed, but internal features exist in the
+  /// `shape` that are unnecessary for the collider.
   fn collider_shape(&self) -> Shape { self.shape() }
   /// The [`Collider`] of the primitive, if it's feasible to generate directly.
   /// Otherwise return `None` and the `collider_shape` will be used in a convex
   /// decomposition to generate the collider.
   fn collider(&self) -> Option<Collider> { None }
-  /// The resolution at which to tessellate the primitive.
+  /// The resolution at which to tessellate the primitive, in cells per meter.
   fn resolution(&self) -> f32 { 500.0 }
-  /// The [`ToonMaterial`] of the primitive.
+  /// The [`ToonMaterial`] of the primitive. This will be deduplicated by
+  /// [`RenderedModule::spawn`].
   fn material(&self) -> ToonMaterial;
-  /// The density of the primitive.
-  fn density(&self) -> f32;
+  /// The density properties of the primitive.
+  fn density(&self) -> ColliderDensity;
   /// The friction properties of the primitive.
   fn friction(&self) -> Friction;
   /// The restitution properties of the primitive.
@@ -34,7 +42,9 @@ pub trait Primitive {
 ///
 /// For now the wood species is assumed to be White American Oak.
 pub struct Plank {
+  /// The dimensions of the plank in meters.
   pub dims:      glam::Vec3,
+  /// The grain direction of the plank.
   pub grain_dir: glam::Vec3,
 }
 
@@ -48,7 +58,7 @@ impl Primitive for Plank {
     Some(Collider::cuboid(self.dims.x, self.dims.y, self.dims.y))
   }
   // https://www.engineeringtoolbox.com/wood-density-d_40.html
-  fn density(&self) -> f32 { 790.0 }
+  fn density(&self) -> ColliderDensity { ColliderDensity(790.0) }
   fn material(&self) -> ToonMaterial {
     ToonMaterial {
       base:      StandardMaterial {
@@ -70,6 +80,8 @@ const STANDARD_BRICK_HALF_EXTENTS: glam::Vec3 =
 ///
 /// For now the brick is assumed to be a red facing brick.
 pub struct Brick {
+  /// The scale of the brick. A standard brick is 10cm x 2.5cm x 5cm. Defaults
+  /// to `glam::Vec3::ONE`.
   pub scale: glam::Vec3,
 }
 
@@ -105,7 +117,7 @@ impl Primitive for Brick {
     Some(Collider::cuboid(dims.x, dims.y, dims.z))
   }
   // source: https://www.engineeringtoolbox.com/bricks-density-d_1777.html
-  fn density(&self) -> f32 { 1765.0 }
+  fn density(&self) -> ColliderDensity { ColliderDensity(1765.0) }
   fn material(&self) -> ToonMaterial {
     ToonMaterial {
       base:      StandardMaterial {

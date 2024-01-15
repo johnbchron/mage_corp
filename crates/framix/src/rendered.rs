@@ -3,10 +3,10 @@ use bevy_implicits::{
   prelude::{ImplicitInputs, MesherDetail, MesherInputs, MesherRegion},
   SyncImplicits,
 };
-use bevy_xpbd_3d::components::{ColliderDensity, RigidBody};
+use bevy_xpbd_3d::components::RigidBody;
 use common::materials::ToonMaterial;
 
-use crate::{PositionedPrimitive, Primitive};
+use crate::PositionedPrimitive;
 
 pub struct RenderedModule {
   primitives: Vec<PositionedPrimitive>,
@@ -77,8 +77,9 @@ impl RenderedModule {
         }),
         SyncImplicits,
         RigidBody::Static,
-        ColliderDensity(p.primitive.density()),
+        p.primitive.density(),
         p.primitive.friction(),
+        p.primitive.restitution(),
       ));
       if let Some(collider) = collider_attempt {
         entity.insert(collider);
