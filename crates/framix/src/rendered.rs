@@ -60,8 +60,9 @@ impl RenderedModule {
     self.primitives.iter().enumerate().for_each(|(i, p)| {
       let collider_attempt = p.primitive.collider();
       let aabb = p.primitive.aabb();
-      let mut transform = p.transform.clone();
+      let mut transform = p.transform;
       transform.translation += translation;
+
       let mut entity = commands.spawn((
         SpatialBundle::from_transform(transform),
         material_handles[material_map[i]].clone(),
@@ -74,7 +75,7 @@ impl RenderedModule {
             prune:    false,
             simplify: false,
           },
-          gen_collider: !collider_attempt.is_some(),
+          gen_collider: collider_attempt.is_none(),
         }),
         SyncImplicits,
         RigidBody::Static,
