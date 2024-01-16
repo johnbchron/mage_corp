@@ -2,7 +2,7 @@ mod camera;
 mod terrain;
 mod test_scene;
 
-use bevy::prelude::*;
+use bevy::{pbr::wireframe::WireframePlugin, prelude::*};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_xpbd_3d::prelude as xpbd;
 pub use common::{markers, materials};
@@ -17,7 +17,7 @@ fn main() {
       xpbd::PhysicsDebugPlugin::default(),
       WorldInspectorPlugin::default(),
       bevy_panorbit_camera::PanOrbitCameraPlugin,
-      // WireframePlugin,
+      WireframePlugin,
     ))
     .add_plugins((
       camera::lowres::LowresCameraPlugin,
@@ -31,6 +31,9 @@ fn main() {
       brightness: 0.20,
       ..default()
     })
-    .insert_resource(xpbd::PhysicsDebugConfig::none())
+    .insert_resource(xpbd::PhysicsDebugConfig::joints(
+      Some(Color::RED),
+      Some(Color::BLUE),
+    ))
     .run();
 }

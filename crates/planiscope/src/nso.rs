@@ -78,6 +78,30 @@ pub mod volumes {
     let d = ctx.add(length_max_q_0, c)?;
     ctx.sub(d, radius)
   }
+
+  pub fn nso_inexact_cuboid(
+    length: Node,
+    width: Node,
+    height: Node,
+    ctx: &mut Context,
+  ) -> Result<Node, fidget::Error> {
+    let x = ctx.x();
+    let y = ctx.y();
+    let z = ctx.z();
+
+    let abs_x = ctx.abs(x)?;
+    let abs_y = ctx.abs(y)?;
+    let abs_z = ctx.abs(z)?;
+
+    let q_x = ctx.sub(abs_x, length)?;
+    let q_y = ctx.sub(abs_y, width)?;
+    let q_z = ctx.sub(abs_z, height)?;
+
+    let max_q_xy = ctx.max(q_x, q_y)?;
+    let max_q_xyz = ctx.max(max_q_xy, q_z)?;
+
+    Ok(max_q_xyz)
+  }
 }
 
 pub mod csg {

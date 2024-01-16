@@ -5,16 +5,15 @@ use bevy::{
   prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCamera;
-use bevy_xpbd_3d::prelude::*;
+use framix::Module;
 
 use crate::{
   camera::lowres::{LowresCamera, LowresCameraBundle},
-  materials::{ToonExtension, ToonMaterial},
+  materials::ToonMaterial,
 };
 
 fn test_scene(
   mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
   mut toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
   // spawn the camera
@@ -26,8 +25,8 @@ fn test_scene(
         n_cameras:       1,
       },
       spatial_bundle: SpatialBundle::from_transform(
-        Transform::from_xyz(0.0, 1.0, 2.0)
-          .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
+        Transform::from_xyz(0.0, 5.0, 10.0)
+          .looking_at(Vec3::new(0.0, 6.0, 0.0), Vec3::Y),
       ),
       projection: Projection::Perspective(PerspectiveProjection {
         far: 250.0,
@@ -54,32 +53,38 @@ fn test_scene(
     ..default()
   });
 
-  // spawn a sphere
+  // spawn the player
   commands.spawn((
     SpatialBundle::from_transform(Transform::from_xyz(0.0, 2.0, 0.0)),
-    meshes.add(
-      Mesh::try_from(shape::Icosphere {
-        radius:       0.5,
-        subdivisions: 4,
-      })
-      .unwrap(),
-    ),
-    toon_materials.add(ToonMaterial {
-      base:      StandardMaterial {
-        base_color: Color::rgb(0.8, 0.7, 0.6),
-        perceptual_roughness: 0.2,
-        reflectance: 0.1,
-        ..default()
-      },
-      extension: ToonExtension::default(),
-    }),
     crate::terrain::TerrainDetailTarget,
-    // RigidBody::Dynamic,
-    Collider::ball(0.5),
-    Name::new("sphere"),
+    Name::new("player"),
     crate::markers::Player,
     magicore::source::Source::default(),
   ));
+
+  let rendered_module = framix::BrickWall.render();
+  rendered_module.spawn(
+    Transform::from_xyz(0.0, 2.0, 0.0),
+    &mut commands,
+    &mut toon_materials,
+  );
+  rendered_module.spawn(
+    Transform::from_xyz(1.0, 2.0, 1.0)
+      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
+    &mut commands,
+    &mut toon_materials,
+  );
+  rendered_module.spawn(
+    Transform::from_xyz(-1.0, 2.0, 1.0)
+      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
+    &mut commands,
+    &mut toon_materials,
+  );
+  rendered_module.spawn(
+    Transform::from_xyz(0.0, 2.0, 2.0),
+    &mut commands,
+    &mut toon_materials,
+  );
 }
 
 pub struct TestScenePlugin;

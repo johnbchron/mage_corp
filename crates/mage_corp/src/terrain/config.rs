@@ -55,7 +55,7 @@ impl Default for TerrainConfig {
       mesh_subdivs: 6,
       mesh_bleed: 1.05,
       n_same_size_meshes: 1,
-      n_sizes: 6,
+      n_sizes: 3,
       // debug_transform_cubes: false,
     }
   }

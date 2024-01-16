@@ -73,7 +73,8 @@ impl Plugin for ImplicitsPlugin {
       .init_asset::<ColliderAsset>()
       .register_type::<ImplicitInputs>()
       .register_asset_loader(ImplicitMeshAssetLoader)
-      .add_systems(Update, sync_implicits);
+      .add_systems(Update, sync_implicits)
+      .add_systems(Update, sync_implicits_once);
   }
 }
 
@@ -106,6 +107,44 @@ fn sync_implicits(
       if let Some(collider) = collider.0.clone() {
         commands.entity(entity).insert(collider);
       }
+    }
+  }
+}
+
+#[derive(Component)]
+pub struct SyncImplicitsOnce;
+
+// When an entity has a `ImplicitInputs` and `SyncImplicitsOnce` component, this
+// system will add the `ImplicitMesh` asset built from the inputs to the entity,
+// and update the `Handle<Mesh>` and `Collider` components.
+//
+// This version of the system will also remove the `SyncImplicitsOnce` component
+// after the first time it runs.
+fn sync_implicits_once(
+  mut commands: Commands,
+  query: Query<(Entity, &ImplicitInputs), With<SyncImplicitsOnce>>,
+  asset_server: Res<AssetServer>,
+  implicit_meshes: Res<Assets<ImplicitMesh>>,
+  colliders: Res<Assets<ColliderAsset>>,
+) {
+  for (entity, inputs) in query.iter() {
+    let asset_path = asset_path(inputs.0.clone()).unwrap();
+    let handle: Handle<ImplicitMesh> = asset_server.load(asset_path);
+
+    commands.entity(entity).insert(handle.clone());
+
+    if asset_server.is_loaded_with_dependencies(handle.clone()) {
+      let implicit_mesh = implicit_meshes.get(handle).unwrap();
+
+      let collider_handle = implicit_mesh.collider.clone();
+      let collider = colliders.get(collider_handle).unwrap();
+
+      commands.entity(entity).insert(implicit_mesh.mesh.clone());
+      if let Some(collider) = collider.0.clone() {
+        commands.entity(entity).insert(collider);
+      }
+
+      commands.entity(entity).remove::<SyncImplicitsOnce>();
     }
   }
 }
