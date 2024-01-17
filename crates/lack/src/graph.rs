@@ -110,19 +110,19 @@ impl Graph {
 
   /// Returns a list of recursive children of the given node, deduplicated and
   /// sorted. Contains the node itself.
-  fn children(&self, id: Id) -> Result<Vec<Id>, GraphError> {
+  fn get_children(&self, id: Id) -> Result<Vec<Id>, GraphError> {
     let node = self.nodes.get(id).ok_or(GraphError::NodeNotFound(id))?;
     let mut nodes = match node {
       Node::Solid(_) => vec![id],
       Node::Binary { lhs, rhs, .. } => {
-        let mut lhs_nodes = self.children(*lhs)?;
-        let mut rhs_nodes = self.children(*rhs)?;
+        let mut lhs_nodes = self.get_children(*lhs)?;
+        let mut rhs_nodes = self.get_children(*rhs)?;
         lhs_nodes.append(&mut rhs_nodes);
         lhs_nodes.push(id);
         lhs_nodes
       }
       Node::Unary { shape, .. } => self
-        .children(*shape)?
+        .get_children(*shape)?
         .into_iter()
         .chain(std::iter::once(id))
         .collect(),
@@ -141,7 +141,7 @@ impl Graph {
   ) -> Result<(), GraphError> {
     let nodes_to_keep: Vec<Id> =
       ids.into_iter().try_fold(Vec::new(), |mut acc, id| {
-        let children_result = self.children(id)?;
+        let children_result = self.get_children(id)?;
 
         acc.extend(children_result);
         Ok(acc)
@@ -227,13 +227,13 @@ mod tests {
   }
 
   #[test]
-  fn children_works() {
+  fn get_children_works() {
     let mut graph = Graph::new();
     let sphere = graph.sphere(1.0);
     let cuboid = graph.cuboid(glam::vec3(1.0, 1.0, 1.0));
 
     let union = graph.union(sphere, cuboid).unwrap();
-    let union_children = graph.children(union).unwrap();
+    let union_children = graph.get_children(union).unwrap();
     assert!(union_children.contains(&sphere));
     assert!(union_children.contains(&cuboid));
     assert!(union_children.contains(&union));
@@ -241,7 +241,7 @@ mod tests {
 
     // the children method should deduplicate nodes
     let difference = graph.difference(sphere, union).unwrap();
-    let difference_children = graph.children(difference).unwrap();
+    let difference_children = graph.get_children(difference).unwrap();
     assert!(difference_children.contains(&sphere));
     assert!(difference_children.contains(&cuboid));
     assert!(difference_children.contains(&union));
