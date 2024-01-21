@@ -27,18 +27,11 @@
 pub mod brick_wall;
 pub mod primitive;
 mod rendered;
-pub mod prelude {
-  //! A collection of commonly used types and traits.
-  pub use crate::{primitive::Primitive, Module, RenderedPrimitive};
-}
-
 use bevy::prelude::*;
 
-pub use self::brick_wall::BrickWall;
-use self::{
-  primitive::{Brick, Primitive},
-  rendered::RenderedModule,
-};
+pub use self::brick_wall::*;
+use self::{primitive::Brick, rendered::RenderedModule};
+pub use crate::primitive::Primitive;
 
 /// A rendered [`Primitive`].
 #[derive(Reflect)]
