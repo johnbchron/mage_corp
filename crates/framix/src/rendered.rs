@@ -13,6 +13,10 @@ pub struct RenderedModule {
   primitives: Vec<RenderedPrimitive>,
 }
 
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub struct RenderedModuleMarker;
+
 impl RenderedModule {
   pub fn new(primitives: Vec<RenderedPrimitive>) -> Self { Self { primitives } }
 
@@ -55,35 +59,60 @@ impl RenderedModule {
       .map(|m| toon_materials.add(m))
       .collect::<Vec<_>>();
 
-    self.primitives.iter().enumerate().for_each(|(i, p)| {
-      let collider_attempt = p.primitive.collider();
-      let aabb = p.primitive.aabb();
-      let transform = transform.mul_transform(p.transform);
-
-      let mut entity = commands.spawn((
+    commands
+      .spawn((
         SpatialBundle::from_transform(transform),
-        material_handles[material_map[i]].clone(),
-        ImplicitInputs(MesherInputs {
-          shape:        p.primitive.shape(),
-          region:       MesherRegion {
-            position: aabb.center,
-            scale:    aabb.half_extents * 2.0,
-            detail:   MesherDetail::Resolution(200.0),
-            prune:    false,
-            simplify: false,
-          },
-          gen_collider: collider_attempt.is_none(),
-        }),
-        SyncImplicitsOnce,
-        RigidBody::Static,
-        p.primitive.density(),
-        p.primitive.friction(),
-        p.primitive.restitution(),
-        Name::new(format!("building_primitive_{}", i)),
-      ));
-      if let Some(collider) = collider_attempt {
-        entity.insert(collider);
-      }
-    });
+        RenderedModuleMarker,
+      ))
+      .with_children(|parent| {
+        self.primitives.iter().enumerate().for_each(|(i, p)| {
+          let collider_attempt = p.primitive.collider();
+          let aabb = p.primitive.aabb();
+
+          let mut entity = parent.spawn((
+            SpatialBundle::from_transform(p.transform),
+            material_handles[material_map[i]].clone(),
+            ImplicitInputs(MesherInputs {
+              shape:        p.primitive.shape(),
+              region:       MesherRegion {
+                position: aabb.center,
+                scale:    aabb.half_extents * 2.0,
+                detail:   MesherDetail::Resolution(200.0),
+                prune:    false,
+                simplify: false,
+              },
+              gen_collider: collider_attempt.is_none(),
+            }),
+            SyncImplicitsOnce,
+            RigidBody::Static,
+            p.primitive.density(),
+            p.primitive.friction(),
+            p.primitive.restitution(),
+            Name::new(format!("building_primitive_{}", i)),
+          ));
+          if let Some(collider) = collider_attempt {
+            entity.insert(collider);
+          }
+        });
+      });
+  }
+}
+
+pub struct RenderedModulePlugin;
+
+impl Plugin for RenderedModulePlugin {
+  fn build(&self, app: &mut App) {
+    app
+      .register_type::<RenderedModuleMarker>()
+      .add_systems(Update, render_module_debug_cubes);
+  }
+}
+
+fn render_module_debug_cubes(
+  mut gizmos: Gizmos,
+  q: Query<&Transform, With<RenderedModuleMarker>>,
+) {
+  for transform in q.iter() {
+    gizmos.cuboid(transform.clone(), Color::WHITE);
   }
 }

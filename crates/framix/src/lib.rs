@@ -29,7 +29,7 @@ pub mod primitive;
 mod rendered;
 use bevy::prelude::*;
 
-pub use self::brick_wall::*;
+pub use self::{brick_wall::*, rendered::RenderedModulePlugin};
 use self::{primitive::Brick, rendered::RenderedModule};
 pub use crate::primitive::Primitive;
 

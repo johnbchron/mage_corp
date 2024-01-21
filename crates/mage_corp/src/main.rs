@@ -25,6 +25,7 @@ fn main() {
       terrain::TerrainPlugin,
       test_scene::TestScenePlugin,
       magicore::MagicPlugin,
+      framix::RenderedModulePlugin,
     ))
     .insert_resource(Msaa::Off)
     .insert_resource(AmbientLight {
