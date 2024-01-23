@@ -20,7 +20,7 @@ pub use self::{brick::Brick, plank::Plank};
 use crate::find_or_add::FindOrAdd;
 
 /// A trait for physical definitions of a physical building primitive.
-pub trait Primitive: Reflect + Send + Sync + 'static {
+pub trait Primitive {
   /// The [`AABB`] of the primitive.
   fn aabb(&self) -> Aabb;
   /// The [`Shape`] of the primitive.

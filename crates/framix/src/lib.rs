@@ -31,13 +31,13 @@ mod rendered;
 
 use bevy::{prelude::*, utils::HashMap};
 use common::materials::ToonMaterial;
+use rendered::RenderedModuleMarker;
 
 pub use self::{brick_wall::*, rendered::RenderedModulePlugin};
 use self::{primitive::Brick, rendered::RenderedModule};
 pub use crate::primitive::Primitive;
 
 /// A rendered [`Primitive`].
-#[derive(Reflect)]
 pub struct RenderedPrimitive {
   primitive: Box<dyn Primitive>,
   transform: Transform,
@@ -74,7 +74,7 @@ impl RenderedPrimitive {
 /// dimension. While a module can be larger than this, its over-reach and
 /// under-reach should be semetrical, similar to the interlocking bricks in a
 /// brick wall.
-pub trait Module {
+pub trait Module: Reflect {
   /// Render the module.
   ///
   /// This method returns a [`RenderedModule`] that can be used to spawn the
@@ -83,8 +83,10 @@ pub trait Module {
 }
 
 /// A composition of modules used to construct a building.
+#[derive(Component, Default, Reflect)]
+#[reflect(from_reflect = false)]
 pub struct Composition {
-  modules: HashMap<IVec3, Box<dyn Module>>,
+  modules: HashMap<IVec3, Box<dyn Module + Send + Sync + 'static>>,
 }
 
 impl Composition {
@@ -96,18 +98,26 @@ impl Composition {
   }
 
   /// Adds a module to the composition.
-  pub fn add_module(&mut self, module: impl Module + 'static, position: IVec3) {
+  pub fn add_module(
+    &mut self,
+    module: impl Module + Send + Sync + 'static,
+    position: IVec3,
+  ) {
     self.modules.insert(position, Box::new(module));
   }
 
   /// Spawns the composition into the world.
   pub fn spawn(
-    &self,
+    self,
+    transform: Transform,
     commands: &mut Commands,
     materials: &mut Assets<ToonMaterial>,
-  ) {
+  ) -> Entity {
     commands
-      .spawn((SpatialBundle::default(), Name::new("building_composition")))
+      .spawn((
+        SpatialBundle::from_transform(transform),
+        Name::new("building_composition"),
+      ))
       .with_children(|p| {
         for (position, module) in self.modules.iter() {
           let transform = Transform::from_translation(Vec3::new(
@@ -117,10 +127,19 @@ impl Composition {
           ));
           module.render().spawn(p, materials, transform);
         }
-      });
+      })
+      .insert(self)
+      .id()
   }
 }
 
-impl Default for Composition {
-  fn default() -> Self { Self::new() }
+/// The `framix` plugin.
+///
+/// This plugin mainly registers types.
+pub struct FramixPlugin;
+
+impl Plugin for FramixPlugin {
+  fn build(&self, app: &mut App) {
+    app.register_type::<RenderedModuleMarker>();
+  }
 }

@@ -67,7 +67,11 @@ fn test_scene(
   comp.add_module(framix::BrickWall, IVec3::new(1, 2, 1));
   comp.add_module(framix::BrickWall, IVec3::new(0, 2, 2));
   comp.add_module(framix::BrickWall, IVec3::new(-1, 2, 1));
-  comp.spawn(&mut commands, toon_materials.into_inner());
+  comp.spawn(
+    Transform::default(),
+    &mut commands,
+    toon_materials.into_inner(),
+  );
 
   // let rendered_module = framix::BrickWall.render();
   // rendered_module.spawn(

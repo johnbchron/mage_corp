@@ -5,6 +5,7 @@ use std::f32::consts::PI;
 use super::*;
 
 /// A brick wall module.
+#[derive(Reflect, Default)]
 pub struct BrickWall;
 
 impl Module for BrickWall {
@@ -38,6 +39,7 @@ impl Module for BrickWall {
 }
 
 /// A brick corner wall module.
+#[derive(Reflect, Default)]
 pub struct BrickCornerWall;
 
 impl Module for BrickCornerWall {
