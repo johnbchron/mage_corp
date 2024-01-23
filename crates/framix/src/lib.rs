@@ -27,7 +27,8 @@
 pub mod brick_wall;
 pub mod primitive;
 mod rendered;
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
+use common::materials::ToonMaterial;
 
 pub use self::{brick_wall::*, rendered::RenderedModulePlugin};
 use self::{primitive::Brick, rendered::RenderedModule};
@@ -50,6 +51,16 @@ impl RenderedPrimitive {
   }
 }
 
+impl RenderedPrimitive {
+  fn spawn(
+    &self,
+    parent: &mut ChildBuilder,
+    materials: &mut Assets<ToonMaterial>,
+  ) {
+    self.primitive.spawn(parent, materials, self.transform);
+  }
+}
+
 /// A trait for semantic definitions of a building chunk.
 ///
 /// This trait is intended to be implemented by users on marker types, which
@@ -67,4 +78,43 @@ pub trait Module {
   /// This method returns a [`RenderedModule`] that can be used to spawn the
   /// building chunk into the game world.
   fn render(&self) -> RenderedModule;
+}
+
+/// A composition of modules used to construct a building.
+pub struct Composition {
+  modules: HashMap<IVec3, Box<dyn Module>>,
+}
+
+impl Composition {
+  /// Creates a new [`Composition`].
+  pub fn new() -> Self {
+    Self {
+      modules: HashMap::new(),
+    }
+  }
+
+  /// Adds a module to the composition.
+  pub fn add_module(&mut self, module: impl Module + 'static, position: IVec3) {
+    self.modules.insert(position, Box::new(module));
+  }
+
+  /// Spawns the composition into the world.
+  pub fn spawn(
+    &self,
+    commands: &mut Commands,
+    materials: &mut Assets<ToonMaterial>,
+  ) {
+    commands
+      .spawn((SpatialBundle::default(), Name::new("building_composition")))
+      .with_children(|p| {
+        for (position, module) in self.modules.iter() {
+          let transform = Transform::from_translation(Vec3::new(
+            position.x as f32,
+            position.y as f32,
+            position.z as f32,
+          ));
+          module.render().spawn(p, materials, transform);
+        }
+      });
+  }
 }

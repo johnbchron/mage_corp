@@ -4,13 +4,15 @@ pub mod brick;
 pub mod plank;
 
 use bevy::{
-  pbr::StandardMaterial,
-  reflect::Reflect,
-  render::{color::Color, primitives::Aabb},
+  prelude::{Transform, *},
+  render::primitives::Aabb,
 };
-use bevy_implicits::prelude::{builder as sb, Shape};
+use bevy_implicits::{
+  prelude::{builder as sb, *},
+  SyncImplicitsOnce,
+};
 use bevy_xpbd_3d::components::{
-  Collider, ColliderDensity, Friction, Restitution,
+  Collider, ColliderDensity, Friction, Restitution, RigidBody,
 };
 use common::materials::{ToonExtension, ToonMaterial};
 
@@ -42,4 +44,60 @@ pub trait Primitive: Reflect + Send + Sync + 'static {
   fn friction(&self) -> Friction;
   /// The restitution properties of the primitive.
   fn restitution(&self) -> Restitution;
+
+  /// Spawn the primitive into the world under the given parent.
+  fn spawn(
+    &self,
+    parent: &mut ChildBuilder,
+    materials: &mut Assets<ToonMaterial>,
+    transform: Transform,
+  ) {
+    let material_handle = {
+      let primitive_material = self.material();
+      let handle = materials
+        .ids()
+        .find_map(|id| {
+          if materials
+            .get(id)
+            .unwrap()
+            .reflect_partial_eq(&primitive_material)
+            .unwrap()
+          {
+            Some(id)
+          } else {
+            None
+          }
+        })
+        .map(|id| Handle::Weak(id));
+      handle.unwrap_or_else(|| materials.add(primitive_material))
+    };
+
+    let collider_attempt = self.collider();
+    let aabb = self.aabb();
+
+    let mut entity = parent.spawn((
+      SpatialBundle::from_transform(transform),
+      material_handle,
+      ImplicitInputs(MesherInputs {
+        shape:        self.shape(),
+        region:       MesherRegion {
+          position: aabb.center,
+          scale:    aabb.half_extents * 2.0,
+          detail:   MesherDetail::Resolution(200.0),
+          prune:    false,
+          simplify: false,
+        },
+        gen_collider: collider_attempt.is_none(),
+      }),
+      SyncImplicitsOnce,
+      RigidBody::Static,
+      self.density(),
+      self.friction(),
+      self.restitution(),
+      Name::new("building_primitive"),
+    ));
+    if let Some(collider) = collider_attempt {
+      entity.insert(collider);
+    }
+  }
 }
