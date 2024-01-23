@@ -56,19 +56,14 @@ pub trait Primitive: Reflect + Send + Sync + 'static {
       let primitive_material = self.material();
       let handle = materials
         .ids()
-        .find_map(|id| {
-          if materials
-            .get(id)
+        .find(|id| {
+          materials
+            .get(*id)
             .unwrap()
             .reflect_partial_eq(&primitive_material)
             .unwrap()
-          {
-            Some(id)
-          } else {
-            None
-          }
         })
-        .map(|id| Handle::Weak(id));
+        .map(Handle::Weak);
       handle.unwrap_or_else(|| materials.add(primitive_material))
     };
 

@@ -56,6 +56,6 @@ fn render_module_debug_cubes(
   q: Query<&Transform, With<RenderedModuleMarker>>,
 ) {
   for transform in q.iter() {
-    gizmos.cuboid(transform.clone(), Color::WHITE);
+    gizmos.cuboid(*transform, Color::WHITE);
   }
 }

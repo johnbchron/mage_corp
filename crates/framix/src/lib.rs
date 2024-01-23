@@ -118,3 +118,7 @@ impl Composition {
       });
   }
 }
+
+impl Default for Composition {
+  fn default() -> Self { Self::new() }
+}
