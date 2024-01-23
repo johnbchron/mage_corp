@@ -37,32 +37,6 @@ pub use self::{brick_wall::*, rendered::RenderedModulePlugin};
 use self::{primitive::Brick, rendered::RenderedModule};
 pub use crate::primitive::Primitive;
 
-/// A rendered [`Primitive`].
-pub struct RenderedPrimitive {
-  primitive: Box<dyn Primitive>,
-  transform: Transform,
-}
-
-impl RenderedPrimitive {
-  /// Create a new [`RenderedPrimitive`].
-  pub fn new(primitive: Box<dyn Primitive>, transform: Transform) -> Self {
-    Self {
-      primitive,
-      transform,
-    }
-  }
-}
-
-impl RenderedPrimitive {
-  fn spawn(
-    &self,
-    parent: &mut ChildBuilder,
-    materials: &mut Assets<ToonMaterial>,
-  ) {
-    self.primitive.spawn(parent, materials, self.transform);
-  }
-}
-
 /// A trait for semantic definitions of a building chunk.
 ///
 /// This trait is intended to be implemented by users on marker types, which

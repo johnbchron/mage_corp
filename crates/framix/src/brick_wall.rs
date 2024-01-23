@@ -3,6 +3,7 @@
 use std::f32::consts::PI;
 
 use super::*;
+use crate::rendered::RenderedPrimitive;
 
 /// A brick wall module.
 #[derive(Reflect, Default)]
@@ -20,16 +21,16 @@ impl Module for BrickWall {
     for i in 0..20 {
       let mut row = Vec::new();
       for j in 0..5 {
-        row.push(RenderedPrimitive {
-          primitive: Box::new(Brick {
+        row.push(RenderedPrimitive::new(
+          Box::new(Brick {
             scale: glam::Vec3::splat(smudge),
           }),
-          transform: Transform::from_xyz(
+          Transform::from_xyz(
             ((j as f32) - 2.0) * 0.2 - ((i % 2) as f32 * 0.1),
             ((i as f32) - 9.5) * 0.05,
             0.05,
           ),
-        })
+        ))
       }
       rows.push(row);
     }
@@ -71,10 +72,7 @@ impl Module for BrickCornerWall {
           )
           .with_rotation(rotation)
         };
-        row.push(RenderedPrimitive {
-          primitive: Box::new(brick),
-          transform,
-        });
+        row.push(RenderedPrimitive::new(Box::new(brick), transform));
       }
       rows.push(row);
     }

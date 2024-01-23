@@ -1,7 +1,31 @@
 use bevy::prelude::*;
 use common::materials::ToonMaterial;
 
-use crate::RenderedPrimitive;
+use crate::Primitive;
+
+/// A rendered [`Primitive`].
+pub struct RenderedPrimitive {
+  primitive: Box<dyn Primitive>,
+  transform: Transform,
+}
+
+impl RenderedPrimitive {
+  /// Create a new [`RenderedPrimitive`].
+  pub fn new(primitive: Box<dyn Primitive>, transform: Transform) -> Self {
+    Self {
+      primitive,
+      transform,
+    }
+  }
+
+  fn spawn(
+    &self,
+    parent: &mut ChildBuilder,
+    materials: &mut Assets<ToonMaterial>,
+  ) {
+    self.primitive.spawn(parent, materials, self.transform);
+  }
+}
 
 #[derive(Reflect)]
 pub struct RenderedModule {
