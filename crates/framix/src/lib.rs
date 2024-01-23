@@ -25,8 +25,10 @@
 //! be spawned into the world.
 
 pub mod brick_wall;
+mod find_or_add;
 pub mod primitive;
 mod rendered;
+
 use bevy::{prelude::*, utils::HashMap};
 use common::materials::ToonMaterial;
 

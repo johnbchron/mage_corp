@@ -17,6 +17,7 @@ use bevy_xpbd_3d::components::{
 use common::materials::{ToonExtension, ToonMaterial};
 
 pub use self::{brick::Brick, plank::Plank};
+use crate::find_or_add::FindOrAdd;
 
 /// A trait for physical definitions of a physical building primitive.
 pub trait Primitive: Reflect + Send + Sync + 'static {
@@ -52,20 +53,7 @@ pub trait Primitive: Reflect + Send + Sync + 'static {
     materials: &mut Assets<ToonMaterial>,
     transform: Transform,
   ) {
-    let material_handle = {
-      let primitive_material = self.material();
-      let handle = materials
-        .ids()
-        .find(|id| {
-          materials
-            .get(*id)
-            .unwrap()
-            .reflect_partial_eq(&primitive_material)
-            .unwrap()
-        })
-        .map(Handle::Weak);
-      handle.unwrap_or_else(|| materials.add(primitive_material))
-    };
+    let material_handle = materials.find_or_add(self.material());
 
     let collider_attempt = self.collider();
     let aabb = self.aabb();
