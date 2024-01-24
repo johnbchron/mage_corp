@@ -1,11 +1,11 @@
-//! Brick wall modules.
+//! Brick wall fragments.
 
 use std::f32::consts::PI;
 
 use super::*;
 use crate::rendered::RenderedPrimitive;
 
-/// A brick wall module.
+/// A brick wall fragment.
 #[derive(Reflect, Default)]
 pub enum BrickWallFragment {
   #[default]

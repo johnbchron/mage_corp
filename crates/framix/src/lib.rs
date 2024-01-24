@@ -42,6 +42,7 @@ use self::{
 };
 pub use crate::primitive::Primitive;
 
+#[derive(Reflect)]
 pub enum Fragment {
   BrickWall(BrickWallFragment),
   Foundation(FoundationFragment),
@@ -121,7 +122,7 @@ impl From<FragmentCoords> for Transform {
 
 /// A composition of fragments used to construct a building.
 #[derive(Component, Default, Reflect)]
-#[reflect(from_reflect = false)]
+#[reflect(Component)]
 pub struct Composition {
   fragments: HashMap<FragmentCoords, Fragment>,
 }
@@ -169,5 +170,6 @@ pub struct FramixPlugin;
 impl Plugin for FramixPlugin {
   fn build(&self, app: &mut App) {
     app.register_type::<RenderedFragmentMarker>();
+    app.register_type::<Composition>();
   }
 }
