@@ -5,7 +5,7 @@ use bevy::{
   prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCamera;
-use framix::{Direction, ModuleCoords};
+use framix::{Direction, FragmentCoords};
 
 use crate::{
   camera::lowres::{LowresCamera, LowresCameraBundle},
@@ -66,46 +66,46 @@ fn test_scene(
   let mut comp = framix::Composition::new();
   for y in 0..=1 {
     for a in 1..=3 {
-      comp.add_module(
-        framix::BrickWall,
-        ModuleCoords::new(IVec3::new(a, y, 0), Direction::South),
+      comp.add_fragment(
+        framix::Fragment::BrickWall(framix::BrickWallFragment::Wall),
+        FragmentCoords::new(IVec3::new(a, y, 0), Direction::South),
       );
-      comp.add_module(
-        framix::BrickWall,
-        ModuleCoords::new(IVec3::new(a, y, 4), Direction::North),
+      comp.add_fragment(
+        framix::Fragment::BrickWall(framix::BrickWallFragment::Wall),
+        FragmentCoords::new(IVec3::new(a, y, 4), Direction::North),
       );
-      comp.add_module(
-        framix::BrickWall,
-        ModuleCoords::new(IVec3::new(4, y, a), Direction::West),
+      comp.add_fragment(
+        framix::Fragment::BrickWall(framix::BrickWallFragment::Wall),
+        FragmentCoords::new(IVec3::new(4, y, a), Direction::West),
       );
-      comp.add_module(
-        framix::BrickWall,
-        ModuleCoords::new(IVec3::new(0, y, a), Direction::East),
+      comp.add_fragment(
+        framix::Fragment::BrickWall(framix::BrickWallFragment::Wall),
+        FragmentCoords::new(IVec3::new(0, y, a), Direction::East),
       );
     }
-    comp.add_module(
-      framix::BrickCornerWall,
-      ModuleCoords::new(IVec3::new(0, y, 0), Direction::South),
+    comp.add_fragment(
+      framix::Fragment::BrickWall(framix::BrickWallFragment::Corner),
+      FragmentCoords::new(IVec3::new(0, y, 0), Direction::South),
     );
-    comp.add_module(
-      framix::BrickCornerWall,
-      ModuleCoords::new(IVec3::new(4, y, 0), Direction::West),
+    comp.add_fragment(
+      framix::Fragment::BrickWall(framix::BrickWallFragment::Corner),
+      FragmentCoords::new(IVec3::new(4, y, 0), Direction::West),
     );
-    comp.add_module(
-      framix::BrickCornerWall,
-      ModuleCoords::new(IVec3::new(4, y, 4), Direction::North),
+    comp.add_fragment(
+      framix::Fragment::BrickWall(framix::BrickWallFragment::Corner),
+      FragmentCoords::new(IVec3::new(4, y, 4), Direction::North),
     );
-    comp.add_module(
-      framix::BrickCornerWall,
-      ModuleCoords::new(IVec3::new(0, y, 4), Direction::East),
+    comp.add_fragment(
+      framix::Fragment::BrickWall(framix::BrickWallFragment::Corner),
+      FragmentCoords::new(IVec3::new(0, y, 4), Direction::East),
     );
   }
   // concrete foundation
   for i in 0..=4 {
     for j in 0..=4 {
-      comp.add_module(
-        framix::Foundation,
-        ModuleCoords::new(IVec3::new(i, -1, j), Direction::South),
+      comp.add_fragment(
+        framix::Fragment::Foundation(framix::FoundationFragment),
+        FragmentCoords::new(IVec3::new(i, -1, j), Direction::South),
       );
     }
   }

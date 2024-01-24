@@ -3,10 +3,10 @@ use crate::{primitive::ConcreteBlock, rendered::RenderedPrimitive};
 
 /// A brick wall module.
 #[derive(Reflect, Default)]
-pub struct Foundation;
+pub struct FoundationFragment;
 
-impl Module for Foundation {
-  fn render(&self) -> RenderedModule {
+impl FragmentConfig for FoundationFragment {
+  fn render(&self) -> RenderedFragment {
     let smudge = 1.02;
     let block = ConcreteBlock {
       dims: Vec3::new(1.0, 0.5, 1.0) * smudge,
@@ -15,6 +15,6 @@ impl Module for Foundation {
       Box::new(block),
       Transform::from_xyz(0.0, 0.25, 0.0),
     );
-    RenderedModule::new(vec![primitive])
+    RenderedFragment::new(vec![primitive])
   }
 }

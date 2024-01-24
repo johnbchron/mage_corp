@@ -25,7 +25,7 @@ fn main() {
       terrain::TerrainPlugin,
       test_scene::TestScenePlugin,
       magicore::MagicPlugin,
-      framix::RenderedModulePlugin,
+      framix::FragmentDebugPlugin,
       framix::FramixPlugin,
     ))
     .insert_resource(Msaa::Off)

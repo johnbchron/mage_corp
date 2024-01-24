@@ -22,7 +22,7 @@ use crate::find_or_add::FindOrAdd;
 
 /// A trait for physical definitions of a physical building primitive.
 pub trait Primitive {
-  /// The [`AABB`] of the primitive.
+  /// The [`Aabb`] of the primitive.
   fn aabb(&self) -> Aabb;
   /// The [`Shape`] of the primitive.
   fn shape(&self) -> Shape;
@@ -37,8 +37,7 @@ pub trait Primitive {
   fn collider(&self) -> Option<Collider> { None }
   /// The resolution at which to tessellate the primitive, in cells per meter.
   fn resolution(&self) -> f32 { 200.0 }
-  /// The [`ToonMaterial`] of the primitive. This will be deduplicated by
-  /// [`RenderedModule::spawn`].
+  /// The [`ToonMaterial`] of the primitive.
   fn material(&self) -> ToonMaterial;
   /// The density properties of the primitive.
   fn density(&self) -> ColliderDensity;
