@@ -64,7 +64,7 @@ impl RenderedFragment {
   }
 }
 
-/// Debug plugin for rendering [`RenderedFragment`] cubes.
+/// Debug plugin for rendering cubes around fragments.
 pub struct FragmentDebugPlugin;
 
 impl Plugin for FragmentDebugPlugin {

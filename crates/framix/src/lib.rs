@@ -3,26 +3,28 @@
 
 //! Framix is a crate for procedurally generating buildings.
 //!
-//! The primary API is composed of the [`Module`] trait and the [`Primitive`]
-//! trait.
+//! The primary API is composed of the [`FragmentConfig`] trait and the
+//! [`Primitive`] trait.
 //!
-//! The [`Module`] trait is intended to be implemented by users on marker types.
-//! The marker types can then be laid out by a user's algorithm to form a
-//! building. The trait has a [`render`] method, which returns a
-//! [`RenderedModule`] that can be used to spawn the building chunk
-//! into the game world.
+//! The [`FragmentConfig`] trait is intended to be implemented by users on
+//! marker types that semantically represent a piece of a building, like
+//! `BrickWallFragment`. The marker types can then be laid out by a user's
+//! algorithm to form a building. The trait has a `render` method, which
+//! returns a `RenderedFragment` that can be used to spawn the building chunk
+//! into the game world. Make sure when adding fragments to add a variant within
+//! the `Fragment` enum.
 //!
-//! The [`Primitive`] trait defines primitives that can be used to construct
-//! modules. The trait has a number of methods that define the properties of the
-//! primitive, such as its [`Shape`](bevy_implicits::prelude::Shape),
+//! The [`Primitive`] trait defines primitives that can be used to populate
+//! fragments. The trait has a number of methods that define the properties of
+//! the primitive, such as its [`Shape`](bevy_implicits::prelude::Shape),
 //! [`Collider`](bevy_xpbd_3d::components::Collider),
-//! [`ToonMaterial`](common::materials::ToonMaterial), etc.
+//! [`ToonMaterial`], etc.
 //!
 //! Essentially, implement [`Primitive`] on the physical building blocks of your
-//! building (such as wood planks, shingles, etc.), and implement [`Module`] on
-//! the semantic building blocks of your building, (such as a brick wall or
-//! roof). The [`Module`] types configure and arrange primitives which can then
-//! be spawned into the world.
+//! building (such as wood planks, shingles, etc.), and implement
+//! [`FragmentConfig`] on the semantic building blocks of your building, (such
+//! as a brick wall or roof). The [`FragmentConfig`] types configure and arrange
+//! primitives which can then be spawned into the world.
 
 pub mod brick_wall;
 mod find_or_add;
