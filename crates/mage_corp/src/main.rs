@@ -26,6 +26,7 @@ fn main() {
       test_scene::TestScenePlugin,
       magicore::MagicPlugin,
       framix::RenderedModulePlugin,
+      framix::FramixPlugin,
     ))
     .insert_resource(Msaa::Off)
     .insert_resource(AmbientLight {

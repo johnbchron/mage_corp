@@ -1,6 +1,7 @@
 //! Physical definitions of building primitives.
 
 pub mod brick;
+pub mod concrete;
 pub mod plank;
 
 use bevy::{
@@ -16,7 +17,7 @@ use bevy_xpbd_3d::components::{
 };
 use common::materials::{ToonExtension, ToonMaterial};
 
-pub use self::{brick::Brick, plank::Plank};
+pub use self::{brick::Brick, concrete::ConcreteBlock, plank::Plank};
 use crate::find_or_add::FindOrAdd;
 
 /// A trait for physical definitions of a physical building primitive.

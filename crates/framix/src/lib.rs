@@ -26,15 +26,18 @@
 
 pub mod brick_wall;
 mod find_or_add;
+pub mod foundation;
 pub mod primitive;
 mod rendered;
 
 use bevy::{prelude::*, utils::HashMap};
 use common::materials::ToonMaterial;
-use rendered::RenderedModuleMarker;
 
-pub use self::{brick_wall::*, rendered::RenderedModulePlugin};
-use self::{primitive::Brick, rendered::RenderedModule};
+pub use self::{brick_wall::*, foundation::*, rendered::RenderedModulePlugin};
+use self::{
+  primitive::Brick,
+  rendered::{RenderedModule, RenderedModuleMarker},
+};
 pub use crate::primitive::Primitive;
 
 /// A trait for semantic definitions of a building chunk.
@@ -56,11 +59,70 @@ pub trait Module: Reflect {
   fn render(&self) -> RenderedModule;
 }
 
+/// A 2d direction.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, Reflect)]
+pub enum Direction {
+  North,
+  East,
+  #[default]
+  South,
+  West,
+}
+
+impl Direction {
+  /// Returns the rotation of the direction.
+  pub fn to_rotation(self) -> f32 {
+    match self {
+      Self::North => 0.0,
+      Self::East => -std::f32::consts::FRAC_PI_2,
+      Self::South => -std::f32::consts::PI,
+      Self::West => -std::f32::consts::FRAC_PI_2 * 3.0,
+    }
+  }
+}
+
+/// The coordinates of a module.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Reflect)]
+pub struct ModuleCoords {
+  pub position:  IVec3,
+  pub direction: Direction,
+}
+
+impl ModuleCoords {
+  /// Creates a new [`ModuleCoords`].
+  pub fn new(position: IVec3, direction: Direction) -> Self {
+    Self {
+      position,
+      direction,
+    }
+  }
+  /// Creates a new [`ModuleCoords`] with the default direction.
+  pub fn new_default_dir(position: IVec3) -> Self {
+    Self::new(position, Direction::default())
+  }
+}
+
+impl From<IVec3> for ModuleCoords {
+  fn from(position: IVec3) -> Self { Self::new_default_dir(position) }
+}
+
+impl From<ModuleCoords> for Transform {
+  fn from(coords: ModuleCoords) -> Self {
+    let mut transform = Transform::from_translation(Vec3::new(
+      coords.position.x as f32,
+      coords.position.y as f32,
+      coords.position.z as f32,
+    ));
+    transform.rotate(Quat::from_rotation_y(coords.direction.to_rotation()));
+    transform
+  }
+}
+
 /// A composition of modules used to construct a building.
 #[derive(Component, Default, Reflect)]
 #[reflect(from_reflect = false)]
 pub struct Composition {
-  modules: HashMap<IVec3, Box<dyn Module + Send + Sync + 'static>>,
+  modules: HashMap<ModuleCoords, Box<dyn Module + Send + Sync + 'static>>,
 }
 
 impl Composition {
@@ -75,9 +137,9 @@ impl Composition {
   pub fn add_module(
     &mut self,
     module: impl Module + Send + Sync + 'static,
-    position: IVec3,
+    coords: ModuleCoords,
   ) {
-    self.modules.insert(position, Box::new(module));
+    self.modules.insert(coords, Box::new(module));
   }
 
   /// Spawns the composition into the world.
@@ -93,13 +155,8 @@ impl Composition {
         Name::new("building_composition"),
       ))
       .with_children(|p| {
-        for (position, module) in self.modules.iter() {
-          let transform = Transform::from_translation(Vec3::new(
-            position.x as f32,
-            position.y as f32,
-            position.z as f32,
-          ));
-          module.render().spawn(p, materials, transform);
+        for (coords, module) in self.modules.iter() {
+          module.render().spawn(p, materials, (*coords).into());
         }
       })
       .insert(self)
