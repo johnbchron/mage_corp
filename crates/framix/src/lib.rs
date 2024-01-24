@@ -42,7 +42,6 @@ pub use crate::primitive::Primitive;
 
 pub enum Fragment {
   BrickWall(BrickWallFragment),
-  BrickCornerWall(BrickCornerWallFragment),
   Foundation(FoundationFragment),
 }
 
@@ -50,7 +49,6 @@ impl Fragment {
   pub fn render(&self) -> RenderedModule {
     match self {
       Self::BrickWall(fragment) => fragment.render(),
-      Self::BrickCornerWall(fragment) => fragment.render(),
       Self::Foundation(fragment) => fragment.render(),
     }
   }
