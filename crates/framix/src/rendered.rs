@@ -77,7 +77,7 @@ impl Plugin for RenderedModulePlugin {
 
 fn render_module_debug_cubes(
   mut gizmos: Gizmos,
-  q: Query<&Transform, With<RenderedModuleMarker>>,
+  q: Query<&GlobalTransform, With<RenderedModuleMarker>>,
 ) {
   for transform in q.iter() {
     gizmos.cuboid(*transform, Color::WHITE);
