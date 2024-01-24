@@ -82,33 +82,33 @@ impl Direction {
   }
 }
 
-/// The coordinates of a module.
+/// The coordinates of a fragment.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Reflect)]
-pub struct ModuleCoords {
+pub struct FragmentCoords {
   pub position:  IVec3,
   pub direction: Direction,
 }
 
-impl ModuleCoords {
-  /// Creates a new [`ModuleCoords`].
+impl FragmentCoords {
+  /// Creates a new [`FragmentCoords`].
   pub fn new(position: IVec3, direction: Direction) -> Self {
     Self {
       position,
       direction,
     }
   }
-  /// Creates a new [`ModuleCoords`] with the default direction.
+  /// Creates a new [`FragmentCoords`] with the default direction.
   pub fn new_default_dir(position: IVec3) -> Self {
     Self::new(position, Direction::default())
   }
 }
 
-impl From<IVec3> for ModuleCoords {
+impl From<IVec3> for FragmentCoords {
   fn from(position: IVec3) -> Self { Self::new_default_dir(position) }
 }
 
-impl From<ModuleCoords> for Transform {
-  fn from(coords: ModuleCoords) -> Self {
+impl From<FragmentCoords> for Transform {
+  fn from(coords: FragmentCoords) -> Self {
     let mut transform = Transform::from_translation(Vec3::new(
       coords.position.x as f32,
       coords.position.y as f32,
@@ -119,24 +119,24 @@ impl From<ModuleCoords> for Transform {
   }
 }
 
-/// A composition of modules used to construct a building.
+/// A composition of fragments used to construct a building.
 #[derive(Component, Default, Reflect)]
 #[reflect(from_reflect = false)]
 pub struct Composition {
-  modules: HashMap<ModuleCoords, Fragment>,
+  fragments: HashMap<FragmentCoords, Fragment>,
 }
 
 impl Composition {
   /// Creates a new [`Composition`].
   pub fn new() -> Self {
     Self {
-      modules: HashMap::new(),
+      fragments: HashMap::new(),
     }
   }
 
-  /// Adds a module to the composition.
-  pub fn add_module(&mut self, fragment: Fragment, coords: ModuleCoords) {
-    self.modules.insert(coords, fragment);
+  /// Adds a fragment to the composition.
+  pub fn add_fragment(&mut self, fragment: Fragment, coords: FragmentCoords) {
+    self.fragments.insert(coords, fragment);
   }
 
   /// Spawns the composition into the world.
@@ -152,7 +152,7 @@ impl Composition {
         Name::new("building_composition"),
       ))
       .with_children(|p| {
-        for (coords, fragment) in self.modules.iter() {
+        for (coords, fragment) in self.fragments.iter() {
           fragment.render().spawn(p, materials, (*coords).into());
         }
       })
