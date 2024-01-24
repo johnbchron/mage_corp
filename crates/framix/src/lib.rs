@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![feature(trivial_bounds)]
 
 //! Framix is a crate for procedurally generating buildings.
