@@ -49,7 +49,7 @@ impl RenderedFragment {
       .spawn((
         SpatialBundle::from_transform(transform),
         RenderedFragmentMarker,
-        Name::new("building_module"),
+        Name::new("building_fragment"),
       ))
       .with_children(|p| {
         for primitive in &self.primitives {
@@ -64,18 +64,18 @@ impl RenderedFragment {
   }
 }
 
-/// Debug plugin for rendering [`RenderedModule`] cubes.
+/// Debug plugin for rendering [`RenderedFragment`] cubes.
 pub struct FragmentDebugPlugin;
 
 impl Plugin for FragmentDebugPlugin {
   fn build(&self, app: &mut App) {
     app
       .register_type::<RenderedFragmentMarker>()
-      .add_systems(Update, render_module_debug_cubes);
+      .add_systems(Update, render_fragment_debug_cubes);
   }
 }
 
-fn render_module_debug_cubes(
+fn render_fragment_debug_cubes(
   mut gizmos: Gizmos,
   q: Query<&GlobalTransform, With<RenderedFragmentMarker>>,
 ) {
