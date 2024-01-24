@@ -24,36 +24,21 @@
 //! roof). The [`Module`] types configure and arrange primitives which can then
 //! be spawned into the world.
 
+pub mod brick_wall;
+mod find_or_add;
+pub mod foundation;
 pub mod primitive;
 mod rendered;
-pub mod prelude {
-  //! A collection of commonly used types and traits.
-  pub use crate::{primitive::Primitive, Module, RenderedPrimitive};
-}
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
+use common::materials::ToonMaterial;
 
+pub use self::{brick_wall::*, foundation::*, rendered::RenderedModulePlugin};
 use self::{
-  primitive::{Brick, Primitive},
-  rendered::RenderedModule,
+  primitive::Brick,
+  rendered::{RenderedModule, RenderedModuleMarker},
 };
-
-/// A rendered [`Primitive`].
-#[derive(Reflect)]
-pub struct RenderedPrimitive {
-  primitive: Box<dyn Primitive>,
-  transform: Transform,
-}
-
-impl RenderedPrimitive {
-  /// Create a new [`RenderedPrimitive`].
-  pub fn new(primitive: Box<dyn Primitive>, transform: Transform) -> Self {
-    Self {
-      primitive,
-      transform,
-    }
-  }
-}
+pub use crate::primitive::Primitive;
 
 /// A trait for semantic definitions of a building chunk.
 ///
@@ -66,7 +51,7 @@ impl RenderedPrimitive {
 /// dimension. While a module can be larger than this, its over-reach and
 /// under-reach should be semetrical, similar to the interlocking bricks in a
 /// brick wall.
-pub trait Module {
+pub trait Module: Reflect {
   /// Render the module.
   ///
   /// This method returns a [`RenderedModule`] that can be used to spawn the
@@ -74,33 +59,118 @@ pub trait Module {
   fn render(&self) -> RenderedModule;
 }
 
-/// A brick wall module.
-pub struct BrickWall;
+/// A 2d direction.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, Reflect)]
+pub enum Direction {
+  North,
+  East,
+  #[default]
+  South,
+  West,
+}
 
-impl Module for BrickWall {
-  fn render(&self) -> RenderedModule {
-    // we'll fit 5 bricks end to end and 20 stacked. we'll also offset every
-    // other brick by one half length.
-    let smudge = 1.02;
-
-    let mut rows = Vec::new();
-    for i in 0..20 {
-      let mut row = Vec::new();
-      for j in 0..5 {
-        row.push(RenderedPrimitive {
-          primitive: Box::new(Brick {
-            scale: glam::Vec3::splat(smudge),
-          }),
-          transform: Transform::from_xyz(
-            ((j as f32) - 2.0) * 0.2 - ((i % 2) as f32 * 0.1),
-            ((i as f32) - 9.5) * 0.05,
-            0.0,
-          ),
-        })
-      }
-      rows.push(row);
+impl Direction {
+  /// Returns the rotation of the direction.
+  pub fn to_rotation(self) -> f32 {
+    match self {
+      Self::North => 0.0,
+      Self::East => -std::f32::consts::FRAC_PI_2,
+      Self::South => -std::f32::consts::PI,
+      Self::West => -std::f32::consts::FRAC_PI_2 * 3.0,
     }
+  }
+}
 
-    RenderedModule::new(rows.into_iter().flatten().collect())
+/// The coordinates of a module.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Reflect)]
+pub struct ModuleCoords {
+  pub position:  IVec3,
+  pub direction: Direction,
+}
+
+impl ModuleCoords {
+  /// Creates a new [`ModuleCoords`].
+  pub fn new(position: IVec3, direction: Direction) -> Self {
+    Self {
+      position,
+      direction,
+    }
+  }
+  /// Creates a new [`ModuleCoords`] with the default direction.
+  pub fn new_default_dir(position: IVec3) -> Self {
+    Self::new(position, Direction::default())
+  }
+}
+
+impl From<IVec3> for ModuleCoords {
+  fn from(position: IVec3) -> Self { Self::new_default_dir(position) }
+}
+
+impl From<ModuleCoords> for Transform {
+  fn from(coords: ModuleCoords) -> Self {
+    let mut transform = Transform::from_translation(Vec3::new(
+      coords.position.x as f32,
+      coords.position.y as f32,
+      coords.position.z as f32,
+    ));
+    transform.rotate(Quat::from_rotation_y(coords.direction.to_rotation()));
+    transform
+  }
+}
+
+/// A composition of modules used to construct a building.
+#[derive(Component, Default, Reflect)]
+#[reflect(from_reflect = false)]
+pub struct Composition {
+  modules: HashMap<ModuleCoords, Box<dyn Module + Send + Sync + 'static>>,
+}
+
+impl Composition {
+  /// Creates a new [`Composition`].
+  pub fn new() -> Self {
+    Self {
+      modules: HashMap::new(),
+    }
+  }
+
+  /// Adds a module to the composition.
+  pub fn add_module(
+    &mut self,
+    module: impl Module + Send + Sync + 'static,
+    coords: ModuleCoords,
+  ) {
+    self.modules.insert(coords, Box::new(module));
+  }
+
+  /// Spawns the composition into the world.
+  pub fn spawn(
+    self,
+    transform: Transform,
+    commands: &mut Commands,
+    materials: &mut Assets<ToonMaterial>,
+  ) -> Entity {
+    commands
+      .spawn((
+        SpatialBundle::from_transform(transform),
+        Name::new("building_composition"),
+      ))
+      .with_children(|p| {
+        for (coords, module) in self.modules.iter() {
+          module.render().spawn(p, materials, (*coords).into());
+        }
+      })
+      .insert(self)
+      .id()
+  }
+}
+
+/// The `framix` plugin.
+///
+/// This plugin mainly registers types.
+pub struct FramixPlugin;
+
+impl Plugin for FramixPlugin {
+  fn build(&self, app: &mut App) {
+    app.register_type::<RenderedModuleMarker>();
   }
 }

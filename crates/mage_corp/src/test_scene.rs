@@ -5,7 +5,7 @@ use bevy::{
   prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCamera;
-use framix::Module;
+use framix::{Direction, ModuleCoords};
 
 use crate::{
   camera::lowres::{LowresCamera, LowresCameraBundle},
@@ -14,7 +14,7 @@ use crate::{
 
 fn test_scene(
   mut commands: Commands,
-  mut toon_materials: ResMut<Assets<ToonMaterial>>,
+  toon_materials: ResMut<Assets<ToonMaterial>>,
 ) {
   // spawn the camera
   commands.spawn((
@@ -62,29 +62,85 @@ fn test_scene(
     magicore::source::Source::default(),
   ));
 
-  let rendered_module = framix::BrickWall.render();
-  rendered_module.spawn(
-    Transform::from_xyz(0.0, 2.0, 0.0),
+  // flat walls
+  let mut comp = framix::Composition::new();
+  for y in 0..=1 {
+    for a in 1..=3 {
+      comp.add_module(
+        framix::BrickWall,
+        ModuleCoords::new(IVec3::new(a, y, 0), Direction::South),
+      );
+      comp.add_module(
+        framix::BrickWall,
+        ModuleCoords::new(IVec3::new(a, y, 4), Direction::North),
+      );
+      comp.add_module(
+        framix::BrickWall,
+        ModuleCoords::new(IVec3::new(4, y, a), Direction::West),
+      );
+      comp.add_module(
+        framix::BrickWall,
+        ModuleCoords::new(IVec3::new(0, y, a), Direction::East),
+      );
+    }
+    comp.add_module(
+      framix::BrickCornerWall,
+      ModuleCoords::new(IVec3::new(0, y, 0), Direction::South),
+    );
+    comp.add_module(
+      framix::BrickCornerWall,
+      ModuleCoords::new(IVec3::new(4, y, 0), Direction::West),
+    );
+    comp.add_module(
+      framix::BrickCornerWall,
+      ModuleCoords::new(IVec3::new(4, y, 4), Direction::North),
+    );
+    comp.add_module(
+      framix::BrickCornerWall,
+      ModuleCoords::new(IVec3::new(0, y, 4), Direction::East),
+    );
+  }
+  // concrete foundation
+  for i in 0..=4 {
+    for j in 0..=4 {
+      comp.add_module(
+        framix::Foundation,
+        ModuleCoords::new(IVec3::new(i, -1, j), Direction::South),
+      );
+    }
+  }
+  comp.spawn(
+    Transform::from_xyz(0.0, 1.0, 0.0),
     &mut commands,
-    &mut toon_materials,
+    toon_materials.into_inner(),
   );
-  rendered_module.spawn(
-    Transform::from_xyz(1.0, 2.0, 1.0)
-      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
-    &mut commands,
-    &mut toon_materials,
-  );
-  rendered_module.spawn(
-    Transform::from_xyz(-1.0, 2.0, 1.0)
-      .with_rotation(Quat::from_rotation_y(PI / 2.0)),
-    &mut commands,
-    &mut toon_materials,
-  );
-  rendered_module.spawn(
-    Transform::from_xyz(0.0, 2.0, 2.0),
-    &mut commands,
-    &mut toon_materials,
-  );
+
+  // // corners
+  // let rendered_module = framix::BrickCornerWall.render();
+  // rendered_module.spawn(
+  //   Transform::from_xyz(-1.0, 2.0, 0.0)
+  //     .with_rotation(Quat::from_rotation_y(PI)),
+  //   &mut commands,
+  //   &mut toon_materials,
+  // );
+  // rendered_module.spawn(
+  //   Transform::from_xyz(1.0, 2.0, 0.0)
+  //     .with_rotation(Quat::from_rotation_y(PI / 2.0)),
+  //   &mut commands,
+  //   &mut toon_materials,
+  // );
+  // rendered_module.spawn(
+  //   Transform::from_xyz(1.0, 2.0, 2.0)
+  //     .with_rotation(Quat::from_rotation_y(0.0)),
+  //   &mut commands,
+  //   &mut toon_materials,
+  // );
+  // rendered_module.spawn(
+  //   Transform::from_xyz(-1.0, 2.0, 2.0)
+  //     .with_rotation(Quat::from_rotation_y(PI * 3.0 / 2.0)),
+  //   &mut commands,
+  //   &mut toon_materials,
+  // );
 }
 
 pub struct TestScenePlugin;
