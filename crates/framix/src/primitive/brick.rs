@@ -41,7 +41,6 @@ impl Primitive for Brick {
       self.scale.z.into(),
     )
   }
-  fn resolution(&self) -> f32 { 1000.0 }
   fn collider(&self) -> Option<Collider> {
     // adjust for the tessellation reducing the size just a bit
     let tess_cell_size = self.resolution().recip();

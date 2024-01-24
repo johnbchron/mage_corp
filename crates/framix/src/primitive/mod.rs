@@ -67,7 +67,7 @@ pub trait Primitive {
         region:       MesherRegion {
           position: aabb.center,
           scale:    aabb.half_extents * 2.0,
-          detail:   MesherDetail::Resolution(200.0),
+          detail:   MesherDetail::Resolution(self.resolution()),
           prune:    false,
           simplify: false,
         },
