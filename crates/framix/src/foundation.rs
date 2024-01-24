@@ -1,3 +1,5 @@
+//! A foundation module.
+
 use super::*;
 use crate::{primitive::ConcreteBlock, rendered::RenderedPrimitive};
 

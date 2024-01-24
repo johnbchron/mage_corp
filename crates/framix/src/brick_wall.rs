@@ -9,7 +9,9 @@ use crate::rendered::RenderedPrimitive;
 #[derive(Reflect, Default)]
 pub enum BrickWallFragment {
   #[default]
+  /// A brick wall fragment.
   Wall,
+  /// A brick wall corner fragment.
   Corner,
 }
 

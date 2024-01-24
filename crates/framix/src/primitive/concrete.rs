@@ -1,8 +1,11 @@
+//! Concrete block primitive.
+
 use super::*;
 
 /// A concrete block.
 #[derive(Reflect)]
 pub struct ConcreteBlock {
+  /// The dimensions of the block.
   pub dims: Vec3,
 }
 

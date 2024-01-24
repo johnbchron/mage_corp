@@ -1,12 +1,12 @@
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 #![feature(trivial_bounds)]
 
 //! Framix is a crate for procedurally generating buildings.
 //!
-//! The primary API is composed of the [`FragmentConfig`] trait and the
+//! The primary API is composed of the `FragmentConfig` trait and the
 //! [`Primitive`] trait.
 //!
-//! The [`FragmentConfig`] trait is intended to be implemented by users on
+//! The `FragmentConfig` trait is intended to be implemented by users on
 //! marker types that semantically represent a piece of a building, like
 //! `BrickWallFragment`. The marker types can then be laid out by a user's
 //! algorithm to form a building. The trait has a `render` method, which
@@ -22,8 +22,8 @@
 //!
 //! Essentially, implement [`Primitive`] on the physical building blocks of your
 //! building (such as wood planks, shingles, etc.), and implement
-//! [`FragmentConfig`] on the semantic building blocks of your building, (such
-//! as a brick wall or roof). The [`FragmentConfig`] types configure and arrange
+//! `FragmentConfig` on the semantic building blocks of your building, (such
+//! as a brick wall or roof). The `FragmentConfig` types configure and arrange
 //! primitives which can then be spawned into the world.
 
 pub mod brick_wall;
@@ -42,14 +42,21 @@ use self::{
 };
 pub use crate::primitive::Primitive;
 
+/// A fragment of a building.
+///
+/// This is a pass-through to allow storing heterogeneous types that implement
+/// `FragmentConfig`. See module-level documentation for more information.
 #[derive(Reflect)]
 pub enum Fragment {
+  /// A brick wall fragment.
   BrickWall(BrickWallFragment),
+  /// A foundation fragment.
   Foundation(FoundationFragment),
 }
 
 impl Fragment {
-  pub fn render(&self) -> RenderedFragment {
+  /// Renders the fragment into a [`RenderedFragment`].
+  pub(crate) fn render(&self) -> RenderedFragment {
     match self {
       Self::BrickWall(fragment) => fragment.render(),
       Self::Foundation(fragment) => fragment.render(),
@@ -57,17 +64,26 @@ impl Fragment {
   }
 }
 
-pub trait FragmentConfig {
+/// A trait for types that configure a fragment.
+///
+/// The [`render()`] method on this trait returns a [`RenderedFragment`], which
+/// contains positioned primitives that can be spawned into the world.
+pub(crate) trait FragmentConfig {
+  /// Renders the fragment config into a `RenderedFragment`.
   fn render(&self) -> RenderedFragment;
 }
 
 /// A 2d direction.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, Reflect)]
 pub enum Direction {
+  /// North.
   North,
+  /// East.
   East,
+  /// South.
   #[default]
   South,
+  /// West.
   West,
 }
 
@@ -86,8 +102,8 @@ impl Direction {
 /// The coordinates of a fragment.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Reflect)]
 pub struct FragmentCoords {
-  pub position:  IVec3,
-  pub direction: Direction,
+  position:  IVec3,
+  direction: Direction,
 }
 
 impl FragmentCoords {
