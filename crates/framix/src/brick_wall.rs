@@ -7,9 +7,9 @@ use crate::rendered::RenderedPrimitive;
 
 /// A brick wall module.
 #[derive(Reflect, Default)]
-pub struct BrickWall;
+pub struct BrickWallFragment;
 
-impl Module for BrickWall {
+impl FragmentConfig for BrickWallFragment {
   fn render(&self) -> RenderedModule {
     // we'll fit 5 bricks end to end and 20 stacked. we'll also offset every
     // other brick by one half length.
@@ -41,9 +41,9 @@ impl Module for BrickWall {
 
 /// A brick corner wall module.
 #[derive(Reflect, Default)]
-pub struct BrickCornerWall;
+pub struct BrickCornerWallFragment;
 
-impl Module for BrickCornerWall {
+impl FragmentConfig for BrickCornerWallFragment {
   fn render(&self) -> RenderedModule {
     let smudge = 1.02;
 

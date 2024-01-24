@@ -40,22 +40,23 @@ use self::{
 };
 pub use crate::primitive::Primitive;
 
-/// A trait for semantic definitions of a building chunk.
-///
-/// This trait is intended to be implemented by users on marker types, which
-/// can be laid out by an algorithm to form a building. The trait has a
-/// [`render`] method, which returns a [`RenderedModule`] that can be used to
-/// spawn the building chunk.
-///
-/// A module should be one meter cubed, on the interval [-0.5, 0.5] in each
-/// dimension. While a module can be larger than this, its over-reach and
-/// under-reach should be semetrical, similar to the interlocking bricks in a
-/// brick wall.
-pub trait Module: Reflect {
-  /// Render the module.
-  ///
-  /// This method returns a [`RenderedModule`] that can be used to spawn the
-  /// building chunk into the game world.
+pub enum Fragment {
+  BrickWall(BrickWallFragment),
+  BrickCornerWall(BrickCornerWallFragment),
+  Foundation(FoundationFragment),
+}
+
+impl Fragment {
+  pub fn render(&self) -> RenderedModule {
+    match self {
+      Self::BrickWall(fragment) => fragment.render(),
+      Self::BrickCornerWall(fragment) => fragment.render(),
+      Self::Foundation(fragment) => fragment.render(),
+    }
+  }
+}
+
+pub trait FragmentConfig {
   fn render(&self) -> RenderedModule;
 }
 
@@ -122,7 +123,7 @@ impl From<ModuleCoords> for Transform {
 #[derive(Component, Default, Reflect)]
 #[reflect(from_reflect = false)]
 pub struct Composition {
-  modules: HashMap<ModuleCoords, Box<dyn Module + Send + Sync + 'static>>,
+  modules: HashMap<ModuleCoords, Fragment>,
 }
 
 impl Composition {
@@ -134,12 +135,8 @@ impl Composition {
   }
 
   /// Adds a module to the composition.
-  pub fn add_module(
-    &mut self,
-    module: impl Module + Send + Sync + 'static,
-    coords: ModuleCoords,
-  ) {
-    self.modules.insert(coords, Box::new(module));
+  pub fn add_module(&mut self, fragment: Fragment, coords: ModuleCoords) {
+    self.modules.insert(coords, fragment);
   }
 
   /// Spawns the composition into the world.
@@ -155,8 +152,8 @@ impl Composition {
         Name::new("building_composition"),
       ))
       .with_children(|p| {
-        for (coords, module) in self.modules.iter() {
-          module.render().spawn(p, materials, (*coords).into());
+        for (coords, fragment) in self.modules.iter() {
+          fragment.render().spawn(p, materials, (*coords).into());
         }
       })
       .insert(self)

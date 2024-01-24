@@ -3,9 +3,9 @@ use crate::{primitive::ConcreteBlock, rendered::RenderedPrimitive};
 
 /// A brick wall module.
 #[derive(Reflect, Default)]
-pub struct Foundation;
+pub struct FoundationFragment;
 
-impl Module for Foundation {
+impl FragmentConfig for FoundationFragment {
   fn render(&self) -> RenderedModule {
     let smudge = 1.02;
     let block = ConcreteBlock {
