@@ -28,15 +28,15 @@ impl RenderedPrimitive {
 }
 
 #[derive(Reflect)]
-pub struct RenderedModule {
+pub struct RenderedFragment {
   primitives: Vec<RenderedPrimitive>,
 }
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
-pub struct RenderedModuleMarker;
+pub struct RenderedFragmentMarker;
 
-impl RenderedModule {
+impl RenderedFragment {
   pub fn new(primitives: Vec<RenderedPrimitive>) -> Self { Self { primitives } }
 
   pub fn spawn(
@@ -45,15 +45,10 @@ impl RenderedModule {
     materials: &mut Assets<ToonMaterial>,
     transform: Transform,
   ) {
-    println!(
-      "spawning rendered module with {} primitives",
-      self.primitives.len()
-    );
-
     parent
       .spawn((
         SpatialBundle::from_transform(transform),
-        RenderedModuleMarker,
+        RenderedFragmentMarker,
         Name::new("building_module"),
       ))
       .with_children(|p| {
@@ -61,23 +56,28 @@ impl RenderedModule {
           primitive.spawn(p, materials);
         }
       });
+
+    debug!(
+      "spawned rendered fragment with {} primitives",
+      self.primitives.len()
+    );
   }
 }
 
 /// Debug plugin for rendering [`RenderedModule`] cubes.
-pub struct RenderedModulePlugin;
+pub struct FragmentDebugPlugin;
 
-impl Plugin for RenderedModulePlugin {
+impl Plugin for FragmentDebugPlugin {
   fn build(&self, app: &mut App) {
     app
-      .register_type::<RenderedModuleMarker>()
+      .register_type::<RenderedFragmentMarker>()
       .add_systems(Update, render_module_debug_cubes);
   }
 }
 
 fn render_module_debug_cubes(
   mut gizmos: Gizmos,
-  q: Query<&GlobalTransform, With<RenderedModuleMarker>>,
+  q: Query<&GlobalTransform, With<RenderedFragmentMarker>>,
 ) {
   for transform in q.iter() {
     gizmos.cuboid(*transform, Color::WHITE);

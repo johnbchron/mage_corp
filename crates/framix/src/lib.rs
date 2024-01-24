@@ -33,10 +33,10 @@ mod rendered;
 use bevy::{prelude::*, utils::HashMap};
 use common::materials::ToonMaterial;
 
-pub use self::{brick_wall::*, foundation::*, rendered::RenderedModulePlugin};
+pub use self::{brick_wall::*, foundation::*, rendered::FragmentDebugPlugin};
 use self::{
   primitive::Brick,
-  rendered::{RenderedModule, RenderedModuleMarker},
+  rendered::{RenderedFragment, RenderedFragmentMarker},
 };
 pub use crate::primitive::Primitive;
 
@@ -46,7 +46,7 @@ pub enum Fragment {
 }
 
 impl Fragment {
-  pub fn render(&self) -> RenderedModule {
+  pub fn render(&self) -> RenderedFragment {
     match self {
       Self::BrickWall(fragment) => fragment.render(),
       Self::Foundation(fragment) => fragment.render(),
@@ -55,7 +55,7 @@ impl Fragment {
 }
 
 pub trait FragmentConfig {
-  fn render(&self) -> RenderedModule;
+  fn render(&self) -> RenderedFragment;
 }
 
 /// A 2d direction.
@@ -166,6 +166,6 @@ pub struct FramixPlugin;
 
 impl Plugin for FramixPlugin {
   fn build(&self, app: &mut App) {
-    app.register_type::<RenderedModuleMarker>();
+    app.register_type::<RenderedFragmentMarker>();
   }
 }

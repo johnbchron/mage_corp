@@ -14,7 +14,7 @@ pub enum BrickWallFragment {
 }
 
 impl FragmentConfig for BrickWallFragment {
-  fn render(&self) -> RenderedModule {
+  fn render(&self) -> RenderedFragment {
     // we'll fit 5 bricks end to end and 20 stacked. we'll also offset every
     // other brick by one half length.
     let smudge = 1.02;
@@ -71,6 +71,6 @@ impl FragmentConfig for BrickWallFragment {
       }
     }
 
-    RenderedModule::new(rows.into_iter().flatten().collect())
+    RenderedFragment::new(rows.into_iter().flatten().collect())
   }
 }
