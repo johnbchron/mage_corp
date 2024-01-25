@@ -12,10 +12,7 @@ use crate::{
   materials::ToonMaterial,
 };
 
-fn test_scene(
-  mut commands: Commands,
-  toon_materials: ResMut<Assets<ToonMaterial>>,
-) {
+fn test_scene(mut commands: Commands) {
   // spawn the camera
   commands.spawn((
     LowresCameraBundle {

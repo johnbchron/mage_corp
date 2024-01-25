@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use common::materials::ToonMaterial;
 
 use crate::{spawnable::Spawnable, Primitive};
 

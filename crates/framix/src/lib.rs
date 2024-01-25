@@ -18,7 +18,7 @@
 //! fragments. The trait has a number of methods that define the properties of
 //! the primitive, such as its [`Shape`](bevy_implicits::prelude::Shape),
 //! [`Collider`](bevy_xpbd_3d::components::Collider),
-//! [`ToonMaterial`], etc.
+//! [`ToonMaterial`](common::materials::ToonMaterial), etc.
 //!
 //! Essentially, implement [`Primitive`] on the physical building blocks of your
 //! building (such as wood planks, shingles, etc.), and implement
@@ -34,7 +34,6 @@ mod rendered;
 mod spawnable;
 
 use bevy::{prelude::*, utils::HashMap};
-use common::materials::ToonMaterial;
 use spawnable::Spawnable;
 
 pub use self::{brick_wall::*, foundation::*, rendered::FragmentDebugPlugin};
