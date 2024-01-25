@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use common::materials::ToonMaterial;
 
-use crate::Primitive;
+use crate::{spawnable::Spawnable, Primitive};
 
 /// A rendered [`Primitive`].
 pub struct RenderedPrimitive {
@@ -17,13 +17,13 @@ impl RenderedPrimitive {
       transform,
     }
   }
+}
 
-  fn spawn(
-    &self,
-    parent: &mut ChildBuilder,
-    materials: &mut Assets<ToonMaterial>,
-  ) {
-    self.primitive.spawn(parent, materials, self.transform);
+impl Spawnable for RenderedPrimitive {
+  type SpawnContext = Entity;
+
+  fn spawn(&self, world: &mut World, context: Self::SpawnContext) {
+    self.primitive.spawn(world, (context, self.transform));
   }
 }
 
@@ -38,24 +38,34 @@ pub struct RenderedFragmentMarker;
 
 impl RenderedFragment {
   pub fn new(primitives: Vec<RenderedPrimitive>) -> Self { Self { primitives } }
+}
 
-  pub fn spawn(
+impl Spawnable for RenderedFragment {
+  type SpawnContext = (Entity, Transform);
+
+  fn spawn(
     &self,
-    parent: &mut ChildBuilder,
-    materials: &mut Assets<ToonMaterial>,
-    transform: Transform,
+    world: &mut World,
+    (comp_entity, transform): Self::SpawnContext,
   ) {
-    parent
+    // spawn the fragment entity by itself.
+    let fragment_entity = world
       .spawn((
         SpatialBundle::from_transform(transform),
         RenderedFragmentMarker,
         Name::new("building_fragment"),
       ))
-      .with_children(|p| {
-        for primitive in &self.primitives {
-          primitive.spawn(p, materials);
-        }
-      });
+      .id();
+    // add the fragment entity as a child of the composition entity.
+    world
+      .entity_mut(comp_entity)
+      .push_children(&[fragment_entity]);
+
+    // spawn each primitive into the fragment entity. they'll add themselves as
+    // children of the fragment entity.
+    for primitive in self.primitives.iter() {
+      primitive.spawn(world, fragment_entity);
+    }
 
     debug!(
       "spawned rendered fragment with {} primitives",

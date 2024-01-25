@@ -18,10 +18,10 @@ use bevy_xpbd_3d::components::{
 use common::materials::{ToonExtension, ToonMaterial};
 
 pub use self::{brick::Brick, concrete::ConcreteBlock, plank::Plank};
-use crate::find_or_add::FindOrAdd;
+use crate::{find_or_add::FindOrAdd, spawnable::Spawnable};
 
 /// A trait for physical definitions of a physical building primitive.
-pub trait Primitive {
+pub trait Primitive: Spawnable<SpawnContext = (Entity, Transform)> {
   /// The [`Aabb`] of the primitive.
   fn aabb(&self) -> Aabb;
   /// The [`Shape`] of the primitive.
@@ -45,42 +45,48 @@ pub trait Primitive {
   fn friction(&self) -> Friction;
   /// The restitution properties of the primitive.
   fn restitution(&self) -> Restitution;
+}
+
+impl<T: Primitive> Spawnable for T {
+  // the spawn context here is the entity's parent and transform.
+  type SpawnContext = (Entity, Transform);
 
   /// Spawn the primitive into the world under the given parent.
-  fn spawn(
-    &self,
-    parent: &mut ChildBuilder,
-    materials: &mut Assets<ToonMaterial>,
-    transform: Transform,
-  ) {
-    let material_handle = materials.find_or_add(self.material());
+  fn spawn(&self, world: &mut World, (parent, transform): Self::SpawnContext) {
+    let material_handle = {
+      world
+        .resource_mut::<Assets<ToonMaterial>>()
+        .find_or_add(self.material())
+    };
 
     let collider_attempt = self.collider();
     let aabb = self.aabb();
 
-    let mut entity = parent.spawn((
-      SpatialBundle::from_transform(transform),
-      material_handle,
-      ImplicitInputs(MesherInputs {
-        shape:        self.shape(),
-        region:       MesherRegion {
-          position: aabb.center,
-          scale:    aabb.half_extents * 2.0,
-          detail:   MesherDetail::Resolution(self.resolution()),
-          prune:    false,
-          simplify: false,
-        },
-        gen_collider: collider_attempt.is_none(),
-      }),
-      SyncImplicitsOnce,
-      RigidBody::Static,
-      self.density(),
-      self.friction(),
-      self.restitution(),
-      Name::new("building_primitive"),
-    ));
-    if let Some(collider) = collider_attempt {
-      entity.insert(collider);
-    }
+    world.entity_mut(parent).with_children(|p| {
+      let mut entity = p.spawn((
+        SpatialBundle::from_transform(transform),
+        material_handle,
+        ImplicitInputs(MesherInputs {
+          shape:        self.shape(),
+          region:       MesherRegion {
+            position: aabb.center,
+            scale:    aabb.half_extents * 2.0,
+            detail:   MesherDetail::Resolution(self.resolution()),
+            prune:    false,
+            simplify: false,
+          },
+          gen_collider: collider_attempt.is_none(),
+        }),
+        SyncImplicitsOnce,
+        RigidBody::Static,
+        self.density(),
+        self.friction(),
+        self.restitution(),
+        Name::new("building_primitive"),
+      ));
+      if let Some(collider) = collider_attempt {
+        entity.insert(collider);
+      }
+    });
   }
 }

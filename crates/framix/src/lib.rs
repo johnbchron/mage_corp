@@ -31,9 +31,11 @@ mod find_or_add;
 pub mod foundation;
 pub mod primitive;
 mod rendered;
+mod spawnable;
 
 use bevy::{prelude::*, utils::HashMap};
 use common::materials::ToonMaterial;
+use spawnable::Spawnable;
 
 pub use self::{brick_wall::*, foundation::*, rendered::FragmentDebugPlugin};
 use self::{
@@ -157,24 +159,18 @@ impl Composition {
   }
 
   /// Spawns the composition into the world.
-  pub fn spawn(
-    self,
-    transform: Transform,
-    commands: &mut Commands,
-    materials: &mut Assets<ToonMaterial>,
-  ) -> Entity {
-    commands
+  pub fn spawn(self, world: &mut World, transform: Transform) -> Entity {
+    let parent = world
       .spawn((
         SpatialBundle::from_transform(transform),
         Name::new("building_composition"),
       ))
-      .with_children(|p| {
-        for (coords, fragment) in self.fragments.iter() {
-          fragment.render().spawn(p, materials, (*coords).into());
-        }
-      })
-      .insert(self)
-      .id()
+      .id();
+    for (coords, fragment) in self.fragments.iter() {
+      fragment.render().spawn(world, (parent, (*coords).into()));
+    }
+
+    world.entity_mut(parent).insert(self).id()
   }
 }
 
