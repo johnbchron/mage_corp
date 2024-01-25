@@ -7,10 +7,7 @@ use bevy::{
 use bevy_panorbit_camera::PanOrbitCamera;
 use framix::{Direction, FragmentCoords};
 
-use crate::{
-  camera::lowres::{LowresCamera, LowresCameraBundle},
-  materials::ToonMaterial,
-};
+use crate::camera::lowres::{LowresCamera, LowresCameraBundle};
 
 fn test_scene(mut commands: Commands) {
   // spawn the camera
