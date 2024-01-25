@@ -7,15 +7,9 @@ use bevy::{
 use bevy_panorbit_camera::PanOrbitCamera;
 use framix::{Direction, FragmentCoords};
 
-use crate::{
-  camera::lowres::{LowresCamera, LowresCameraBundle},
-  materials::ToonMaterial,
-};
+use crate::camera::lowres::{LowresCamera, LowresCameraBundle};
 
-fn test_scene(
-  mut commands: Commands,
-  toon_materials: ResMut<Assets<ToonMaterial>>,
-) {
+fn test_scene(mut commands: Commands) {
   // spawn the camera
   commands.spawn((
     LowresCameraBundle {
@@ -61,7 +55,9 @@ fn test_scene(
     crate::markers::Player,
     magicore::source::Source::default(),
   ));
+}
 
+fn spawn_framix_test(world: &mut World) {
   // flat walls
   let mut comp = framix::Composition::new();
   for y in 0..=1 {
@@ -109,42 +105,13 @@ fn test_scene(
       );
     }
   }
-  comp.spawn(
-    Transform::from_xyz(0.0, 1.0, 0.0),
-    &mut commands,
-    toon_materials.into_inner(),
-  );
-
-  // // corners
-  // let rendered_module = framix::BrickCornerWall.render();
-  // rendered_module.spawn(
-  //   Transform::from_xyz(-1.0, 2.0, 0.0)
-  //     .with_rotation(Quat::from_rotation_y(PI)),
-  //   &mut commands,
-  //   &mut toon_materials,
-  // );
-  // rendered_module.spawn(
-  //   Transform::from_xyz(1.0, 2.0, 0.0)
-  //     .with_rotation(Quat::from_rotation_y(PI / 2.0)),
-  //   &mut commands,
-  //   &mut toon_materials,
-  // );
-  // rendered_module.spawn(
-  //   Transform::from_xyz(1.0, 2.0, 2.0)
-  //     .with_rotation(Quat::from_rotation_y(0.0)),
-  //   &mut commands,
-  //   &mut toon_materials,
-  // );
-  // rendered_module.spawn(
-  //   Transform::from_xyz(-1.0, 2.0, 2.0)
-  //     .with_rotation(Quat::from_rotation_y(PI * 3.0 / 2.0)),
-  //   &mut commands,
-  //   &mut toon_materials,
-  // );
+  comp.spawn(world, Transform::from_xyz(0.0, 1.0, 0.0));
 }
 
 pub struct TestScenePlugin;
 
 impl Plugin for TestScenePlugin {
-  fn build(&self, app: &mut App) { app.add_systems(Startup, test_scene); }
+  fn build(&self, app: &mut App) {
+    app.add_systems(Startup, (test_scene, spawn_framix_test));
+  }
 }
